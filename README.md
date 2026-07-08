@@ -1,36 +1,125 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Junior Dev Team Projects
 
-## Getting Started
+Plateforme web qui aide les développeurs juniors à former une équipe, construire un vrai projet sur GitHub et créer une preuve crédible de collaboration pour leur CV.
 
-First, run the development server:
+## Objectif
+
+Aider les développeurs juniors à montrer plus que des projets solo :
+
+- travail en équipe ;
+- Git/GitHub ;
+- pull requests ;
+- contribution réelle ;
+- projet terminé ;
+- rôle clair dans une équipe.
+
+## MVP
+
+Fonctionnalités principales :
+
+- Authentification avec GitHub
+- Création d’un profil développeur
+- File de matchmaking
+- Création d’équipe
+- Création d’un projet lié à une équipe
+- Ajout manuel du repo GitHub
+- Page équipe/projet
+- `publicProfile` pour afficher les projets terminés d’un utilisateur
+
+## Règle importante
+
+Une équipe correspond toujours à un seul projet.
+
+```txt
+1 team = 1 project
+1 project = 1 team
+```
+
+Même si les mêmes membres veulent faire un nouveau projet, une nouvelle équipe doit être créée.
+
+## Stack
+
+- Next.js
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
+- Supabase
+- GitHub Auth
+- Vercel
+
+## Structure
+
+```txt
+src/
+  app/
+    api/
+    dashboard/
+    matchmaking/
+    teams/
+    publicProfile/
+
+  components/
+  lib/
+  services/
+  hooks/
+  constants/
+```
+
+## Base de données
+
+Tables principales :
+
+```txt
+profiles
+matchmaking_queue
+teams
+team_members
+projects
+project_members
+```
+
+Relation importante :
+
+```txt
+projects.team_id UNIQUE
+```
+
+Cela garantit qu’une équipe ne peut avoir qu’un seul projet.
+
+## GitHub
+
+Pour le MVP, la plateforme ne crée pas automatiquement les repos GitHub.
+
+Chaque équipe crée son propre repo GitHub, puis ajoute le lien dans la plateforme.
+
+## Développement local
+
+```bash
+npm install
+npm run dev
+```
+
+Créer un fichier `.env.local` :
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+```
+
+Ne jamais envoyer `.env.local` sur GitHub.
+
+## Scripts
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
+npm run lint
+npm run start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Priorité MVP
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Valider que des développeurs juniors veulent réellement rejoindre une équipe, construire un projet et terminer quelque chose qu’ils peuvent montrer sur leur CV.

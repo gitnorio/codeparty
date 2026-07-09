@@ -45,6 +45,3 @@ This file contains a growing ruleset that improves over time. **At session start
 
 <!-- New rules are appended below this line. Do not edit above this section. -->
 1. [CODE] Always use `shadcn` components for this branch's feature UI work when applicable — user explicitly asked to redo the feature with shadcn.
-2. [UX] Always push the home, onboarding, and dashboard toward a premium SaaS direction inspired by `blabla.ai` — user explicitly requested that visual direction.
-3. [UX] Always match the referenced design language much more closely in palette, spacing, and composition when the user provides screenshots — previous attempt drifted too far from the reference.
-4. [ARCH] Always use an authenticated app shell after login with left sidebar, topbar, and content areas for dashboard, matchmaking, team, project, public profile, and settings — user explicitly defined the connected layout.

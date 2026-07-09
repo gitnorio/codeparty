@@ -45,12 +45,3 @@ This file contains a growing ruleset that improves over time. **At session start
 
 <!-- New rules are appended below this line. Do not edit above this section. -->
 1. [CODE] Always use `shadcn` components for this branch's feature UI work when applicable — user explicitly asked to redo the feature with shadcn.
-2. [UX] Always push the home, onboarding, and dashboard toward a premium SaaS direction inspired by `blabla.ai` — user explicitly requested that visual direction.
-3. [UX] Always match the referenced design language much more closely in palette, spacing, and composition when the user provides screenshots — previous attempt drifted too far from the reference.
-4. [ARCH] Always use an authenticated app shell after login with left sidebar, topbar, and content areas for dashboard, matchmaking, team, project, public profile, and settings — user explicitly defined the connected layout.
-5. [STYLE] Always keep the product UI copy in English unless the user explicitly asks for another language — user explicitly reminded that the interface must be in English.
-6. [UX] Never switch the onboarding back to a dark dashboard aesthetic when a stronger visual rule already requires a `blabla.ai`-like light violet SaaS look — the previous onboarding rewrite violated the established design direction.
-7. [UX] Always keep the entire app in the `blabla.ai` UX direction on every page, not just marketing screens — user explicitly said the whole app must follow that UX without exception.
-8. [UX] Always keep `Login with GitHub` as the GitHub auth button label and never replace it with `Open dashboard`; expose `Dev Login` as a temporary separate entry to `/dev-login` when requested — user explicitly clarified the CTA behavior.
-9. [DATA] Never use fake placeholder identities like `Alex Morgan` or labels like `Simulated developer preview` in authenticated onboarding; always use the real GitHub/session identity with professional copy — user explicitly rejected non-production identity placeholders.
-10. [STYLE] Always keep the entire site fully in English, including onboarding labels and helper text, even when the user discusses product decisions in French — user explicitly reminded that the whole site must remain in English.

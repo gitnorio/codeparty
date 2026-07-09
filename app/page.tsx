@@ -85,7 +85,7 @@ export default function HomePage() {
 
           <div className="flex items-center gap-4">
             <Link href="/dev-login" className="hidden text-[15px] font-medium md:inline-flex">
-              Log in
+              Dev Login
             </Link>
             <Button
               type="button"
@@ -93,7 +93,7 @@ export default function HomePage() {
               disabled={isLoading}
               className="h-11 rounded-full bg-[#7650ff] px-6 text-white hover:bg-[#6744f0]"
             >
-              {isAuthenticated ? "Open dashboard" : "Book a demo"}
+              Login with GitHub
             </Button>
           </div>
         </header>
@@ -123,8 +123,10 @@ export default function HomePage() {
                 className="h-16 rounded-full bg-[#7650ff] px-10 text-xl text-white hover:bg-[#6744f0]"
               >
                 <LogIn className="size-5" />
-                {isAuthenticated ? "Go to dashboard" : "Try for free"}
+                Login with GitHub
               </Button>
+
+             
 
               <Link
                 href={isAuthenticated ? "/dashboard" : "/onboarding"}

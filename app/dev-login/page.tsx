@@ -111,13 +111,13 @@ export default function DevLoginPage() {
         <div className="text-center space-y-4">
           <div className="mx-auto w-fit flex items-center gap-2 px-3 py-1.5 rounded-full border border-orange-500/30 bg-orange-500/5 text-orange-400 text-xs font-semibold tracking-wider uppercase animate-pulse">
             <Terminal className="size-3.5" />
-            Environnement de test (Sandbox)
+            Test environment (Sandbox)
           </div>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-orange-400 bg-clip-text text-transparent font-sans">
-            Authentification Développeur
+            Developer Login
           </h1>
           <p className="max-w-xl mx-auto text-sm md:text-base text-slate-400">
-            Choisissez un profil factice ci-dessous pour tester instantanément le flux de redirection : inscription, onboarding ou tableau de bord.
+            Choose a test profile below to instantly verify the redirect flow: onboarding or dashboard.
           </p>
         </div>
 
@@ -175,7 +175,7 @@ export default function DevLoginPage() {
                       <Loader2 className="size-4 animate-spin" />
                     ) : (
                       <>
-                        Se connecter
+                        Open dashboard
                         <ArrowRight className="size-4 ml-1 group-hover:translate-x-1 transition-transform" />
                       </>
                     )}
@@ -198,7 +198,7 @@ export default function DevLoginPage() {
         <div className="flex justify-between items-center text-xs text-slate-500 border-t border-white/5 pt-4">
           <p>CodeParty Dev Environment</p>
           <Link href="/" className="hover:text-orange-400 transition-colors">
-            Retour à l&apos;accueil
+            Back to home
           </Link>
         </div>
       </div>

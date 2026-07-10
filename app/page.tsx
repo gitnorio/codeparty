@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Check,
+  Clock3,
+  FolderGit2,
   LogIn,
   MessageSquareMore,
   Play,
@@ -25,17 +28,24 @@ import {
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function HomePage() {
+  const router = useRouter();
   const supabase = getSupabaseBrowserClient();
+  const showDevLogin = process.env.NODE_ENV !== "production";
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadSession() {
+    let cancelled = false;
+
+    async function resolveEntryRoute() {
       const {
         data: { session },
         error,
       } = await supabase.auth.getSession();
+
+      if (cancelled) {
+        return;
+      }
 
       if (error) {
         setErrorMessage(error.message);
@@ -43,18 +53,64 @@ export default function HomePage() {
         return;
       }
 
-      setIsAuthenticated(Boolean(session));
+      if (!session?.user) {
+        setIsLoading(false);
+        return;
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", session.user.id)
+        .maybeSingle<{ id: string }>();
+
+      if (cancelled) {
+        return;
+      }
+
+      if (profileError) {
+        setErrorMessage(profileError.message);
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(false);
+
+      router.replace(profile ? "/dashboard" : "/onboarding");
     }
 
-    void loadSession();
-  }, [supabase]);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (cancelled) {
+        return;
+      }
+
+      if (!session?.user) {
+        setIsLoading(false);
+        return;
+      }
+
+      window.setTimeout(() => {
+        if (!cancelled) {
+          void resolveEntryRoute();
+        }
+      }, 0);
+    });
+
+    void resolveEntryRoute();
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, [router, supabase]);
 
   async function handleGitHubLogin() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "github",
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard`,
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/`,
       },
     });
 
@@ -77,16 +133,18 @@ export default function HomePage() {
               </div>
             </div>
             <nav className="hidden items-center gap-8 text-[15px] text-[#3f3a5b] md:flex">
-              <span>Solutions</span>
-              <span>Product</span>
-              <span>Resources</span>
+              <span>Matchmaking</span>
+              <span>Projects</span>
+              <span>Portfolio proof</span>
             </nav>
           </div>
 
           <div className="flex items-center gap-4">
-            <Link href="/dev-login" className="hidden text-[15px] font-medium md:inline-flex">
-              Dev Login
-            </Link>
+            {showDevLogin ? (
+              <Link href="/dev-login" className="hidden text-[15px] font-medium md:inline-flex">
+                Dev Login
+              </Link>
+            ) : null}
             <Button
               type="button"
               onClick={handleGitHubLogin}
@@ -126,10 +184,8 @@ export default function HomePage() {
                 Login with GitHub
               </Button>
 
-             
-
               <Link
-                href={isAuthenticated ? "/dashboard" : "/onboarding"}
+                href="#how-it-works"
                 className="inline-flex items-center gap-2 text-[17px] font-medium text-[#1f1c38]"
               >
                 Learn more
@@ -152,14 +208,14 @@ export default function HomePage() {
           <div className="rounded-[2rem] bg-[#f6f4fb] p-6 lg:p-9">
             <div className="mx-auto max-w-[360px] rounded-[1.4rem] bg-[#7650ff] p-4 text-white shadow-[0_30px_80px_rgba(118,80,255,0.35)]">
               <p className="text-[15px] leading-6 text-white/95">
-                Hey! Your team just opened a frontend slot for the portfolio sprint.
+                A new team just opened a frontend seat for this week’s build sprint.
               </p>
               <div className="mt-4 overflow-hidden rounded-[1.4rem] bg-[#f6f2ff] p-5">
                 <div className="rounded-[1.2rem] bg-[#e9e0ff] p-5 text-[#1f1c38]">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-sm font-medium text-[#6c5aa5]">Project sprint</p>
-                      <p className="mt-1 text-2xl font-semibold">GitHub Team Build</p>
+                      <p className="text-sm font-medium text-[#6c5aa5]">Team sprint</p>
+                      <p className="mt-1 text-2xl font-semibold">Launch a shared GitHub build</p>
                     </div>
                     <Badge className="rounded-full bg-white text-[#7650ff] hover:bg-white">
                       Live
@@ -167,15 +223,15 @@ export default function HomePage() {
                   </div>
 
                   <div className="mt-5 grid gap-3">
-                    <MiniInfo label="Stack" value="Next.js • Supabase • PR reviews" />
-                    <MiniInfo label="Goal" value="Build a real shipped project with 3 juniors" />
-                    <MiniInfo label="Output" value="Portfolio page + GitHub proof" />
+                    <MiniInfo label="Stack" value="Next.js • Supabase • Code review" />
+                    <MiniInfo label="Goal" value="Ship one real project with 3 junior developers" />
+                    <MiniInfo label="Outcome" value="A stronger CV, portfolio story, and teamwork signal" />
                   </div>
                 </div>
 
-                <button className="mt-4 flex h-15 w-full items-center justify-center rounded-[1rem] bg-white text-lg font-medium text-[#7650ff]">
-                  Join now
-                </button>
+                <div className="mt-4 flex h-15 w-full items-center justify-center rounded-[1rem] bg-white text-lg font-medium text-[#7650ff]">
+                  Shared team sprint preview
+                </div>
               </div>
             </div>
 
@@ -184,9 +240,9 @@ export default function HomePage() {
                 <Play className="size-4 fill-current" />
               </div>
               <div className="flex gap-3 text-right">
-                <StatBubble value="3-5" label="members" />
-                <StatBubble value="1" label="project" />
-                <StatBubble value="CV" label="proof" />
+                <StatBubble value="3-4" label="teammates" />
+                <StatBubble value="1" label="shared repo" />
+                <StatBubble value="PR" label="workflow" />
               </div>
             </div>
           </div>
@@ -199,37 +255,37 @@ export default function HomePage() {
                 <CardHeader>
                   <div className="flex items-center gap-3">
                     <div className="flex size-12 items-center justify-center rounded-full bg-white/15 text-sm font-semibold">
-                      EG
+                      CP
                     </div>
                     <div>
-                      <CardTitle className="text-xl">Emmanuel Guillo</CardTitle>
+                      <CardTitle className="text-xl">CodeParty teams</CardTitle>
                       <CardDescription className="text-white/80">
-                        Head of E-business
+                        Junior developers building together
                       </CardDescription>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="text-2xl leading-10 font-medium text-white">
-                  “Since we started using Blabla, our ads generate 30% more conversions simply because every comment now gets an instant reply.”
+                  “The goal is simple: stop building alone, join a serious team, and leave with real GitHub work you can show.”
                 </CardContent>
               </Card>
 
-              <HighlightStat value="11%" label="Revenue growth" sublabel="in the first month" />
-              <HighlightStat value="19%" label="More followers" sublabel="after one month" />
-              <HighlightStat value="823" label="Negative comments" sublabel="deleted in one month" />
+              <HighlightStat value="4" label="Developers max" sublabel="per focused team" />
+              <HighlightStat value="1" label="Shared project" sublabel="to ship together" />
+              <HighlightStat value="100%" label="Real workflow" sublabel="with commits, PRs, and feedback" />
             </div>
 
             <div className="mt-6 flex flex-wrap items-center gap-4 text-white/95">
-              <span className="text-[18px]">Used by top</span>
+              <span className="text-[18px]">Built for</span>
               <span className="rounded-full bg-[#ffdf94] px-4 py-1 text-[18px] text-[#8a4d00]">
-                creators
+                junior developers
               </span>
-              <span className="text-[18px]">daily</span>
+              <span className="text-[18px]">who want stronger teamwork proof</span>
             </div>
           </div>
         </section>
 
-        <section className="bg-white px-6 py-14 md:px-8 lg:px-12">
+        <section id="how-it-works" className="bg-white px-6 py-14 md:px-8 lg:px-12">
           <div className="grid gap-10 lg:grid-cols-3">
             <FeatureHeading
               title={
@@ -264,19 +320,59 @@ export default function HomePage() {
           <div className="mt-10 grid gap-6 lg:grid-cols-3">
             <SoftFeatureCard
               icon={Sparkles}
-              title="Track your performance"
-              description="See how a comment, click, or message can turn into a concrete collaboration signal."
+              title="Build with intention"
+              description="Join a project with clear constraints, shared ownership, and a stack you genuinely want to use."
             />
             <SoftFeatureCard
               icon={Users}
-              title="Find the teammates that matter"
-              description="Filter by skills, availability, timezone and role to build stronger teams."
+              title="Find the right teammates"
+              description="Match by skills, availability, language, goal, and project type instead of guessing alone."
             />
             <SoftFeatureCard
               icon={MessageSquareMore}
-              title="Show real project proof"
-              description="Create a portfolio story around real GitHub work, not just isolated solo demos."
+              title="Show real portfolio signal"
+              description="Turn commits, pull requests, project roles, and summaries into a clearer story for your next opportunity."
             />
+          </div>
+        </section>
+
+        <section className="bg-white px-6 pb-14 md:px-8 lg:px-12">
+          <div className="rounded-[2rem] bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] p-8 text-white md:p-10">
+            <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+              <div>
+                <p className="text-sm uppercase tracking-[0.18em] text-white/75">
+                  Start your next build
+                </p>
+                <h2 className="mt-3 text-[3.4rem] leading-[0.95] font-semibold tracking-[-0.06em]">
+                  Join a team,
+                  <br />
+                  ship a project,
+                  <br />
+                  keep the proof.
+                </h2>
+                <p className="mt-5 max-w-[560px] text-[1.1rem] leading-8 text-white/82">
+                  CodeParty is designed to make collaboration visible from the first match to the final project summary.
+                </p>
+              </div>
+
+              <div className="grid gap-4">
+                <CtaSignal
+                  icon={Users}
+                  title="Matchmaking"
+                  detail="Small serious teams built from real availability and stack intent."
+                />
+                <CtaSignal
+                  icon={FolderGit2}
+                  title="Shared project"
+                  detail="One clear repo, one project context, and role visibility for everyone."
+                />
+                <CtaSignal
+                  icon={Clock3}
+                  title="Portfolio signal"
+                  detail="Your contribution stays easier to explain after the sprint ends."
+                />
+              </div>
+            </div>
           </div>
         </section>
       </div>
@@ -331,7 +427,7 @@ function FeatureHeading({
 }) {
   return (
     <h2 className="text-[3.7rem] leading-[0.95] font-semibold tracking-[-0.06em] text-[#1f1c38]">
-      <span className={accent ? "text-[#7650ff]" : "text-[#7650ff]"}>{title}</span>
+      <span className={accent ? "text-[#7650ff]" : "text-[#1f1c38]"}>{title}</span>
     </h2>
   );
 }
@@ -355,5 +451,29 @@ function SoftFeatureCard({
         <p className="mt-4 text-[18px] leading-8 text-[#6b6784]">{description}</p>
       </CardContent>
     </Card>
+  );
+}
+
+function CtaSignal({
+  icon: Icon,
+  title,
+  detail,
+}: {
+  icon: LucideIcon;
+  title: string;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-[1.5rem] border border-white/14 bg-white/8 p-5">
+      <div className="flex items-start gap-3">
+        <div className="flex size-11 items-center justify-center rounded-2xl bg-white/14 text-white">
+          <Icon className="size-5" />
+        </div>
+        <div>
+          <p className="text-xl font-semibold">{title}</p>
+          <p className="mt-2 text-sm leading-7 text-white/82">{detail}</p>
+        </div>
+      </div>
+    </div>
   );
 }

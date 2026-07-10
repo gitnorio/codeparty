@@ -95,7 +95,7 @@ export default function DevLoginPage() {
       return;
     }
 
-    router.push("/dashboard");
+    router.replace("/");
   }
 
   return (
@@ -117,7 +117,7 @@ export default function DevLoginPage() {
             Developer Login
           </h1>
           <p className="max-w-xl mx-auto text-sm md:text-base text-slate-400">
-            Choose a test profile below to instantly verify the redirect flow: onboarding or dashboard.
+            Choose a test profile below to verify the real redirect flow through the app entry point.
           </p>
         </div>
 

@@ -50,6 +50,19 @@
 
 body {
   font-family: var(--font-sans);
+  background:
+    radial-gradient(circle at top, rgba(118, 80, 255, 0.08), transparent 28%),
+    #fbfaff;
+  color: #1f1c38;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+::selection {
+  background: rgba(118, 80, 255, 0.18);
+  color: #1f1c38;
 }
 
 :root {
@@ -153,4 +166,3 @@ body {
     box-shadow: 0 0 15px rgba(251, 146, 60, 0.15);
   }
 }
-

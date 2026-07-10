@@ -105,8 +105,14 @@ Créer un fichier `.env.local` :
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-GITHUB_CLIENT_ID=
-GITHUB_CLIENT_SECRET=
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_ADMIN_EMAILS=
+```
+
+Production GitHub OAuth callback should point to:
+
+```txt
+{NEXT_PUBLIC_SITE_URL}/
 ```
 
 Ne jamais envoyer `.env.local` sur GitHub.

@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "CodeParty",
-  description: "Plateforme de projets collaboratifs pour développeurs juniors.",
+  description: "Collaborative project platform for junior developers.",
 };
 
 export default function RootLayout({
@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className="h-full font-sans antialiased">
+    <html lang="en" className="h-full font-sans antialiased">
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

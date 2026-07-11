@@ -1,26 +1,11 @@
 "use client";
 
-import {
-  Activity,
-  ArrowUpRight,
-  FolderGit2,
-  GitBranch,
-  Loader2,
-  Sparkles,
-  Users,
-} from "lucide-react";
+import { FolderGit2, GitBranch, Loader2, Sparkles, Users } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { FeedbackBanner } from "@/components/app/feedback";
-import { Progress } from "@/components/ui/progress";
 import { useWorkspaceProfile } from "@/components/app/workspace-shell";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useWorkspaceSnapshot } from "@/lib/workspace-data";
 
 export default function DashboardPage() {
@@ -28,10 +13,6 @@ export default function DashboardPage() {
   const { snapshot, isLoading, errorMessage } = useWorkspaceSnapshot(profile.id);
 
   const teamCount = snapshot?.teamMembers.length ?? 0;
-  const progressValue = getProjectProgress(snapshot?.currentProject?.status);
-  const contributionSummary =
-    snapshot?.currentProjectMember?.membership.contribution_summary?.trim() ||
-    "Your contribution summary becomes available once your team adds project role details.";
   const hasTeam = Boolean(snapshot?.currentTeam);
 
   return (
@@ -46,8 +27,8 @@ export default function DashboardPage() {
             <br />
             {profile.display_name}
           </CardTitle>
-          <CardDescription className="mt-2 text-lg leading-8 text-white/82">
-            Keep your matchmaking, team, project, and contribution proof aligned in one place.
+          <CardDescription className="mt-2 max-w-2xl text-base leading-7 text-white/82">
+            Keep your matchmaking status, team context, and shared project setup aligned in one place.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -92,21 +73,21 @@ export default function DashboardPage() {
         <Card className="border border-[#ece8f8] bg-white shadow-none">
           <CardHeader>
             <Badge variant="outline" className="w-fit rounded-full bg-[#f6f2ff] text-[#7650ff]">
-              Repo & progress
+              Project repo
             </Badge>
-            <CardTitle className="text-3xl tracking-[-0.05em] text-[#1f1c38]">
-              Project progress panel
+            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
+              Shared repository
             </CardTitle>
-            <CardDescription className="text-base leading-7 text-[#6a6683]">
-              See the shared repository, current status, and where the project is headed next.
+            <CardDescription className="text-sm leading-6 text-[#6a6683]">
+              Keep the project link visible without turning the dashboard into a GitHub clone.
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-5">
-            <div className="rounded-[1.5rem] bg-[#faf8ff] p-5">
+          <CardContent>
+            <div className="rounded-[1.25rem] bg-[#faf8ff] p-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-sm uppercase tracking-[0.18em] text-[#8f84bc]">GitHub repo</p>
-                  <p className="mt-1 text-xl font-medium text-[#1f1c38]">
+                  <p className="mt-1 text-lg font-medium text-[#1f1c38]">
                     {snapshot?.currentProject?.github_repo_url
                       ? getRepoLabel(snapshot.currentProject.github_repo_url)
                       : "Not linked yet"}
@@ -116,7 +97,8 @@ export default function DashboardPage() {
                   {snapshot?.currentProject?.github_repo_url ? "Linked" : "Not linked"}
                 </div>
               </div>
-              <div className="mt-4 flex items-center gap-3 text-sm text-[#6a6683]">
+
+              <div className="mt-3 flex items-center gap-3 text-sm text-[#6a6683]">
                 <GitBranch className="size-4 text-[#7650ff]" />
                 {snapshot?.currentProject?.github_repo_url ? (
                   <a
@@ -127,31 +109,12 @@ export default function DashboardPage() {
                   >
                     Open repository
                   </a>
+                ) : hasTeam ? (
+                  "The repository will appear once your team creates and links the project setup."
                 ) : (
-                  hasTeam
-                    ? "The repository will appear once your team creates and links the project setup."
-                    : "Add the shared GitHub repository once your team creates it."
+                  "Add the shared GitHub repository once your team creates it."
                 )}
               </div>
-            </div>
-
-            <div className="rounded-[1.5rem] bg-[#faf8ff] p-5">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm uppercase tracking-[0.18em] text-[#8f84bc]">Project progression</p>
-                  <p className="mt-1 text-xl font-medium text-[#1f1c38]">
-                    {snapshot?.currentProject
-                      ? formatLabel(snapshot.currentProject.status)
-                      : "Kickoff pending"}
-                  </p>
-                </div>
-                <span className="text-sm font-medium text-[#7650ff]">{progressValue}%</span>
-              </div>
-              <Progress value={progressValue} className="mt-4 h-3 bg-[#ece8f8]" />
-              <p className="mt-3 text-sm leading-7 text-[#6a6683]">
-                {snapshot?.currentProject?.description ||
-                  "Once a team is active, this block will reflect the live project scope and milestone status."}
-              </p>
             </div>
           </CardContent>
         </Card>
@@ -159,32 +122,38 @@ export default function DashboardPage() {
         <Card className="border border-[#ece8f8] bg-white shadow-none">
           <CardHeader>
             <Badge variant="outline" className="w-fit rounded-full bg-[#f6f2ff] text-[#7650ff]">
-              Contribution snapshot
+              Current focus
             </Badge>
-            <CardTitle className="text-3xl tracking-[-0.05em] text-[#1f1c38]">
-              Your contributions
+            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
+              What matters now
             </CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-4">
-            <ContributionRow
-              icon={Activity}
-              title="Project role"
-              value={snapshot?.currentProjectMember?.membership.project_role
-                ? formatLabel(snapshot.currentProjectMember.membership.project_role)
-                : "Not assigned"}
-              detail="This reflects your current role inside the active project."
+          <CardContent className="grid gap-3">
+            <CompactRow
+              title="Project status"
+              value={
+                snapshot?.currentProject
+                  ? formatLabel(snapshot.currentProject.status)
+                  : "Waiting for project"
+              }
+              detail={
+                snapshot?.currentProject?.description ||
+                "The project scope appears here once your team saves the setup."
+              }
             />
-            <ContributionRow
-              icon={GitBranch}
-              title="Stack focus"
+            <CompactRow
+              title="Your role"
+              value={
+                snapshot?.currentProjectMember?.membership.project_role
+                  ? formatLabel(snapshot.currentProjectMember.membership.project_role)
+                  : "Not assigned"
+              }
+              detail="Your team can define or refine roles on the project page."
+            />
+            <CompactRow
+              title="Core stack"
               value={snapshot?.currentProject?.stack.slice(0, 3).join(" · ") || "Not defined"}
-              detail="These are the main technologies currently attached to the shared project."
-            />
-            <ContributionRow
-              icon={ArrowUpRight}
-              title="Contribution summary"
-              value={snapshot?.currentProjectMember ? "Available" : "Not yet"}
-              detail={contributionSummary}
+              detail="Keep this lightweight here; the full setup lives on the project page."
             />
           </CardContent>
         </Card>
@@ -208,7 +177,7 @@ function StatCard({
 }) {
   return (
     <Card className="border border-[#ece8f8] bg-white shadow-none">
-      <CardContent className="pt-6">
+      <CardContent className="pt-5">
         <div className="flex items-start gap-3">
           <div className="rounded-xl bg-[#ece4ff] p-2 text-[#7650ff]">
             <Icon className="size-4" />
@@ -217,9 +186,9 @@ function StatCard({
             <p className="text-sm uppercase tracking-[0.18em] text-[#8f84bc]">{title}</p>
             <div className="mt-1 flex items-center gap-2">
               {loading ? <Loader2 className="size-4 animate-spin text-[#7650ff]" /> : null}
-              <p className="text-2xl font-semibold tracking-[-0.04em] text-[#1f1c38]">{value}</p>
+              <p className="text-xl font-semibold tracking-[-0.04em] text-[#1f1c38]">{value}</p>
             </div>
-            <p className="mt-2 text-sm leading-7 text-[#6a6683]">{description}</p>
+            <p className="mt-2 text-sm leading-6 text-[#6a6683]">{description}</p>
           </div>
         </div>
       </CardContent>
@@ -227,29 +196,20 @@ function StatCard({
   );
 }
 
-function ContributionRow({
-  icon: Icon,
+function CompactRow({
   title,
   value,
   detail,
 }: {
-  icon: typeof Activity;
   title: string;
   value: string;
   detail: string;
 }) {
   return (
-    <div className="rounded-[1.4rem] bg-[#faf8ff] p-4">
-      <div className="flex items-start gap-3">
-        <div className="rounded-xl bg-[#ece4ff] p-2 text-[#7650ff]">
-          <Icon className="size-4" />
-        </div>
-        <div>
-          <p className="text-lg font-medium text-[#1f1c38]">{title}</p>
-          <p className="mt-1 text-sm font-medium text-[#7650ff]">{value}</p>
-          <p className="mt-1 text-sm leading-7 text-[#6a6683]">{detail}</p>
-        </div>
-      </div>
+    <div className="rounded-[1.15rem] bg-[#faf8ff] px-4 py-3">
+      <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">{title}</p>
+      <p className="mt-1 text-base font-medium text-[#1f1c38]">{value}</p>
+      <p className="mt-1 text-sm leading-6 text-[#6a6683]">{detail}</p>
     </div>
   );
 }
@@ -266,14 +226,6 @@ function getQueueStatusDescription(status?: string | null) {
   if (status === "waiting") return "Your profile is currently visible for team matching.";
   if (status === "matched") return "A team match has already been created for your profile.";
   return "You can rejoin matchmaking anytime from the Matchmaking screen.";
-}
-
-function getProjectProgress(status?: string | null) {
-  if (status === "planning") return 18;
-  if (status === "active") return 62;
-  if (status === "completed") return 100;
-  if (status === "cancelled") return 0;
-  return 12;
 }
 
 function getRepoLabel(repoUrl: string) {

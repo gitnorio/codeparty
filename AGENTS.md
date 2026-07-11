@@ -57,3 +57,5 @@ This file contains a growing ruleset that improves over time. **At session start
 11. [ARCH] Secure admin-only screens with a real email-based admin allowlist and hide those entries from non-admin users — user explicitly requested a true email-based admin guard.
 12. [PROCESS] When committing to an implementation block, always finish the full agreed scope before stopping — user explicitly asked that each step be completed all the way through.
 13. [PROCESS] Always maintain and follow a written MVP execution plan in a Markdown file as the source of truth once the user requests it — user explicitly asked for a plan file to be followed religiously.
+14. [UX] Never add GitHub-like contribution or progress panels, and always keep forms and cards compact rather than oversized — user explicitly said CodeParty should not try to replace GitHub and that the UI must feel tighter.
+15. [ARCH] Always keep the authenticated MVP navigation focused on `Dashboard`, `Matchmaking`, `Workspace`, and `Settings`, with `Public Profile` removed from primary navigation and `Team`/`Project` merged into one `Workspace` screen — user asked to execute the full cleanup audit.

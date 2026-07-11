@@ -323,11 +323,11 @@ export default function AdminMatchmakingPage() {
     <div className="grid gap-4">
       {!isAdmin ? (
         <Card className="border border-red-200 shadow-none">
-          <CardContent className="pt-6">
-            <h1 className="text-3xl font-semibold tracking-[-0.05em] text-[#1f1c38]">
+          <CardContent className="pt-5">
+            <h1 className="text-2xl font-semibold tracking-[-0.05em] text-[#1f1c38]">
               Access denied
             </h1>
-            <p className="mt-3 text-base leading-7 text-[#6a6683]">
+            <p className="mt-2 text-sm leading-6 text-[#6a6683]">
               This admin matchmaking screen is restricted to approved admin email addresses.
             </p>
           </CardContent>
@@ -342,11 +342,9 @@ export default function AdminMatchmakingPage() {
                 Admin Matchmaking
               </Badge>
               <CardTitle className="mt-4 text-5xl leading-[0.96] tracking-[-0.05em]">
-                Build teams manually,
-                <br />
-                supervise projects lightly.
+                Build teams manually, supervise lightly.
               </CardTitle>
-              <CardDescription className="mt-2 text-lg leading-8 text-white/82">
+              <CardDescription className="mt-2 max-w-2xl text-base leading-7 text-white/82">
                 Admins create teams from the queue, then teams create their own project setup in self-service.
               </CardDescription>
             </CardHeader>
@@ -355,20 +353,20 @@ export default function AdminMatchmakingPage() {
           <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
             <Card className="border border-[#ece8f8] shadow-none">
               <CardHeader>
-                <CardTitle className="text-3xl tracking-[-0.05em] text-[#1f1c38]">
+                <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
                   Waiting profiles
                 </CardTitle>
-                <CardDescription className="text-base leading-7 text-[#6a6683]">
+                <CardDescription className="text-sm leading-6 text-[#6a6683]">
                   Every user currently marked as `waiting` appears here for manual team creation.
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
-                <div className="flex items-center justify-between rounded-[1.5rem] bg-[#faf8ff] p-5">
+                <div className="flex items-center justify-between rounded-[1.2rem] bg-[#faf8ff] p-4">
                   <div>
-                    <p className="text-sm uppercase tracking-[0.18em] text-[#8f84bc]">
+                    <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">
                       Waiting users
                     </p>
-                    <p className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-[#1f1c38]">
+                    <p className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-[#1f1c38]">
                       {waitingCandidates.length}
                     </p>
                   </div>
@@ -409,7 +407,7 @@ export default function AdminMatchmakingPage() {
                         key={candidate.profile.id}
                         type="button"
                         onClick={() => toggleCandidate(candidate.profile.id)}
-                        className={`rounded-[1.6rem] border p-5 text-left transition ${
+                        className={`rounded-[1.2rem] border p-4 text-left transition ${
                           selected
                             ? "border-[#8d78ff] bg-[#f1ebff] shadow-[0_18px_42px_rgba(123,97,255,0.10)]"
                             : "border-[#ece8f8] bg-[#fcfbff] hover:bg-[#faf8ff]"
@@ -417,10 +415,10 @@ export default function AdminMatchmakingPage() {
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div>
-                            <p className="text-xl font-medium text-[#1f1c38]">
+                            <p className="text-lg font-medium text-[#1f1c38]">
                               {candidate.profile.display_name}
                             </p>
-                            <p className="mt-2 text-sm leading-7 text-[#6a6683]">
+                            <p className="mt-1 text-sm leading-6 text-[#6a6683]">
                               {candidate.profile.goal} · {candidate.profile.language} ·{" "}
                               {candidate.profile.availability_per_week}h / week
                             </p>
@@ -433,11 +431,11 @@ export default function AdminMatchmakingPage() {
                           </Badge>
                         </div>
 
-                        <div className="mt-4 flex flex-wrap gap-2">
+                        <div className="mt-3 flex flex-wrap gap-2">
                           {candidate.profile.skills.slice(0, 6).map((skill) => (
                             <span
                               key={skill}
-                              className="rounded-full bg-white px-3 py-1 text-sm text-[#5b45d9]"
+                              className="rounded-full bg-white px-2.5 py-1 text-xs text-[#5b45d9]"
                             >
                               {skill}
                             </span>
@@ -452,22 +450,22 @@ export default function AdminMatchmakingPage() {
 
             <Card className="border border-[#ece8f8] shadow-none">
               <CardHeader>
-                <CardTitle className="text-3xl tracking-[-0.05em] text-[#1f1c38]">
+                <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
                   Team builder
                 </CardTitle>
-                <CardDescription className="text-base leading-7 text-[#6a6683]">
+                <CardDescription className="text-sm leading-6 text-[#6a6683]">
                   Build a team from the waiting queue, pause candidates when needed, and leave project setup to the team itself.
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
-                <div className="rounded-[1.5rem] bg-[#faf8ff] p-5">
-                  <p className="text-sm uppercase tracking-[0.18em] text-[#8f84bc]">
+                <div className="rounded-[1.2rem] bg-[#faf8ff] p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">
                     Selected members
                   </p>
-                  <p className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-[#1f1c38]">
+                  <p className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-[#1f1c38]">
                     {selectedCandidates.length} / {maxTeamSize}
                   </p>
-                  <p className="mt-2 text-sm leading-7 text-[#6a6683]">
+                  <p className="mt-1 text-sm leading-6 text-[#6a6683]">
                     Recommended team size: {minTeamSize} to {maxTeamSize} members.
                   </p>
                 </div>
@@ -480,7 +478,7 @@ export default function AdminMatchmakingPage() {
                     value={teamName}
                     onChange={(event) => setTeamName(event.target.value)}
                     placeholder={suggestedTeamName || "CodeParty Squad"}
-                    className="h-14 rounded-[1.2rem] border-[#e8e2f7] bg-[#fcfbff] px-4 text-lg"
+                    className="h-11 rounded-[1rem] border-[#e8e2f7] bg-[#fcfbff] px-3.5"
                   />
                 </div>
 
@@ -489,9 +487,9 @@ export default function AdminMatchmakingPage() {
                     selectedCandidates.map((candidate) => (
                       <div
                         key={candidate.profile.id}
-                        className="rounded-[1.3rem] bg-[#faf8ff] p-4"
+                        className="rounded-[1.1rem] bg-[#faf8ff] p-3.5"
                       >
-                        <p className="text-lg font-medium text-[#1f1c38]">
+                        <p className="text-base font-medium text-[#1f1c38]">
                           {candidate.profile.display_name}
                         </p>
                         <p className="mt-1 text-sm text-[#6a6683]">
@@ -514,7 +512,7 @@ export default function AdminMatchmakingPage() {
                   type="button"
                   onClick={handleCreateTeam}
                   disabled={isCreating || !canCreateTeam}
-                  className="h-14 rounded-full bg-[linear-gradient(90deg,#7650ff_0%,#947cff_100%)] text-lg text-white hover:opacity-95"
+                  className="h-11 rounded-full bg-[linear-gradient(90deg,#7650ff_0%,#947cff_100%)] text-white hover:opacity-95"
                 >
                   {isCreating ? (
                     <>
@@ -534,7 +532,7 @@ export default function AdminMatchmakingPage() {
                   variant="outline"
                   onClick={() => void handleCancelSelectedQueue()}
                   disabled={selectedCandidates.length === 0 || actionKey === "cancel-selected"}
-                  className="h-14 rounded-full border-[#f1d4dc] bg-white text-[#a14b63] hover:bg-[#fff7f9]"
+                  className="h-11 rounded-full border-[#f1d4dc] bg-white text-[#a14b63] hover:bg-[#fff7f9]"
                 >
                   {actionKey === "cancel-selected" ? (
                     <>
@@ -566,14 +564,14 @@ export default function AdminMatchmakingPage() {
           </div>
 
           <Card className="border border-[#ece8f8] shadow-none">
-            <CardHeader>
-              <CardTitle className="text-3xl tracking-[-0.05em] text-[#1f1c38]">
-                Cancelled queue
-              </CardTitle>
-              <CardDescription className="text-base leading-7 text-[#6a6683]">
-                Reopen any paused profile and send it back into the active waiting queue.
-              </CardDescription>
-            </CardHeader>
+              <CardHeader>
+                <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
+                  Cancelled queue
+                </CardTitle>
+                <CardDescription className="text-sm leading-6 text-[#6a6683]">
+                  Reopen any paused profile and send it back into the active waiting queue.
+                </CardDescription>
+              </CardHeader>
             <CardContent className="grid gap-4 lg:grid-cols-2">
               {isLoading ? (
                 <div className="flex min-h-[160px] items-center justify-center rounded-[1.5rem] bg-[#faf8ff] lg:col-span-2">
@@ -587,14 +585,14 @@ export default function AdminMatchmakingPage() {
                 cancelledCandidates.map((candidate) => (
                   <div
                     key={candidate.queue.id}
-                    className="rounded-[1.6rem] border border-[#ece8f8] bg-[#fcfbff] p-5"
+                    className="rounded-[1.2rem] border border-[#ece8f8] bg-[#fcfbff] p-4"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <p className="text-xl font-medium text-[#1f1c38]">
+                        <p className="text-lg font-medium text-[#1f1c38]">
                           {candidate.profile.display_name}
                         </p>
-                        <p className="mt-2 text-sm leading-7 text-[#6a6683]">
+                        <p className="mt-1 text-sm leading-6 text-[#6a6683]">
                           {candidate.profile.goal} · {candidate.profile.language} ·{" "}
                           {candidate.profile.availability_per_week}h / week
                         </p>
@@ -625,11 +623,11 @@ export default function AdminMatchmakingPage() {
                       </Button>
                     </div>
 
-                    <div className="mt-4 flex flex-wrap gap-2">
+                    <div className="mt-3 flex flex-wrap gap-2">
                       {candidate.profile.skills.slice(0, 6).map((skill) => (
                         <span
                           key={skill}
-                          className="rounded-full bg-white px-3 py-1 text-sm text-[#5b45d9]"
+                          className="rounded-full bg-white px-2.5 py-1 text-xs text-[#5b45d9]"
                         >
                           {skill}
                         </span>
@@ -642,11 +640,11 @@ export default function AdminMatchmakingPage() {
           </Card>
 
           <Card className="border border-[#ece8f8] shadow-none">
-            <CardHeader>
-              <CardTitle className="text-3xl tracking-[-0.05em] text-[#1f1c38]">
+              <CardHeader>
+              <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
                 Formed teams
               </CardTitle>
-              <CardDescription className="text-base leading-7 text-[#6a6683]">
+              <CardDescription className="text-sm leading-6 text-[#6a6683]">
                 Supervise every team already created through the manual admin workflow.
               </CardDescription>
             </CardHeader>
@@ -663,12 +661,12 @@ export default function AdminMatchmakingPage() {
                 formedTeams.map((item) => (
                   <div
                     key={item.team.id}
-                    className="rounded-[1.6rem] border border-[#ece8f8] bg-[#fcfbff] p-5"
+                    className="rounded-[1.2rem] border border-[#ece8f8] bg-[#fcfbff] p-4"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <p className="text-xl font-medium text-[#1f1c38]">{item.team.name}</p>
-                        <p className="mt-2 text-sm text-[#6a6683]">
+                        <p className="text-lg font-medium text-[#1f1c38]">{item.team.name}</p>
+                        <p className="mt-1 text-sm text-[#6a6683]">
                           Status: {formatProjectLabel(item.team.status)}
                         </p>
                       </div>
@@ -677,24 +675,24 @@ export default function AdminMatchmakingPage() {
                       </Badge>
                     </div>
 
-                    <div className="mt-4 flex flex-wrap gap-2">
+                    <div className="mt-3 flex flex-wrap gap-2">
                       {item.members.map((member) => (
                         <span
                           key={member.id}
-                          className="rounded-full bg-[#f3eeff] px-3 py-2 text-sm text-[#5b45d9]"
+                          className="rounded-full bg-[#f3eeff] px-2.5 py-1 text-xs text-[#5b45d9]"
                         >
                           {member.display_name}
                         </span>
                       ))}
                     </div>
 
-                    <div className="mt-5 rounded-[1.5rem] bg-[#faf8ff] p-4">
+                    <div className="mt-4 rounded-[1.2rem] bg-[#faf8ff] p-4">
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <p className="text-sm uppercase tracking-[0.18em] text-[#8f84bc]">
+                          <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">
                             Project supervision
                           </p>
-                          <p className="mt-1 text-lg font-medium text-[#1f1c38]">
+                          <p className="mt-1 text-base font-medium text-[#1f1c38]">
                             {item.project?.name ?? "Project not created yet"}
                           </p>
                         </div>
@@ -703,7 +701,7 @@ export default function AdminMatchmakingPage() {
                         </Badge>
                       </div>
 
-                      <p className="mt-3 text-sm leading-7 text-[#6a6683]">
+                      <p className="mt-2 text-sm leading-6 text-[#6a6683]">
                         {item.project
                           ? item.project.description || "No project description has been added yet."
                           : "The team will create its own project setup from the workspace once ready."}
@@ -721,11 +719,11 @@ export default function AdminMatchmakingPage() {
                       ) : null}
 
                       {item.project?.stack.length ? (
-                        <div className="mt-4 flex flex-wrap gap-2">
+                        <div className="mt-3 flex flex-wrap gap-2">
                           {item.project.stack.map((skill) => (
                             <span
                               key={skill}
-                              className="rounded-full bg-white px-3 py-1 text-sm text-[#5b45d9]"
+                              className="rounded-full bg-white px-2.5 py-1 text-xs text-[#5b45d9]"
                             >
                               {skill}
                             </span>
@@ -738,7 +736,7 @@ export default function AdminMatchmakingPage() {
                           {item.projectMembers.map((member) => (
                             <div
                               key={member.membership.id}
-                              className="rounded-[1.2rem] border border-[#ece8f2] bg-white p-4"
+                              className="rounded-[1rem] border border-[#ece8f2] bg-white p-3.5"
                             >
                               <p className="text-sm font-medium text-[#1f1c38]">
                                 {member.profile.display_name}
@@ -746,7 +744,7 @@ export default function AdminMatchmakingPage() {
                               <p className="mt-1 text-sm text-[#6a6683]">
                                 {formatProjectLabel(member.membership.project_role)}
                               </p>
-                              <p className="mt-2 text-sm leading-7 text-[#6a6683]">
+                              <p className="mt-2 text-sm leading-6 text-[#6a6683]">
                                 {member.membership.contribution_summary ||
                                   "No contribution summary written yet."}
                               </p>
@@ -763,7 +761,7 @@ export default function AdminMatchmakingPage() {
                           actionKey === `abandon-${item.team.id}` ||
                           item.team.status === "cancelled"
                         }
-                        className="mt-5 rounded-full border-[#f1d4dc] bg-white text-[#a14b63] hover:bg-[#fff7f9]"
+                        className="mt-4 rounded-full border-[#f1d4dc] bg-white text-[#a14b63] hover:bg-[#fff7f9]"
                       >
                         {actionKey === `abandon-${item.team.id}` ? (
                           <>
@@ -796,14 +794,14 @@ function CriteriaCard({
   detail: string;
 }) {
   return (
-    <div className="rounded-[1.3rem] bg-[#faf8ff] p-4">
+    <div className="rounded-[1.1rem] bg-[#faf8ff] p-3.5">
       <div className="flex items-start gap-3">
         <div className="rounded-xl bg-[#ece4ff] p-2 text-[#7650ff]">
           <Icon className="size-4" />
         </div>
         <div>
-          <p className="text-lg font-medium text-[#1f1c38]">{title}</p>
-          <p className="mt-1 text-sm leading-7 text-[#6a6683]">{detail}</p>
+          <p className="text-base font-medium text-[#1f1c38]">{title}</p>
+          <p className="mt-1 text-sm leading-6 text-[#6a6683]">{detail}</p>
         </div>
       </div>
     </div>

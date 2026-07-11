@@ -9,6 +9,7 @@ returns boolean
 language sql
 stable
 as $$
+  -- Keep this allowlist aligned with NEXT_PUBLIC_ADMIN_EMAILS / lib/admin-access.ts.
   select coalesce(
     lower(auth.jwt() ->> 'email') = any (
       array[

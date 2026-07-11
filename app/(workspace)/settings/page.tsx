@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
-import { Loader2, Settings, ShieldCheck } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { Loader2 } from "lucide-react";
 
 import {
   useWorkspaceProfile,
@@ -30,11 +30,6 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  const skillLabel = useMemo(
-    () => (formData.skills.length > 0 ? formData.skills.join(", ") : "No technologies selected yet"),
-    [formData.skills]
-  );
 
   async function handleSave() {
     setIsSaving(true);
@@ -83,140 +78,124 @@ export default function SettingsPage() {
           <CardTitle className="mt-4 text-5xl leading-[0.96] tracking-[-0.05em]">
             Control your profile and preferences.
           </CardTitle>
-          <CardDescription className="mt-2 text-lg leading-8 text-white/82">
+          <CardDescription className="mt-2 max-w-2xl text-base leading-7 text-white/82">
             Keep your public identity, matchmaking preferences, and team context accurate.
           </CardDescription>
         </CardHeader>
       </Card>
 
-      <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-        <Card className="border border-[#ece8f8] shadow-none">
-          <CardHeader>
-            <CardTitle className="text-3xl tracking-[-0.05em] text-[#1f1c38]">
-              Profile preferences
-            </CardTitle>
-            <CardDescription className="text-base leading-7 text-[#6a6683]">
-              Update the profile signals that matter for matchmaking and collaboration fit.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-5">
-            <Field label="Display name">
+      <Card className="border border-[#ece8f8] shadow-none">
+        <CardHeader>
+          <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
+            Profile preferences
+          </CardTitle>
+          <CardDescription className="text-sm leading-6 text-[#6a6683]">
+            Update the profile signals that matter for matchmaking and collaboration fit.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <Field label="Display name">
+            <Input
+              value={formData.display_name}
+              onChange={(event) =>
+                setFormData((current) => ({ ...current, display_name: event.target.value }))
+              }
+              className="h-10 rounded-[0.9rem] border-[#e8e2f7] bg-[#fcfbff] px-3.5"
+            />
+          </Field>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Timezone">
               <Input
-                value={formData.display_name}
+                value={formData.timezone}
                 onChange={(event) =>
-                  setFormData((current) => ({ ...current, display_name: event.target.value }))
+                  setFormData((current) => ({ ...current, timezone: event.target.value }))
                 }
-                className="h-12 rounded-[1rem] border-[#e8e2f7] bg-[#fcfbff] px-4"
+                className="h-10 rounded-[0.9rem] border-[#e8e2f7] bg-[#fcfbff] px-3.5"
               />
             </Field>
+            <Field label="Availability per week">
+              <Input
+                type="number"
+                min={1}
+                max={40}
+                value={formData.availability_per_week}
+                onChange={(event) =>
+                  setFormData((current) => ({
+                    ...current,
+                    availability_per_week: Number(event.target.value),
+                  }))
+                }
+                className="h-10 rounded-[0.9rem] border-[#e8e2f7] bg-[#fcfbff] px-3.5"
+              />
+            </Field>
+          </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Timezone">
-                <Input
-                  value={formData.timezone}
-                  onChange={(event) =>
-                    setFormData((current) => ({ ...current, timezone: event.target.value }))
-                  }
-                  className="h-12 rounded-[1rem] border-[#e8e2f7] bg-[#fcfbff] px-4"
-                />
-              </Field>
-              <Field label="Availability per week">
-                <Input
-                  type="number"
-                  min={1}
-                  max={40}
-                  value={formData.availability_per_week}
-                  onChange={(event) =>
-                    setFormData((current) => ({
-                      ...current,
-                      availability_per_week: Number(event.target.value),
-                    }))
-                  }
-                  className="h-12 rounded-[1rem] border-[#e8e2f7] bg-[#fcfbff] px-4"
-                />
-              </Field>
-            </div>
-
-            <ChoiceGroup
-              label="Level"
-              options={profileLevelOptions}
-              value={formData.level}
-              onSelect={(value) =>
-                setFormData((current) => ({
-                  ...current,
-                  level: value as AppProfile["level"],
-                }))
-              }
-            />
-            <ChoiceGroup
-              label="Goal"
-              options={profileGoalOptions}
-              value={formData.goal}
-              onSelect={(value) =>
-                setFormData((current) => ({
-                  ...current,
-                  goal: value as AppProfile["goal"],
-                }))
-              }
-            />
-            <ChoiceGroup
-              label="Language"
-              options={profileLanguageOptions}
-              value={formData.language}
-              onSelect={(value) =>
-                setFormData((current) => ({
-                  ...current,
-                  language: value as AppProfile["language"],
-                }))
-              }
-            />
-            <ChoiceGroup
-              label="Project type"
-              options={profileProjectTypeOptions}
-              value={formData.project_type}
-              onSelect={(value) =>
-                setFormData((current) => ({
-                  ...current,
-                  project_type: value as AppProfile["project_type"],
-                }))
-              }
-            />
-
-            {errorMessage ? <FeedbackBanner tone="error" message={errorMessage} /> : null}
-
-            {successMessage ? <FeedbackBanner tone="success" message={successMessage} /> : null}
-
-            <Button
-              type="button"
-              onClick={() => void handleSave()}
-              disabled={isSaving}
-              className="h-12 rounded-full bg-[#7650ff] text-white hover:bg-[#6744f0]"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save settings"
-              )}
-            </Button>
-          </CardContent>
-        </Card>
-
-        <div className="grid gap-4">
-          <SettingCard
-            icon={Settings}
-            title="Current stack"
-            description={skillLabel}
+          <ChoiceGroup
+            label="Level"
+            options={profileLevelOptions}
+            value={formData.level}
+            onSelect={(value) =>
+              setFormData((current) => ({
+                ...current,
+                level: value as AppProfile["level"],
+              }))
+            }
           />
-          <SettingCard
-            icon={ShieldCheck}
-            title="Account summary"
-            description={`Signed in as ${profile.display_name}. Your workspace access updates as your profile and team state change.`}
+          <ChoiceGroup
+            label="Goal"
+            options={profileGoalOptions}
+            value={formData.goal}
+            onSelect={(value) =>
+              setFormData((current) => ({
+                ...current,
+                goal: value as AppProfile["goal"],
+              }))
+            }
           />
-        </div>
-      </div>
+          <ChoiceGroup
+            label="Language"
+            options={profileLanguageOptions}
+            value={formData.language}
+            onSelect={(value) =>
+              setFormData((current) => ({
+                ...current,
+                language: value as AppProfile["language"],
+              }))
+            }
+          />
+          <ChoiceGroup
+            label="Project type"
+            options={profileProjectTypeOptions}
+            value={formData.project_type}
+            onSelect={(value) =>
+              setFormData((current) => ({
+                ...current,
+                project_type: value as AppProfile["project_type"],
+              }))
+            }
+          />
+
+          {errorMessage ? <FeedbackBanner tone="error" message={errorMessage} /> : null}
+          {successMessage ? <FeedbackBanner tone="success" message={successMessage} /> : null}
+
+          <Button
+            type="button"
+            onClick={() => void handleSave()}
+            disabled={isSaving}
+            className="h-11 rounded-full bg-[#7650ff] text-white hover:bg-[#6744f0]"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save settings"
+            )}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -260,8 +239,8 @@ function ChoiceGroup({
               onClick={() => onSelect(option)}
               className={
                 active
-                  ? "rounded-full border border-[#8d78ff] bg-[#f1ebff] px-4 py-2 text-sm font-medium text-[#5b45d9]"
-                  : "rounded-full border border-[#e8e2f7] bg-white px-4 py-2 text-sm font-medium text-[#5f587f]"
+                  ? "rounded-full border border-[#8d78ff] bg-[#f1ebff] px-3 py-1.5 text-xs font-medium text-[#5b45d9]"
+                  : "rounded-full border border-[#e8e2f7] bg-white px-3 py-1.5 text-xs font-medium text-[#5f587f]"
               }
             >
               {formatLabel(option)}
@@ -270,34 +249,6 @@ function ChoiceGroup({
         })}
       </div>
     </div>
-  );
-}
-
-function SettingCard({
-  icon: Icon,
-  title,
-  description,
-}: {
-  icon: typeof Settings;
-  title: string;
-  description: string;
-}) {
-  return (
-    <Card className="border border-[#ece8f8] shadow-none">
-      <CardContent className="pt-6">
-        <div className="rounded-[1.5rem] bg-[#faf8ff] p-5">
-          <div className="flex items-start gap-3">
-            <div className="rounded-xl bg-[#ece4ff] p-2 text-[#7650ff]">
-              <Icon className="size-4" />
-            </div>
-            <div>
-              <p className="text-2xl font-semibold tracking-[-0.04em] text-[#1f1c38]">{title}</p>
-              <p className="mt-2 text-sm leading-7 text-[#6a6683]">{description}</p>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 

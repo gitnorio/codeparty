@@ -5,14 +5,12 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   ShieldCheck,
-  FolderGit2,
   LayoutDashboard,
   Loader2,
   LogOut,
   Settings,
   Sparkles,
   Users,
-  UserSquare2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -37,9 +35,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/matchmaking", label: "Matchmaking", icon: Sparkles },
   { href: "/admin-matchmaking", label: "Admin Matchmaking", icon: ShieldCheck },
-  { href: "/team", label: "My Team", icon: Users },
-  { href: "/project", label: "My Project", icon: FolderGit2 },
-  { href: "/public-profile", label: "Public Profile", icon: UserSquare2 },
+  { href: "/workspace", label: "Workspace", icon: Users },
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
@@ -227,21 +223,21 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
               ))}
             </div>
 
-            <div className="mt-8 rounded-[1.5rem] bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] p-4 text-white">
+            <div className="mt-6 rounded-[1.35rem] bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] p-4 text-white">
               <Badge className="rounded-full bg-white/14 text-white hover:bg-white/14">
                 Live workspace
               </Badge>
-              <p className="mt-4 text-2xl font-semibold leading-tight tracking-[-0.04em]">
-                Turn shared project work into something you can actually show.
+              <p className="mt-3 text-xl font-semibold leading-tight tracking-[-0.04em]">
+                Keep your team and project setup in one clean flow.
               </p>
-              <p className="mt-3 text-sm leading-7 text-white/82">
-                Track your match, your team, your project, and the contribution story that grows with it.
+              <p className="mt-2 text-sm leading-6 text-white/82">
+                Match, form a team, link the repo, and keep the build context easy to follow.
               </p>
             </div>
           </aside>
 
           <div className="flex min-w-0 flex-col gap-4">
-            <div className="flex items-center justify-between rounded-[1.6rem] border border-[#ece8f8] bg-[#fcfbff] px-5 py-4">
+            <div className="flex items-center justify-between rounded-[1.4rem] border border-[#ece8f8] bg-[#fcfbff] px-4 py-3.5">
               <div>
                 <p className="text-sm uppercase tracking-[0.18em] text-[#8f84bc]">Workspace</p>
                 <p className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-[#1f1c38]">
@@ -250,7 +246,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="hidden items-center gap-3 rounded-full border border-[#e8e2f7] bg-white px-4 py-2 md:flex">
+                <div className="hidden items-center gap-3 rounded-full border border-[#e8e2f7] bg-white px-3.5 py-2 md:flex">
                   <div className="flex size-9 items-center justify-center rounded-full bg-[#e9e0ff] text-sm font-semibold text-[#7650ff]">
                     {profile.display_name.slice(0, 2).toUpperCase()}
                   </div>

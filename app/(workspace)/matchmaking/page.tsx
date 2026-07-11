@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { Loader2, RefreshCcw, Sparkles, Users } from "lucide-react";
+import { ArrowRight, Loader2, RefreshCcw, Sparkles, Users } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -77,9 +78,9 @@ export default function MatchmakingPage() {
             Matchmaking
           </Badge>
           <CardTitle className="mt-4 text-5xl leading-[0.96] tracking-[-0.05em]">
-            Let’s find your first serious team.
+            Match into the right team, then move fast.
           </CardTitle>
-          <CardDescription className="mt-2 text-lg leading-8 text-white/82">
+          <CardDescription className="mt-2 max-w-2xl text-base leading-7 text-white/82">
             Your profile currently highlights {formatLabel(profile.goal)}, {formatLabel(profile.language)}, and {profile.availability_per_week} hours per week.
           </CardDescription>
         </CardHeader>
@@ -92,18 +93,18 @@ export default function MatchmakingPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="border border-[#ece8f8] shadow-none">
           <CardHeader>
-            <CardTitle className="text-3xl tracking-[-0.05em] text-[#1f1c38]">Queue status</CardTitle>
-            <CardDescription className="text-base leading-7 text-[#6a6683]">
+            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">Queue status</CardTitle>
+            <CardDescription className="text-sm leading-6 text-[#6a6683]">
               Join the queue, pause your availability, or confirm that your match is already in motion.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
-            <div className="rounded-[1.5rem] bg-[#faf8ff] p-5">
-              <p className="text-sm uppercase tracking-[0.18em] text-[#8f84bc]">Current status</p>
-              <p className="mt-2 text-2xl font-semibold text-[#1f1c38]">
+            <div className="rounded-[1.2rem] bg-[#faf8ff] p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">Current status</p>
+              <p className="mt-1 text-xl font-semibold text-[#1f1c38]">
                 {isLoading ? "Loading..." : queueStatusLabel}
               </p>
-              <p className="mt-2 text-sm leading-7 text-[#6a6683]">
+              <p className="mt-1 text-sm leading-6 text-[#6a6683]">
                 {isLoading ? "Checking your queue entry..." : queueStatusDescription}
               </p>
             </div>
@@ -112,7 +113,7 @@ export default function MatchmakingPage() {
               <Button
                 onClick={() => void handleJoinMatchmaking()}
                 disabled={isLoading || isMutating || isWaiting || isMatched}
-                className="h-12 rounded-full bg-[#7650ff] text-white hover:bg-[#6744f0]"
+                className="h-11 rounded-full bg-[#7650ff] text-white hover:bg-[#6744f0]"
               >
                 {isMutating && !isWaiting ? (
                   <>
@@ -133,7 +134,7 @@ export default function MatchmakingPage() {
                 variant="outline"
                 onClick={() => void handleCancelQueue()}
                 disabled={isLoading || isMutating || !isWaiting}
-                className="h-12 rounded-full border-[#e8e2f7] bg-white text-[#1f1c38]"
+                className="h-11 rounded-full border-[#e8e2f7] bg-white text-[#1f1c38]"
               >
                 {isMutating && isWaiting ? (
                   <>
@@ -151,7 +152,7 @@ export default function MatchmakingPage() {
               variant="outline"
               onClick={() => void refreshSnapshot()}
               disabled={isLoading}
-              className="h-12 rounded-full border-[#e8e2f7] bg-white text-[#5b45d9]"
+              className="h-11 rounded-full border-[#e8e2f7] bg-white text-[#5b45d9]"
             >
               <RefreshCcw className="size-4" />
               Refresh status
@@ -161,8 +162,8 @@ export default function MatchmakingPage() {
 
         <Card className="border border-[#ece8f8] shadow-none">
           <CardHeader>
-            <CardTitle className="text-3xl tracking-[-0.05em] text-[#1f1c38]">Matching criteria</CardTitle>
-            <CardDescription className="text-base leading-7 text-[#6a6683]">
+            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">Profile signals</CardTitle>
+            <CardDescription className="text-sm leading-6 text-[#6a6683]">
               Matchmaking combines your preferences, project direction, availability, and stack focus.
             </CardDescription>
           </CardHeader>
@@ -182,56 +183,43 @@ export default function MatchmakingPage() {
 
       {isMatched ? (
         <Card className="border border-[#d8cff8] bg-[#f8f4ff] shadow-none">
-          <CardContent className="pt-6">
-            <p className="text-sm uppercase tracking-[0.18em] text-[#8f84bc]">
+          <CardContent className="pt-5">
+            <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">
               Match confirmed
             </p>
-            <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[#1f1c38]">
+            <p className="mt-1 text-xl font-semibold tracking-[-0.04em] text-[#1f1c38]">
               {hasAssignedTeam
                 ? `You are now in ${snapshot?.currentTeam?.name}.`
                 : "Your profile has been matched."}
             </p>
-            <p className="mt-2 text-sm leading-7 text-[#6a6683]">
+            <p className="mt-1 text-sm leading-6 text-[#6a6683]">
               {hasAssignedProject
                 ? `Your team is already linked to ${snapshot?.currentProject?.name}.`
                 : "Your team exists, and the project setup is the next step."}
             </p>
+            <Link
+              href="/workspace"
+              className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-[#5b45d9] underline-offset-4 hover:underline"
+            >
+              Open workspace
+              <ArrowRight className="size-4" />
+            </Link>
           </CardContent>
         </Card>
       ) : null}
 
-      <Card className="border border-[#ece8f8] shadow-none">
-        <CardHeader>
-          <CardTitle className="text-3xl tracking-[-0.05em] text-[#1f1c38]">Current outcome</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 lg:grid-cols-2">
-          <div className="rounded-[1.5rem] bg-[#faf8ff] p-5">
-            <p className="text-sm uppercase tracking-[0.18em] text-[#8f84bc]">Assigned team</p>
-            <p className="mt-2 text-2xl font-semibold text-[#1f1c38]">
-              {snapshot?.currentTeam?.name ?? "No team assigned yet"}
-            </p>
-            <p className="mt-2 text-sm leading-7 text-[#6a6683]">
-              {snapshot?.currentTeam
-                ? `${snapshot.teamMembers.length} members · ${formatLabel(snapshot.currentTeam.status)}`
-                : "Once a match is created, your team will appear here automatically."}
-            </p>
-          </div>
-
-          <div className="rounded-[1.5rem] bg-[#faf8ff] p-5">
-            <p className="text-sm uppercase tracking-[0.18em] text-[#8f84bc]">Assigned project</p>
-            <p className="mt-2 text-2xl font-semibold text-[#1f1c38]">
-              {snapshot?.currentProject?.name ?? "No project attached yet"}
-            </p>
-            <p className="mt-2 text-sm leading-7 text-[#6a6683]">
-              {snapshot?.currentProject
-                ? `${formatLabel(snapshot.currentProject.status)} · ${snapshot.currentProject.stack.join(", ")}`
-                : hasAssignedTeam
-                  ? "Your team exists, and the project will appear once your team creates it."
-                  : "Your project will appear after your team starts a shared build."}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      {!isMatched ? (
+        <Card className="border border-[#ece8f8] shadow-none">
+          <CardHeader>
+            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">What happens next</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-3">
+            <Criteria label="Queue visibility" value="Your profile becomes visible to matching." icon={Sparkles} />
+            <Criteria label="Team creation" value="An admin can place you into a serious team." icon={Users} />
+            <Criteria label="Workspace handoff" value="Your team then creates the project in the workspace." icon={Sparkles} />
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }
@@ -246,14 +234,14 @@ function Criteria({
   icon: typeof Sparkles;
 }) {
   return (
-    <div className="rounded-[1.3rem] bg-[#faf8ff] p-4">
+    <div className="rounded-[1.1rem] bg-[#faf8ff] p-3.5">
       <div className="flex items-start gap-3">
         <div className="rounded-xl bg-[#ece4ff] p-2 text-[#7650ff]">
           <Icon className="size-4" />
         </div>
         <div>
-          <p className="text-sm uppercase tracking-[0.18em] text-[#8f84bc]">{label}</p>
-          <p className="mt-1 text-lg font-medium text-[#1f1c38]">{value}</p>
+          <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">{label}</p>
+          <p className="mt-1 text-sm font-medium leading-6 text-[#1f1c38]">{value}</p>
         </div>
       </div>
     </div>

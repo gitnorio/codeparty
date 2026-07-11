@@ -241,7 +241,37 @@ Confirm the MVP is operational and safe to demo or release.
 - Block 3 — Complete user workspace behavior: **completed**
 - Block 4 — Finish auth and routing reliability: **completed**
 - Block 5 — UX polish for MVP readiness: **completed**
-- Block 6 — MVP validation and release readiness: **next**
+- Block 6 — MVP validation and release readiness: **paused for audit cleanup**
+
+## Audit cleanup pass
+
+The product audit introduced one final structural cleanup pass before Block 6.
+
+### Goal
+
+Reduce page duplication, tighten the MVP UX, and make the workspace feel more intentional.
+
+### Tasks
+
+1. Merge `My Team` and `My Project` into one compact `Workspace` screen
+2. Remove `Public Profile` from primary navigation
+3. Keep `Public Profile` out of the MVP flow and redirect it to a stronger screen
+4. Recenter `Matchmaking` on queue management and next-step clarity
+5. Compact oversized cards and forms across workspace pages
+6. Compact the admin matchmaking screen and reduce visual noise
+7. Keep admin allowlist logic explicitly aligned between app code and Supabase SQL
+
+### Done when
+
+- Sidebar navigation is simpler
+- No thin or duplicate workspace page remains in the main flow
+- Queue, workspace, and settings each have a clear role
+- The UI feels tighter and more production-ready
+- The SQL allowlist source-of-truth mismatch is documented in code
+
+### Current cleanup status
+
+- Audit cleanup pass: **in progress**
 
 ## Latest validation
 

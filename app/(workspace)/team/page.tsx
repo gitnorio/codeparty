@@ -1,44 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { Users } from "lucide-react";
-
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-
-export default function TeamPage() {
-  return (
-    <div className="grid gap-4">
-      <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-none">
-        <CardHeader>
-          <Badge className="w-fit rounded-full bg-white/14 text-white hover:bg-white/14">
-            My Team
-          </Badge>
-          <CardTitle className="mt-4 text-5xl leading-[0.96] tracking-[-0.05em]">
-            Your future team will live here.
-          </CardTitle>
-          <CardDescription className="mt-2 text-lg leading-8 text-white/82">
-            This route is ready for active members, roles, team status and collaboration rules.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-
-      <Card className="border border-[#ece8f8] shadow-none">
-        <CardContent className="pt-6">
-          <div className="rounded-[1.5rem] bg-[#faf8ff] p-5">
-            <div className="flex items-start gap-3">
-              <div className="rounded-xl bg-[#ece4ff] p-2 text-[#7650ff]">
-                <Users className="size-4" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold tracking-[-0.04em] text-[#1f1c38]">No active team yet</p>
-                <p className="mt-2 text-sm leading-7 text-[#6a6683]">
-                  Once matched, this page can show members, roles, collaboration charter and team activity.
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+export default function TeamRedirectPage() {
+  redirect("/workspace");
 }

@@ -4,27 +4,29 @@ import Link from "next/link";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Bell,
-  FolderGit2,
+  ShieldCheck,
   LayoutDashboard,
   Loader2,
   LogOut,
   Settings,
   Sparkles,
   Users,
-  UserSquare2,
   type LucideIcon,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { FeedbackBanner } from "@/components/app/feedback";
+import { isAdminEmail } from "@/lib/admin-access";
 import { cn } from "@/lib/utils";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { AppProfile } from "@/lib/profile";
 
 type WorkspaceContextValue = {
   profile: AppProfile;
+  isAdmin: boolean;
+  updateProfile: (profile: AppProfile) => void;
 };
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
@@ -32,9 +34,8 @@ const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/matchmaking", label: "Matchmaking", icon: Sparkles },
-  { href: "/team", label: "My Team", icon: Users },
-  { href: "/project", label: "My Project", icon: FolderGit2 },
-  { href: "/public-profile", label: "Public Profile", icon: UserSquare2 },
+  { href: "/admin-matchmaking", label: "Admin Matchmaking", icon: ShieldCheck },
+  { href: "/workspace", label: "Workspace", icon: Users },
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
@@ -43,15 +44,22 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const supabase = getSupabaseBrowserClient();
   const [profile, setProfile] = useState<AppProfile | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadSessionAndProfile() {
       const {
         data: { session },
         error: sessionError,
       } = await supabase.auth.getSession();
+
+      if (cancelled) {
+        return;
+      }
 
       if (sessionError) {
         setErrorMessage(sessionError.message);
@@ -60,9 +68,14 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
       }
 
       if (!session?.user) {
+        setProfile(null);
+        setIsLoading(false);
         router.replace("/");
         return;
       }
+
+      const userIsAdmin = isAdminEmail(session.user.email);
+      setIsAdmin(userIsAdmin);
 
       const { data, error } = await supabase
         .from("profiles")
@@ -77,7 +90,14 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
       }
 
       if (!data) {
+        setProfile(null);
+        setIsLoading(false);
         router.replace("/onboarding");
+        return;
+      }
+
+      if (pathname === "/admin-matchmaking" && !userIsAdmin) {
+        router.replace("/dashboard");
         return;
       }
 
@@ -85,15 +105,56 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
     }
 
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (cancelled) {
+        return;
+      }
+
+      if (!session?.user) {
+        setProfile(null);
+        setIsLoading(false);
+        router.replace("/");
+        return;
+      }
+
+      window.setTimeout(() => {
+        if (!cancelled) {
+          void loadSessionAndProfile();
+        }
+      }, 0);
+    });
+
     void loadSessionAndProfile();
-  }, [router, supabase]);
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, [pathname, router, supabase]);
 
   async function handleSignOut() {
     await supabase.auth.signOut();
     router.replace("/");
   }
 
-  const contextValue = useMemo(() => (profile ? { profile } : null), [profile]);
+  const visibleNavItems = useMemo(
+    () => navItems.filter((item) => item.href !== "/admin-matchmaking" || isAdmin),
+    [isAdmin]
+  );
+
+  const contextValue = useMemo(
+    () =>
+      profile
+        ? {
+            profile,
+            isAdmin,
+            updateProfile: (nextProfile: AppProfile) => setProfile(nextProfile),
+          }
+        : null,
+    [isAdmin, profile]
+  );
 
   if (isLoading) {
     return (
@@ -115,7 +176,9 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
           <Card className="w-full max-w-md rounded-[1.8rem] border border-red-200 shadow-none">
             <CardContent className="pt-6 text-center">
               <h1 className="text-2xl font-semibold text-red-600">Workspace error</h1>
-              <p className="mt-3 text-sm text-[#6a6683]">{errorMessage}</p>
+              <div className="mt-4 text-left">
+                <FeedbackBanner tone="error" message={errorMessage} />
+              </div>
               <Button
                 onClick={() => window.location.reload()}
                 className="mt-5 rounded-full bg-[#7650ff] text-white"
@@ -149,7 +212,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="mt-5 grid gap-1">
-              {navItems.map((item) => (
+              {visibleNavItems.map((item) => (
                 <SidebarItem
                   key={item.href}
                   href={item.href}
@@ -160,21 +223,21 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
               ))}
             </div>
 
-            <div className="mt-8 rounded-[1.5rem] bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] p-4 text-white">
+            <div className="mt-6 rounded-[1.35rem] bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] p-4 text-white">
               <Badge className="rounded-full bg-white/14 text-white hover:bg-white/14">
-                Connected
+                Live workspace
               </Badge>
-              <p className="mt-4 text-2xl font-semibold leading-tight tracking-[-0.04em]">
-                Turn your GitHub work into visible teamwork proof.
+              <p className="mt-3 text-xl font-semibold leading-tight tracking-[-0.04em]">
+                Keep your team and project setup in one clean flow.
               </p>
-              <p className="mt-3 text-sm leading-7 text-white/82">
-                Every screen in this shell is preparing the next step of the MVP.
+              <p className="mt-2 text-sm leading-6 text-white/82">
+                Match, form a team, link the repo, and keep the build context easy to follow.
               </p>
             </div>
           </aside>
 
           <div className="flex min-w-0 flex-col gap-4">
-            <div className="flex items-center justify-between rounded-[1.6rem] border border-[#ece8f8] bg-[#fcfbff] px-5 py-4">
+            <div className="flex items-center justify-between rounded-[1.4rem] border border-[#ece8f8] bg-[#fcfbff] px-4 py-3.5">
               <div>
                 <p className="text-sm uppercase tracking-[0.18em] text-[#8f84bc]">Workspace</p>
                 <p className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-[#1f1c38]">
@@ -183,12 +246,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
               </div>
 
               <div className="flex items-center gap-3">
-                <button className="relative flex size-11 items-center justify-center rounded-full border border-[#e8e2f7] bg-white text-[#5f587f]">
-                  <Bell className="size-4" />
-                  <span className="absolute right-3 top-3 size-2 rounded-full bg-[#7650ff]" />
-                </button>
-
-                <div className="hidden items-center gap-3 rounded-full border border-[#e8e2f7] bg-white px-4 py-2 md:flex">
+                <div className="hidden items-center gap-3 rounded-full border border-[#e8e2f7] bg-white px-3.5 py-2 md:flex">
                   <div className="flex size-9 items-center justify-center rounded-full bg-[#e9e0ff] text-sm font-semibold text-[#7650ff]">
                     {profile.display_name.slice(0, 2).toUpperCase()}
                   </div>
@@ -253,4 +311,28 @@ export function useWorkspaceProfile() {
   }
 
   return context.profile;
+}
+
+export function useWorkspaceAccess() {
+  const context = useContext(WorkspaceContext);
+
+  if (!context) {
+    throw new Error("useWorkspaceAccess must be used inside WorkspaceShell");
+  }
+
+  return {
+    isAdmin: context.isAdmin,
+  };
+}
+
+export function useWorkspaceProfileActions() {
+  const context = useContext(WorkspaceContext);
+
+  if (!context) {
+    throw new Error("useWorkspaceProfileActions must be used inside WorkspaceShell");
+  }
+
+  return {
+    updateProfile: context.updateProfile,
+  };
 }

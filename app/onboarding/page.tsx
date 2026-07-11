@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ensureWaitingMatchmakingEntry } from "@/lib/matchmaking";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type Level = "beginner" | "junior" | "intermediate";
@@ -230,7 +231,38 @@ export default function OnboardingPage() {
 
       const {
         data: { session },
+        error: sessionError,
       } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        if (mounted) {
+          setSubmitError(sessionError.message);
+        }
+        return;
+      }
+
+      if (!session?.user) {
+        router.replace("/");
+        return;
+      }
+
+      const { data: existingProfile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", session.user.id)
+        .maybeSingle<{ id: string }>();
+
+      if (profileError) {
+        if (mounted) {
+          setSubmitError(profileError.message);
+        }
+        return;
+      }
+
+      if (existingProfile) {
+        router.replace("/dashboard");
+        return;
+      }
 
       const sessionDisplayName = extractDisplayName(session?.user ?? null);
 
@@ -243,12 +275,21 @@ export default function OnboardingPage() {
       }));
     }
 
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session?.user) {
+        router.replace("/");
+      }
+    });
+
     void bootstrap();
 
     return () => {
       mounted = false;
+      subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [router, supabase]);
 
   const progressValue = useMemo(() => (step / totalSteps) * 100, [step]);
 
@@ -351,6 +392,17 @@ export default function OnboardingPage() {
     if (error) {
       setSubmitState("error");
       setSubmitError(error.message);
+      return;
+    }
+
+    const queueResult = await ensureWaitingMatchmakingEntry(
+      supabase,
+      session.user.id
+    );
+
+    if (queueResult.error) {
+      setSubmitState("error");
+      setSubmitError(queueResult.error.message);
       return;
     }
 
@@ -490,7 +542,7 @@ function WelcomeStep({
           Welcome to CodeParty
         </h1>
         <p className="mt-5 max-w-[430px] text-lg leading-8 text-[#6a6683]">
-          Let’s configure your profile so we can match you with the right team.
+          Let’s configure your profile so we can place you in the right team, project, and collaboration rhythm.
         </p>
       </div>
 
@@ -900,7 +952,7 @@ function SummaryStep({
       <StepHeader
         eyebrow="Step 8"
         title="Final summary"
-        description="Here’s the developer profile we will use to prepare your future matchmaking payload."
+        description="Here’s the profile we will use to match you with the right team and project."
       />
 
       <div className="mt-8 grid gap-3">

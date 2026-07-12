@@ -79,12 +79,38 @@ as $$
     );
 $$;
 
+create table if not exists public.team_messages (
+  id uuid primary key default gen_random_uuid(),
+  team_id uuid not null references public.teams(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  content text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists team_messages_team_id_idx
+on public.team_messages(team_id);
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'team_messages'
+  ) then
+    alter publication supabase_realtime add table public.team_messages;
+  end if;
+end
+$$;
+
 alter table public.profiles enable row level security;
 alter table public.matchmaking_queue enable row level security;
 alter table public.teams enable row level security;
 alter table public.team_members enable row level security;
 alter table public.projects enable row level security;
 alter table public.project_members enable row level security;
+alter table public.team_messages enable row level security;
 
 drop policy if exists "Users can cancel their own matchmaking entry" on public.matchmaking_queue;
 drop policy if exists "Users can delete their own matchmaking entry" on public.matchmaking_queue;
@@ -130,6 +156,9 @@ drop policy if exists "Users can view project members of their teams" on public.
 drop policy if exists "project_members_insert_admin_only" on public.project_members;
 drop policy if exists "project_members_select_self_team_or_admin" on public.project_members;
 drop policy if exists "project_members_update_admin_only" on public.project_members;
+
+drop policy if exists "team_messages_select_member_only" on public.team_messages;
+drop policy if exists "team_messages_insert_active_member_only" on public.team_messages;
 
 create policy "profiles_select"
 on public.profiles
@@ -380,6 +409,35 @@ with check (
       and tm.user_id = auth.uid()
       and tm.member_status = 'active'
       and t.status in ('forming', 'active')
+  )
+);
+
+create policy "team_messages_select_member_only"
+on public.team_messages
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.team_members tm
+    where tm.team_id = team_messages.team_id
+      and tm.user_id = auth.uid()
+      and tm.member_status in ('active', 'completed')
+  )
+);
+
+create policy "team_messages_insert_active_member_only"
+on public.team_messages
+for insert
+to authenticated
+with check (
+  user_id = auth.uid()
+  and exists (
+    select 1
+    from public.team_members tm
+    where tm.team_id = team_messages.team_id
+      and tm.user_id = auth.uid()
+      and tm.member_status = 'active'
   )
 );
 

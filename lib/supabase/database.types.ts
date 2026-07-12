@@ -48,6 +48,29 @@ export type Database = {
         };
         Relationships: [];
       };
+      team_messages: {
+        Row: {
+          id: string;
+          team_id: string;
+          user_id: string;
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          team_id: string;
+          user_id: string;
+          content: string;
+          created_at?: string;
+        };
+        Update: {
+          team_id?: string;
+          user_id?: string;
+          content?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       teams: {
         Row: {
           id: string;

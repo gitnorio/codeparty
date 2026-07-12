@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+
+import { RootClientShell } from "@/components/app/root-client-shell";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,7 +15,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full font-sans antialiased">
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <RootClientShell>{children}</RootClientShell>
+      </body>
     </html>
   );
 }

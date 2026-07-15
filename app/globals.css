@@ -140,46 +140,52 @@ html.theme-fade body * {
 }
 
 .landing-theme {
-  --background: #faf9ff;
-  --foreground: #211d38;
-  --card: #ffffff;
-  --card-foreground: #211d38;
+  --background: #f8f5ff;
+  --foreground: #241f3d;
+  --card: #fffaff;
+  --card-foreground: #241f3d;
   --primary: #7650ff;
   --primary-foreground: #ffffff;
-  --secondary: #eee9ff;
+  --secondary: #ebe4ff;
   --secondary-foreground: #4d389b;
-  --muted: #f4f2fa;
-  --muted-foreground: #6d6881;
-  --border: #e8e3f2;
+  --muted: #f0ebfa;
+  --muted-foreground: #6d6685;
+  --border: #ddd3f3;
   --ring: #7650ff;
-  --brand-soft: #eee9ff;
-  --brand-quiet: #f8f6ff;
+  --brand-soft: #e8dfff;
+  --brand-quiet: #f2edff;
   --brand-signal: #f6d96f;
 }
 
 .dark .landing-theme {
-  --background: #101016;
-  --foreground: #f5f3fb;
-  --card: #191920;
-  --card-foreground: #f5f3fb;
-  --primary: #8d7af2;
-  --primary-foreground: #111016;
-  --secondary: #2b263d;
-  --secondary-foreground: #d7ceff;
-  --muted: #22222b;
-  --muted-foreground: #aaa7b8;
-  --border: #2d2d37;
-  --ring: #8d7af2;
-  --brand-soft: #29243a;
-  --brand-quiet: #15151c;
+  --background: #171329;
+  --foreground: #f4efff;
+  --card: #211a38;
+  --card-foreground: #f4efff;
+  --primary: #7650ff;
+  --primary-foreground: #ffffff;
+  --secondary: #31264f;
+  --secondary-foreground: #ded5ff;
+  --muted: #29213f;
+  --muted-foreground: #b5add0;
+  --border: #40345f;
+  --ring: #7650ff;
+  --brand-soft: #322650;
+  --brand-quiet: #1c1730;
   --brand-signal: #e8c964;
 }
 
 .landing-grid {
   background-image:
-    linear-gradient(to right, color-mix(in srgb, var(--border) 38%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in srgb, var(--border) 38%, transparent) 1px, transparent 1px);
+    linear-gradient(to right, rgba(118, 80, 255, 0.11) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(118, 80, 255, 0.11) 1px, transparent 1px);
   background-size: 44px 44px;
+}
+
+.dark .landing-grid {
+  background-image:
+    linear-gradient(to right, rgba(150, 126, 255, 0.12) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(150, 126, 255, 0.12) 1px, transparent 1px);
 }
 
 .dark {

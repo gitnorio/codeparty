@@ -118,7 +118,7 @@ export default function HomePage() {
   const copy = language === "fr" ? frenchCopy : englishCopy;
 
   return (
-    <main className="landing-theme min-h-screen bg-background px-3 py-3 text-foreground sm:px-5 sm:py-5">
+    <main className="landing-theme landing-grid min-h-screen bg-background px-3 py-3 text-foreground sm:px-5 sm:py-5">
       <div className="mx-auto max-w-[1440px] overflow-hidden rounded-[1.75rem] border bg-card shadow-[0_32px_100px_rgba(87,63,180,0.10)] sm:rounded-[2.25rem]">
         <header className="flex min-h-20 items-center justify-between gap-4 px-4 sm:px-7 lg:px-10">
           <div className="flex min-w-0 items-center gap-2.5">

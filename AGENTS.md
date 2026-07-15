@@ -62,6 +62,7 @@ This file contains a growing ruleset that improves over time. **At session start
 16. [UX] Always make the main parent container responsive and content-driven in height — it should grow when a page has many elements and shrink when a page has few, instead of forcing oversized fixed-height shells.
 17. [DATA] Always treat the user avatar as a persisted profile field in Supabase and prefer the user’s Discord avatar URL when available, with a safe fallback when it is missing.
 18. [DATA] Always use the user’s GitHub avatar as the profile avatar source for this app when available — user corrected the earlier Discord wording.
+19. [ARCH] Always provide a real Portfolio page when the user asks for it, backed by public-shareable portfolio data rather than a placeholder redirect.
 16. [ARCH] Always add a reliable sync fallback for realtime chat updates instead of depending on Supabase Realtime alone — realtime proved unreliable across two real browser sessions and the chat must update without manual refresh.
 17. [ARCH] Always treat onboarding as profile configuration, not as next-matchmaking configuration — the user explicitly redefined onboarding’s product purpose.
 18. [DATA] Always treat `display_name` as the immutable account username in the UI and product flow — the user explicitly said it is now the username and must not be editable.
@@ -77,3 +78,23 @@ This file contains a growing ruleset that improves over time. **At session start
 28. [UX] Never show the `Username` section inside `Profile settings` — the user explicitly asked to remove it from Settings.
 29. [UX] Always provide a global dark mode toggle near `Logout`, using moon/sun icons and keeping the same violet accents while replacing white surfaces with dark ones — the user explicitly requested this theme behavior.
 30. [UX] Always use a product-grade dark palette with dark cards, muted borders, softened text, and a slightly subdued violet accent instead of leaving white cards on a black background — the user explicitly rejected the half-finished dark mode look.
+
+31. [UX] Always make the portfolio owner view visibly editable with a clear Edit button on the actual in-app Portfolio route, not only on the public share page — the user must immediately see how to edit their portfolio.
+
+32. [DATA] Never relax required profile fields globally when the user only asks for optional display in Portfolio — keep profile data rules strict and change only portfolio visibility.
+
+33. [UX] Always keep only one clear portfolio edit entry and one top-level copy-link action — duplicate edit/copy buttons in the portfolio UI confuse the user.
+
+34. [CODE] Never render `window`-derived absolute URLs during the initial SSR pass of a Client Component — compute them after mount or only inside click handlers to avoid hydration mismatches.
+35. [UX] Always support both English and French across the full app with a top-right language toggle, while never translating usernames or other user-generated identity fields.
+36. [STYLE] Always treat `party` as a masculine noun in French copy and translate built-in option labels like languages and project types according to the active app language.
+35. [DATA] Never use the mascot as a user avatar or avatar fallback — user identities must use their GitHub avatar when available, with initials fallback only if needed.
+36. [UX] Always make the `Get my resume` CTA on Portfolio feel premium and elevated, matching the high-end violet SaaS direction — the user explicitly asked for a premium treatment.
+37. [UX] Never show mascot PNGs inside Portfolio success/error notification feedback — Portfolio toast/banner messages must stay clean and minimal.
+38. [UX] Always keep the `© 2026 CodeParty. All rights reserved.` footer global, outside the main content boxes, and visually understated at the very bottom of every page.
+39. [DATA] Always keep `location` optional in the `profiles` model and never add it to onboarding — the user explicitly said onboarding must not collect it and the database must allow null.
+40. [UX] Always include the global dark mode toggle in onboarding and ensure the onboarding surfaces have matching dark styling — the user explicitly asked for dark mode there too.
+41. [UX] Always keep the onboarding parent box vertically centered in the viewport unless the user explicitly asks otherwise.
+42. [UX] Never show a mascot PNG inside the Dashboard hero, and keep the `Suggested next step` mascot larger and more prominent instead — the user explicitly refined that layout.
+43. [UX] Always give the Matchmaking profile-criteria card a meaningful action-oriented title and use a distinct icon for each criterion — the user explicitly asked for clearer wording and unique icons.
+44. [UX] Always include `Portfolio` in the portfolio-page top navigation before `Settings`, and show it as the selected nav item on portfolio routes.

@@ -9,7 +9,7 @@ type TeamMemberRow = Database["public"]["Tables"]["team_members"]["Row"];
 
 export type TeamMessageWithProfile = {
   message: TeamMessageRow;
-  profile: Pick<AppProfile, "id" | "display_name">;
+  profile: Pick<AppProfile, "id" | "display_name" | "avatar_url">;
 };
 
 export async function getActiveTeamMembership(
@@ -81,7 +81,7 @@ export async function getRecentTeamMessages(
   const userIds = [...new Set(messageRows.map((message) => message.user_id))];
   const { data: profiles, error: profilesError } = await supabase
     .from("profiles")
-    .select("id, display_name")
+    .select("id, display_name, avatar_url")
     .in("id", userIds);
 
   if (profilesError) {

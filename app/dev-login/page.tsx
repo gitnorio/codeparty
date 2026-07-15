@@ -24,6 +24,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useLanguage } from "@/components/app/language-provider";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const testUsers = [
@@ -86,6 +87,7 @@ const testUsers = [
 export default function DevLoginPage() {
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
+  const { language } = useLanguage();
   const [loadingUser, setLoadingUser] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -120,13 +122,15 @@ export default function DevLoginPage() {
         <div className="text-center space-y-4">
           <div className="mx-auto w-fit flex items-center gap-2 px-3 py-1.5 rounded-full border border-orange-500/30 bg-orange-500/5 text-orange-400 text-xs font-semibold tracking-wider uppercase animate-pulse">
             <Terminal className="size-3.5" />
-            Test environment (Sandbox)
+            {language === "fr" ? "Environnement de test (sandbox)" : "Test environment (Sandbox)"}
           </div>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-orange-400 bg-clip-text text-transparent font-sans">
-            Developer Login
+            {language === "fr" ? "Connexion développeur" : "Developer Login"}
           </h1>
           <p className="max-w-xl mx-auto text-sm md:text-base text-slate-400">
-            Choose a test profile below to verify the real redirect flow through the app entry point.
+            {language === "fr"
+              ? "Choisissez un profil de test ci-dessous pour vérifier le vrai flux de redirection à travers le point d’entrée de l’application."
+              : "Choose a test profile below to verify the real redirect flow through the app entry point."}
           </p>
         </div>
 
@@ -155,7 +159,7 @@ export default function DevLoginPage() {
                           {user.label}
                         </CardTitle>
                         <CardDescription className="text-xs text-slate-400 mt-0.5">
-                          {user.role}
+                          {translateDevRole(user.role, language)}
                         </CardDescription>
                       </div>
                     </div>
@@ -184,7 +188,7 @@ export default function DevLoginPage() {
                       <Loader2 className="size-4 animate-spin" />
                     ) : (
                       <>
-                        Open dashboard
+                        {language === "fr" ? "Ouvrir le dashboard" : "Open dashboard"}
                         <ArrowRight className="size-4 ml-1 group-hover:translate-x-1 transition-transform" />
                       </>
                     )}
@@ -205,12 +209,25 @@ export default function DevLoginPage() {
 
         {/* Footer info */}
         <div className="flex justify-between items-center text-xs text-slate-500 border-t border-white/5 pt-4">
-          <p>CodeParty Dev Environment</p>
+          <p>{language === "fr" ? "Environnement dev CodeParty" : "CodeParty Dev Environment"}</p>
           <Link href="/" className="hover:text-orange-400 transition-colors">
-            Back to home
+            {language === "fr" ? "Retour à l’accueil" : "Back to home"}
           </Link>
         </div>
       </div>
     </main>
   );
+}
+
+function translateDevRole(role: string, language: "en" | "fr") {
+  if (language === "en") {
+    return role;
+  }
+
+  if (role === "Frontend Developer") return "Développeur frontend";
+  if (role === "Backend Developer") return "Développeur backend";
+  if (role === "Fullstack Developer") return "Développeur fullstack";
+  if (role === "Part-time Coder") return "Développeuse ou développeur à temps partiel";
+  if (role === "Mobile Developer") return "Développeur mobile";
+  return role;
 }

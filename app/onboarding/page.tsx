@@ -4,23 +4,32 @@ import Image from "next/image";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, Clock3, Code2, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Clock3, Code2, Loader2, Moon, Sun } from "lucide-react";
 
+import { LanguageToggleButton } from "@/components/app/language-toggle-button";
+import { useLanguage } from "@/components/app/language-provider";
+import { Mascot } from "@/components/app/mascot";
+import { useTheme } from "@/components/app/theme-provider";
 import { Button } from "@/components/ui/button";
 import {
   deriveLanguageValue,
   formatLanguageValue,
   formatProjectTypeList,
+  getProfileLanguageOptions,
+  getProfileProjectTypeOptions,
   getDetectedTimezone,
   getTimezonePreview,
-  profileLanguageOptions,
-  profileProjectTypeOptions,
   profileTimezoneOptions,
   type ProfileProjectTypeValue,
   type SelectableLanguage,
 } from "@/lib/profile-options";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { maxSelectedSkills, technologyGroups } from "@/lib/technology-options";
+import {
+  formatTechnologyGroupLabel,
+  formatTechnologyLabel,
+  maxSelectedSkills,
+  technologyGroups,
+} from "@/lib/technology-options";
 
 type FormData = {
   display_name: string;
@@ -84,6 +93,8 @@ function extractAvatarUrl(user: {
 export default function OnboardingPage() {
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
+  const { theme, toggleTheme } = useTheme();
+  const { language } = useLanguage();
   const [step, setStep] = useState(1);
   const [submitState, setSubmitState] = useState<"idle" | "saving" | "done" | "error">("idle");
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -168,6 +179,8 @@ export default function OnboardingPage() {
   const progressValue = useMemo(() => (step / totalSteps) * 100, [step]);
   const selectedLanguageValue = deriveLanguageValue(formData.selected_languages);
   const timezonePreview = getTimezonePreview(formData.timezone);
+  const languageOptions = useMemo(() => getProfileLanguageOptions(language), [language]);
+  const projectTypeOptions = useMemo(() => getProfileProjectTypeOptions(language), [language]);
 
   function goNext() {
     setStep((current) => Math.min(totalSteps, current + 1));
@@ -188,7 +201,11 @@ export default function OnboardingPage() {
       const exists = current.skills.includes(skill);
 
       if (!exists && current.skills.length >= maxSelectedSkills) {
-        setSkillsLimitMessage("You can choose up to 8 technologies.");
+        setSkillsLimitMessage(
+          language === "fr"
+            ? "Vous pouvez choisir jusqu’à 8 technologies."
+            : "You can choose up to 8 technologies."
+        );
         return current;
       }
 
@@ -242,7 +259,11 @@ export default function OnboardingPage() {
 
     if (!session?.user) {
       setSubmitState("error");
-      setSubmitError("You must be logged in to complete onboarding.");
+      setSubmitError(
+        language === "fr"
+          ? "Vous devez être connecté pour terminer l’onboarding."
+          : "You must be logged in to complete onboarding."
+      );
       return;
     }
 
@@ -254,7 +275,31 @@ export default function OnboardingPage() {
       formData.project_types.length === 0
     ) {
       setSubmitState("error");
-      setSubmitError("Please complete every onboarding step before continuing.");
+      setSubmitError(
+        language === "fr"
+          ? "Veuillez compléter chaque étape avant de continuer."
+          : "Please complete every onboarding step before continuing."
+      );
+      return;
+    }
+
+    if (formData.display_name.trim().length > 39) {
+      setSubmitState("error");
+      setSubmitError(
+        language === "fr"
+          ? "Le nom d’utilisateur doit contenir 39 caractères ou moins."
+          : "Username must be 39 characters or fewer."
+      );
+      return;
+    }
+
+    if (formData.avatar_url.trim().length > 500) {
+      setSubmitState("error");
+      setSubmitError(
+        language === "fr"
+          ? "L’URL de l’avatar doit contenir 500 caractères ou moins."
+          : "Avatar URL must be 500 characters or fewer."
+      );
       return;
     }
 
@@ -283,28 +328,58 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-start justify-center bg-[#fbfaff] px-4 py-8 text-[#1f1c38] md:px-6 md:py-10">
+    <main className="flex min-h-screen items-center justify-center bg-[#fbfaff] px-4 py-8 text-[#1f1c38] dark:bg-[#0d0d12] dark:text-[#f2f2f5] md:px-6 md:py-10">
       <section className="w-full max-w-[620px]">
         <div className="mb-5 flex items-center justify-between">
           {step > 1 ? (
             <button
               type="button"
               onClick={goBack}
-              className="inline-flex items-center gap-2 rounded-full border border-[#e8e2f7] bg-white px-4 py-2 text-sm text-[#4f496e] transition hover:bg-[#faf8ff]"
+              className="inline-flex items-center gap-2 rounded-full border border-[#e8e2f7] bg-white px-4 py-2 text-sm text-[#4f496e] transition hover:bg-[#faf8ff] dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#d0cde0] dark:hover:bg-[#1a1a22]"
             >
               <ArrowLeft className="size-4" />
-              Back
+              {language === "fr" ? "Retour" : "Back"}
             </button>
           ) : (
             <div />
           )}
 
-          <div className="rounded-full border border-[#e8e2f7] bg-white px-4 py-2 text-sm text-[#6a6683]">
-            Step {step} of {totalSteps}
+          <div className="flex items-center gap-3">
+            <div className="rounded-full border border-[#e8e2f7] bg-white px-4 py-2 text-sm text-[#6a6683] dark:border-[#27272f] dark:bg-[#16161d] dark:text-muted-foreground">
+              {language === "fr" ? `Étape ${step} sur ${totalSteps}` : `Step ${step} of ${totalSteps}`}
+            </div>
+            <LanguageToggleButton />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={toggleTheme}
+              title={
+                theme === "dark"
+                  ? language === "fr"
+                    ? "Passer en mode clair"
+                    : "Switch to light mode"
+                  : language === "fr"
+                    ? "Passer en mode sombre"
+                    : "Switch to dark mode"
+              }
+              aria-label={
+                theme === "dark"
+                  ? language === "fr"
+                    ? "Passer en mode clair"
+                    : "Switch to light mode"
+                  : language === "fr"
+                    ? "Passer en mode sombre"
+                    : "Switch to dark mode"
+              }
+              className="size-10 rounded-full border-[#e8e2f7] bg-white text-[#5f4c9b] hover:bg-[#f7f4ff] dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5] dark:hover:bg-[#1a1a22]"
+            >
+              {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+            </Button>
           </div>
         </div>
 
-        <div className="mb-6 h-2 overflow-hidden rounded-full bg-[#ece8f8]">
+        <div className="mb-6 h-2 overflow-hidden rounded-full bg-[#ece8f8] dark:bg-[#23232c]">
           <motion.div
             className="h-full rounded-full bg-[linear-gradient(90deg,#7650ff_0%,#9a84ff_100%)]"
             animate={{ width: `${progressValue}%` }}
@@ -312,8 +387,8 @@ export default function OnboardingPage() {
           />
         </div>
 
-        <div className="relative overflow-hidden rounded-[2.1rem] border border-[#ece8f8] bg-white shadow-[0_30px_100px_rgba(113,87,255,0.08)]">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-[radial-gradient(circle_at_top,rgba(118,80,255,0.08),transparent_70%)]" />
+        <div className="relative overflow-hidden rounded-[2.1rem] border border-[#ece8f8] bg-white shadow-[0_30px_100px_rgba(113,87,255,0.08)] dark:border-[#27272f] dark:bg-[#16161d] dark:shadow-[0_30px_100px_rgba(0,0,0,0.35)]">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-[radial-gradient(circle_at_top,rgba(118,80,255,0.08),transparent_70%)] dark:bg-[radial-gradient(circle_at_top,rgba(109,92,232,0.18),transparent_70%)]" />
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
@@ -329,10 +404,12 @@ export default function OnboardingPage() {
                   displayName={formData.display_name}
                   avatarUrl={formData.avatar_url}
                   onStart={goNext}
+                  language={language}
                 />
               ) : null}
               {step === 2 ? (
                 <SkillsStep
+                  language={language}
                   selectedSkills={formData.skills}
                   limitMessage={skillsLimitMessage}
                   showMoreTechnologies={showMoreTechnologies}
@@ -343,7 +420,9 @@ export default function OnboardingPage() {
               ) : null}
               {step === 3 ? (
                 <LanguageStep
+                  language={language}
                   selectedLanguages={formData.selected_languages}
+                  languageOptions={languageOptions}
                   timezone={formData.timezone}
                   timezonePreview={timezonePreview}
                   onToggleLanguage={toggleLanguage}
@@ -353,6 +432,8 @@ export default function OnboardingPage() {
               ) : null}
               {step === 4 ? (
                 <ProjectTypeStep
+                  language={language}
+                  projectTypeOptions={projectTypeOptions}
                   selectedProjectTypes={formData.project_types}
                   onToggleProjectType={toggleProjectType}
                   onContinue={goNext}
@@ -360,6 +441,7 @@ export default function OnboardingPage() {
               ) : null}
               {step === 5 ? (
                 <SummaryStep
+                  language={language}
                   formData={formData}
                   submitError={submitError}
                   submitState={submitState}
@@ -380,23 +462,28 @@ function WelcomeStep({
   displayName,
   avatarUrl,
   onStart,
+  language,
 }: {
   displayName: string;
   avatarUrl: string;
   onStart: () => void;
+  language: "en" | "fr";
 }) {
   return (
     <div className="flex flex-col gap-10">
       <div>
-        <h1 className="mt-6 text-5xl font-semibold tracking-[-0.06em] text-[#1f1c38] sm:text-6xl">
-          Welcome to CodeParty
+        <Mascot pose="welcome" size="md" centered className="mb-3 sm:mx-0 sm:justify-start" />
+        <h1 className="mt-6 text-5xl font-semibold tracking-[-0.06em] text-[#1f1c38] dark:text-[#f2f2f5] sm:text-6xl">
+          {language === "fr" ? "Bienvenue sur CodeParty" : "Welcome to CodeParty"}
         </h1>
-        <p className="mt-5 max-w-[450px] text-lg leading-8 text-[#6a6683]">
-          Let’s set up your profile so your account is ready across the workspace. You can update everything later in settings.
+        <p className="mt-5 max-w-[450px] text-lg leading-8 text-[#6a6683] dark:text-muted-foreground">
+          {language === "fr"
+            ? "Configurons votre profil pour que votre compte soit prêt partout dans l’application. Vous pourrez tout modifier plus tard dans les paramètres."
+            : "Let’s set up your profile so your account is ready across the workspace. You can update everything later in settings."}
         </p>
       </div>
 
-      <div className="mt-10 rounded-[1.8rem] bg-[#f6f2ff] p-5">
+      <div className="mt-10 rounded-[1.8rem] bg-[#f6f2ff] p-5 dark:bg-[#1a1a22]">
         <div className="flex items-center gap-4">
           {avatarUrl ? (
             <Image
@@ -412,10 +499,12 @@ function WelcomeStep({
             </div>
           )}
           <div>
-            <p className="text-2xl font-medium text-[#1f1c38]">
-              {displayName || "Your GitHub profile"}
+            <p className="text-2xl font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
+              {displayName || (language === "fr" ? "Votre profil GitHub" : "Your GitHub profile")}
             </p>
-            <p className="mt-1 text-sm text-[#877faf]">Connected GitHub account</p>
+            <p className="mt-1 text-sm text-[#877faf] dark:text-muted-foreground">
+              {language === "fr" ? "Compte GitHub connecté" : "Connected GitHub account"}
+            </p>
           </div>
         </div>
       </div>
@@ -425,7 +514,7 @@ function WelcomeStep({
         onClick={onStart}
         className="mt-10 h-14 rounded-full bg-[linear-gradient(90deg,#7650ff_0%,#947cff_100%)] text-lg text-white hover:opacity-95"
       >
-        Start
+        {language === "fr" ? "Commencer" : "Start"}
         <ArrowRight className="size-4" />
       </Button>
     </div>
@@ -433,6 +522,7 @@ function WelcomeStep({
 }
 
 function SkillsStep({
+  language,
   selectedSkills,
   limitMessage,
   showMoreTechnologies,
@@ -440,6 +530,7 @@ function SkillsStep({
   onToggleMore,
   onContinue,
 }: {
+  language: "en" | "fr";
   selectedSkills: string[];
   limitMessage: string | null;
   showMoreTechnologies: boolean;
@@ -453,14 +544,19 @@ function SkillsStep({
   return (
     <div className="flex flex-col">
       <StepHeader
-        eyebrow="Step 2"
-        title="Your technical stack"
-        description="Choose up to 8 technologies to describe your profile. These choices help matchmaking a bit, and you can change them anytime."
+        eyebrow={language === "fr" ? "Étape 2" : "Step 2"}
+        title={language === "fr" ? "Ta stack technique" : "Your technical stack"}
+        description={
+          language === "fr"
+            ? "Choisissez jusqu’à 8 technologies pour décrire votre profil. Ces choix aident un peu le matchmaking et vous pouvez les modifier à tout moment."
+            : "Choose up to 8 technologies to describe your profile. These choices help matchmaking a bit, and you can change them anytime."
+        }
       />
 
       <div className="mt-8 space-y-6">
         {primaryGroups.map((group) => (
           <TechnologyGroup
+            language={language}
             key={group.label}
             label={group.label}
             selectedSkills={selectedSkills}
@@ -472,9 +568,15 @@ function SkillsStep({
         <button
           type="button"
           onClick={onToggleMore}
-          className="text-sm font-medium text-[#7650ff] transition hover:text-[#5b45d9]"
+          className="text-sm font-medium text-[#7650ff] transition hover:text-[#5b45d9] dark:text-[#a698ff] dark:hover:text-[#c0b4ff]"
         >
-          {showMoreTechnologies ? "− Show fewer technologies" : "+ See more technologies"}
+          {showMoreTechnologies
+            ? language === "fr"
+              ? "− Voir moins de technologies"
+              : "− Show fewer technologies"
+            : language === "fr"
+              ? "+ Voir plus de technologies"
+              : "+ See more technologies"}
         </button>
 
         <AnimatePresence>
@@ -487,6 +589,7 @@ function SkillsStep({
             >
               {secondaryGroups.map((group) => (
                 <TechnologyGroup
+                  language={language}
                   key={group.label}
                   label={group.label}
                   selectedSkills={selectedSkills}
@@ -500,8 +603,8 @@ function SkillsStep({
       </div>
 
       <div className="mt-6 flex items-center justify-between text-sm">
-        <p className="text-[#7d76a2]">
-          {selectedSkills.length} / {maxSelectedSkills} selected
+        <p className="text-[#7d76a2] dark:text-muted-foreground">
+          {selectedSkills.length} / {maxSelectedSkills} {language === "fr" ? "sélectionnées" : "selected"}
         </p>
         <AnimatePresence>
           {limitMessage ? (
@@ -509,7 +612,7 @@ function SkillsStep({
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 6 }}
-              className="text-[#8f84bc]"
+              className="text-[#8f84bc] dark:text-[#a698ff]"
             >
               {limitMessage}
             </motion.p>
@@ -517,24 +620,26 @@ function SkillsStep({
         </AnimatePresence>
       </div>
 
-      <div className="mt-4 rounded-[1.6rem] bg-[#f8f4ff] p-4">
-        <p className="text-sm uppercase tracking-[0.16em] text-[#9086b5]">
-          Selected technologies
+      <div className="mt-4 rounded-[1.6rem] bg-[#f8f4ff] p-4 dark:bg-[#1a1a22]">
+        <p className="text-sm uppercase tracking-[0.16em] text-[#9086b5] dark:text-muted-foreground">
+          {language === "fr" ? "Technologies sélectionnées" : "Selected technologies"}
         </p>
         <div className="mt-3 flex min-h-[56px] flex-wrap gap-2">
           {selectedSkills.length > 0 ? (
             selectedSkills.map((skill) => (
               <span
                 key={skill}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm font-medium text-[#5b45d9]"
+                className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm font-medium text-[#5b45d9] dark:bg-[#23232c] dark:text-[#b8acff]"
               >
                 <Check className="size-3" />
-                {skill.replaceAll(": Other", " · Other")}
+                {formatTechnologyLabel(skill, language)}
               </span>
             ))
           ) : (
-            <span className="text-sm text-[#9188b3]">
-              Select at least one technology to continue.
+            <span className="text-sm text-[#9188b3] dark:text-muted-foreground">
+              {language === "fr"
+                ? "Sélectionnez au moins une technologie pour continuer."
+                : "Select at least one technology to continue."}
             </span>
           )}
         </div>
@@ -547,7 +652,7 @@ function SkillsStep({
           disabled={selectedSkills.length === 0}
           className="h-14 w-full rounded-full bg-[linear-gradient(90deg,#7650ff_0%,#947cff_100%)] text-lg text-white hover:opacity-95"
         >
-          Continue
+          {language === "fr" ? "Continuer" : "Continue"}
           <ArrowRight className="size-4" />
         </Button>
       </div>
@@ -556,11 +661,13 @@ function SkillsStep({
 }
 
 function TechnologyGroup({
+  language,
   label,
   technologies,
   selectedSkills,
   onToggleSkill,
 }: {
+  language: "en" | "fr";
   label: string;
   technologies: readonly string[];
   selectedSkills: string[];
@@ -568,11 +675,13 @@ function TechnologyGroup({
 }) {
   return (
     <div>
-      <p className="mb-3 text-sm font-medium text-[#6a6683]">{label}</p>
+      <p className="mb-3 text-sm font-medium text-[#6a6683] dark:text-muted-foreground">
+        {formatTechnologyGroupLabel(label as (typeof technologyGroups)[number]["label"], language)}
+      </p>
       <div className="flex flex-wrap gap-3">
         {technologies.map((tech) => {
           const selected = selectedSkills.includes(tech);
-          const labelValue = tech.endsWith(": Other") ? "Other" : tech;
+          const labelValue = formatTechnologyLabel(tech, language);
 
           return (
             <motion.button
@@ -583,8 +692,8 @@ function TechnologyGroup({
               onClick={() => onToggleSkill(tech)}
               className={`rounded-full border px-4 py-3 text-sm font-medium transition ${
                 selected
-                  ? "border-[#8d78ff] bg-[#efe9ff] text-[#5b45d9] shadow-[0_14px_32px_rgba(123,97,255,0.10)]"
-                  : "border-[#e8e2f7] bg-white text-[#5f587f] hover:bg-[#faf8ff]"
+                  ? "border-[#8d78ff] bg-[#efe9ff] text-[#5b45d9] shadow-[0_14px_32px_rgba(123,97,255,0.10)] dark:border-[#6d5ce8] dark:bg-[#2a2340] dark:text-[#b8acff]"
+                  : "border-[#e8e2f7] bg-white text-[#5f587f] hover:bg-[#faf8ff] dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#d0cde0] dark:hover:bg-[#1a1a22]"
               }`}
             >
               {labelValue}
@@ -597,6 +706,8 @@ function TechnologyGroup({
 }
 
 function LanguageStep({
+  language,
+  languageOptions,
   selectedLanguages,
   timezone,
   timezonePreview,
@@ -604,6 +715,8 @@ function LanguageStep({
   onTimezoneChange,
   onContinue,
 }: {
+  language: "en" | "fr";
+  languageOptions: Array<{ label: string; value: SelectableLanguage }>;
   selectedLanguages: SelectableLanguage[];
   timezone: string;
   timezonePreview: string;
@@ -614,13 +727,17 @@ function LanguageStep({
   return (
     <div className="flex flex-col">
       <StepHeader
-        eyebrow="Step 3"
-        title="What languages do you speak?"
-        description="Choose the languages you can collaborate in, then confirm the timezone attached to your profile."
+        eyebrow={language === "fr" ? "Étape 3" : "Step 3"}
+        title={language === "fr" ? "Quelles langues parlez-vous ?" : "What languages do you speak?"}
+        description={
+          language === "fr"
+            ? "Choisissez les langues dans lesquelles vous pouvez collaborer, puis confirmez le fuseau horaire attaché à votre profil."
+            : "Choose the languages you can collaborate in, then confirm the timezone attached to your profile."
+        }
       />
 
       <div className="mt-8 flex flex-wrap gap-3">
-        {profileLanguageOptions.map((option) => {
+        {languageOptions.map((option) => {
           const active = selectedLanguages.includes(option.value);
           return (
             <button
@@ -629,8 +746,8 @@ function LanguageStep({
               onClick={() => onToggleLanguage(option.value)}
               className={
                 active
-                  ? "rounded-full border border-[#8d78ff] bg-[#f1ebff] px-4 py-3 text-sm font-medium text-[#5b45d9]"
-                  : "rounded-full border border-[#e8e2f7] bg-white px-4 py-3 text-sm font-medium text-[#5f587f]"
+                  ? "rounded-full border border-[#8d78ff] bg-[#f1ebff] px-4 py-3 text-sm font-medium text-[#5b45d9] dark:border-[#6d5ce8] dark:bg-[#2a2340] dark:text-[#b8acff]"
+                  : "rounded-full border border-[#e8e2f7] bg-white px-4 py-3 text-sm font-medium text-[#5f587f] dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#d0cde0]"
               }
             >
               {option.label}
@@ -640,11 +757,13 @@ function LanguageStep({
       </div>
 
       <div className="mt-8 grid gap-3">
-        <label className="text-sm font-medium text-[#4f496e]">Timezone</label>
+        <label className="text-sm font-medium text-[#4f496e] dark:text-[#d0cde0]">
+          {language === "fr" ? "Fuseau horaire" : "Timezone"}
+        </label>
         <select
           value={timezone}
           onChange={(event) => onTimezoneChange(event.target.value)}
-          className="h-14 w-full rounded-[1.2rem] border border-[#e8e2f7] bg-[#fcfbff] px-4 text-base text-[#1f1c38] outline-none transition focus:border-[#7b61ff]/45"
+          className="h-14 w-full rounded-[1.2rem] border border-[#e8e2f7] bg-[#fcfbff] px-4 text-base text-[#1f1c38] outline-none transition focus:border-[#7b61ff]/45 dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5]"
         >
           {profileTimezoneOptions.map((option) => (
             <option key={option.value} value={option.value}>
@@ -654,13 +773,13 @@ function LanguageStep({
         </select>
       </div>
 
-      <div className="mt-4 rounded-[1.4rem] bg-[#f8f4ff] p-4">
-        <div className="flex items-center gap-2 text-sm font-medium text-[#5b45d9]">
+      <div className="mt-4 rounded-[1.4rem] bg-[#f8f4ff] p-4 dark:bg-[#1a1a22]">
+        <div className="flex items-center gap-2 text-sm font-medium text-[#5b45d9] dark:text-[#b8acff]">
           <Clock3 className="size-4" />
-          Local time preview
+          {language === "fr" ? "Aperçu de l’heure locale" : "Local time preview"}
         </div>
-        <p className="mt-2 text-sm leading-6 text-[#6a6683]">
-          {timezonePreview} in {timezone}
+        <p className="mt-2 text-sm leading-6 text-[#6a6683] dark:text-muted-foreground">
+          {timezonePreview} {language === "fr" ? "dans" : "in"} {timezone}
         </p>
       </div>
 
@@ -671,7 +790,7 @@ function LanguageStep({
           disabled={selectedLanguages.length === 0 || !timezone}
           className="h-14 w-full rounded-full bg-[linear-gradient(90deg,#7650ff_0%,#947cff_100%)] text-lg text-white hover:opacity-95"
         >
-          Continue
+          {language === "fr" ? "Continuer" : "Continue"}
           <ArrowRight className="size-4" />
         </Button>
       </div>
@@ -680,10 +799,18 @@ function LanguageStep({
 }
 
 function ProjectTypeStep({
+  language,
+  projectTypeOptions,
   selectedProjectTypes,
   onToggleProjectType,
   onContinue,
 }: {
+  language: "en" | "fr";
+  projectTypeOptions: Array<{
+    label: string;
+    value: ProfileProjectTypeValue;
+    description: string;
+  }>;
   selectedProjectTypes: ProfileProjectTypeValue[];
   onToggleProjectType: (value: ProfileProjectTypeValue) => void;
   onContinue: () => void;
@@ -691,13 +818,17 @@ function ProjectTypeStep({
   return (
     <div className="flex flex-col">
       <StepHeader
-        eyebrow="Step 4"
-        title="What would you like to build?"
-        description="Select every project type that fits your profile. You can choose one or many."
+        eyebrow={language === "fr" ? "Étape 4" : "Step 4"}
+        title={language === "fr" ? "Que voulez-vous construire ?" : "What would you like to build?"}
+        description={
+          language === "fr"
+            ? "Sélectionnez tous les types de projet qui correspondent à votre profil. Vous pouvez en choisir un ou plusieurs."
+            : "Select every project type that fits your profile. You can choose one or many."
+        }
       />
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2">
-        {profileProjectTypeOptions.map((option) => (
+        {projectTypeOptions.map((option) => (
           <SelectableCard
             key={option.value}
             selected={selectedProjectTypes.includes(option.value)}
@@ -716,7 +847,7 @@ function ProjectTypeStep({
           disabled={selectedProjectTypes.length === 0}
           className="h-14 w-full rounded-full bg-[linear-gradient(90deg,#7650ff_0%,#947cff_100%)] text-lg text-white hover:opacity-95"
         >
-          Continue
+          {language === "fr" ? "Continuer" : "Continue"}
           <ArrowRight className="size-4" />
         </Button>
       </div>
@@ -725,6 +856,7 @@ function ProjectTypeStep({
 }
 
 function SummaryStep({
+  language,
   formData,
   submitError,
   submitState,
@@ -732,6 +864,7 @@ function SummaryStep({
   timezonePreview,
   onSubmit,
 }: {
+  language: "en" | "fr";
   formData: FormData;
   submitError: string | null;
   submitState: "idle" | "saving" | "done" | "error";
@@ -740,31 +873,38 @@ function SummaryStep({
   onSubmit: () => void | Promise<void>;
 }) {
   const summaryItems = [
-    { label: "Username", value: formData.display_name || "Not selected" },
+    { label: language === "fr" ? "Nom d’utilisateur" : "Username", value: formData.display_name || (language === "fr" ? "Non sélectionné" : "Not selected") },
     {
-      label: "Languages",
-      value: formatLanguageValue(selectedLanguageValue),
+      label: language === "fr" ? "Langues" : "Languages",
+      value: formatLanguageValue(selectedLanguageValue, language),
     },
-    { label: "Timezone", value: formData.timezone || "Not selected" },
-    { label: "Local time preview", value: timezonePreview },
+    { label: language === "fr" ? "Fuseau horaire" : "Timezone", value: formData.timezone || (language === "fr" ? "Non sélectionné" : "Not selected") },
+    { label: language === "fr" ? "Aperçu de l’heure locale" : "Local time preview", value: timezonePreview },
     {
-      label: "Technical stack",
+      label: language === "fr" ? "Stack technique" : "Technical stack",
       value:
-        formData.skills.map((skill) => skill.replaceAll(": Other", " · Other")).join(", ") ||
-        "Not selected",
+        formData.skills.map((skill) => formatTechnologyLabel(skill, language)).join(", ") ||
+        (language === "fr" ? "Non sélectionnée" : "Not selected"),
     },
     {
-      label: "Project types",
-      value: formatProjectTypeList(formData.project_types),
+      label: language === "fr" ? "Types de projet" : "Project types",
+      value: formatProjectTypeList(
+        formData.project_types,
+        language
+      ),
     },
   ];
 
   return (
     <div className="flex flex-col">
       <StepHeader
-        eyebrow="Step 5"
-        title="Your profile summary"
-        description="This is the profile setup that will be saved to your account. You can edit it later in settings."
+        eyebrow={language === "fr" ? "Étape 5" : "Step 5"}
+        title={language === "fr" ? "Résumé de votre profil" : "Your profile summary"}
+        description={
+          language === "fr"
+            ? "Voici la configuration du profil qui sera enregistrée sur votre compte. Vous pourrez la modifier plus tard dans les paramètres."
+            : "This is the profile setup that will be saved to your account. You can edit it later in settings."
+        }
       />
 
       <div className="mt-8 grid gap-3">
@@ -774,12 +914,12 @@ function SummaryStep({
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.045 }}
-            className="rounded-[1.45rem] border border-[#ece8f8] bg-[#fcfbff] px-5 py-4"
+            className="rounded-[1.45rem] border border-[#ece8f8] bg-[#fcfbff] px-5 py-4 dark:border-[#27272f] dark:bg-[#1a1a22]"
           >
-            <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">
+            <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc] dark:text-muted-foreground">
               {item.label}
             </p>
-            <p className="mt-2 text-lg font-medium text-[#1f1c38]">{item.value}</p>
+            <p className="mt-2 text-lg font-medium text-[#1f1c38] dark:text-[#f2f2f5]">{item.value}</p>
           </motion.div>
         ))}
       </div>
@@ -794,11 +934,11 @@ function SummaryStep({
           {submitState === "saving" ? (
             <>
               <Loader2 className="size-4 animate-spin" />
-              Saving profile...
+              {language === "fr" ? "Enregistrement du profil..." : "Saving profile..."}
             </>
           ) : (
             <>
-              Join a party!
+              {language === "fr" ? "Join a party!" : "Join a party!"}
               <ArrowRight className="size-4" />
             </>
           )}
@@ -810,7 +950,7 @@ function SummaryStep({
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 12 }}
-              className="mt-4 rounded-[1.2rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
+              className="mt-4 rounded-[1.2rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
             >
               {submitError}
             </motion.p>
@@ -821,9 +961,11 @@ function SummaryStep({
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 12 }}
-              className="mt-4 rounded-[1.2rem] border border-[#d8cff8] bg-[#f3eeff] px-4 py-3 text-sm text-[#5b45d9]"
+              className="mt-4 rounded-[1.2rem] border border-[#d8cff8] bg-[#f3eeff] px-4 py-3 text-sm text-[#5b45d9] dark:border-[#3b3454] dark:bg-[#221d33] dark:text-[#b8acff]"
             >
-              Profile saved successfully. Redirecting to matchmaking...
+              {language === "fr"
+                ? "Profil enregistré avec succès. Redirection vers le matchmaking..."
+                : "Profile saved successfully. Redirecting to matchmaking..."}
             </motion.p>
           ) : null}
         </AnimatePresence>
@@ -843,13 +985,13 @@ function StepHeader({
 }) {
   return (
     <div>
-      <div className="inline-flex rounded-full bg-[#f3eeff] px-4 py-2 text-sm uppercase tracking-[0.18em] text-[#7c67ec]">
+      <div className="inline-flex rounded-full bg-[#f3eeff] px-4 py-2 text-sm uppercase tracking-[0.18em] text-[#7c67ec] dark:bg-[#272138] dark:text-[#b8acff]">
         {eyebrow}
       </div>
-      <h2 className="mt-4 text-4xl font-semibold tracking-[-0.05em] text-[#1f1c38] sm:text-5xl">
+      <h2 className="mt-4 text-4xl font-semibold tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5] sm:text-5xl">
         {title}
       </h2>
-      <p className="mt-4 max-w-[460px] text-base leading-8 text-[#6a6683] sm:text-lg">
+      <p className="mt-4 max-w-[460px] text-base leading-8 text-[#6a6683] dark:text-muted-foreground sm:text-lg">
         {description}
       </p>
     </div>
@@ -877,23 +1019,23 @@ function SelectableCard({
       onClick={onClick}
       className={`w-full rounded-[1.55rem] border p-5 text-left transition ${
         selected
-          ? "border-[#8d78ff] bg-[#f1ebff] shadow-[0_18px_42px_rgba(123,97,255,0.10)]"
-          : "border-[#ece8f8] bg-[#fcfbff] hover:bg-[#faf8ff]"
+          ? "border-[#8d78ff] bg-[#f1ebff] shadow-[0_18px_42px_rgba(123,97,255,0.10)] dark:border-[#6d5ce8] dark:bg-[#2a2340]"
+          : "border-[#ece8f8] bg-[#fcfbff] hover:bg-[#faf8ff] dark:border-[#27272f] dark:bg-[#16161d] dark:hover:bg-[#1a1a22]"
       }`}
     >
       <div className="flex items-start gap-4">
         {icon ? (
           <div
             className={`rounded-xl p-2 ${
-              selected ? "bg-[#7650ff] text-white" : "bg-[#f0ecff] text-[#7650ff]"
+              selected ? "bg-[#7650ff] text-white dark:bg-[#6d5ce8]" : "bg-[#f0ecff] text-[#7650ff] dark:bg-[#272138] dark:text-[#a698ff]"
             }`}
           >
             {icon}
           </div>
         ) : null}
         <div className="flex-1">
-          <p className="text-xl font-medium text-[#1f1c38]">{title}</p>
-          <p className="mt-2 text-sm leading-7 text-[#6a6683]">{description}</p>
+          <p className="text-xl font-medium text-[#1f1c38] dark:text-[#f2f2f5]">{title}</p>
+          <p className="mt-2 text-sm leading-7 text-[#6a6683] dark:text-muted-foreground">{description}</p>
         </div>
       </div>
     </motion.button>

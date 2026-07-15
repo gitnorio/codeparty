@@ -6,6 +6,8 @@ import { useSearchParams } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Link2, Loader2, Search, Sparkles, Users } from "lucide-react";
 
 import { EmptyStatePanel, FeedbackBanner, LoadingPanel } from "@/components/app/feedback";
+import { useLanguage } from "@/components/app/language-provider";
+import { Mascot } from "@/components/app/mascot";
 import { ProfileAvatar } from "@/components/app/profile-avatar";
 import { useWorkspaceProfile } from "@/components/app/workspace-shell";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatLanguageValue } from "@/lib/profile-options";
+import { formatLanguageValue, formatTimezoneValue } from "@/lib/profile-options";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { formatProjectLabel } from "@/lib/team-projects";
 import { useWorkspaceSnapshot } from "@/lib/workspace-data";
@@ -22,6 +24,7 @@ export default function WorkspacePage() {
   const searchParams = useSearchParams();
   const supabase = getSupabaseBrowserClient();
   const profile = useWorkspaceProfile();
+  const { language } = useLanguage();
   const selectedPartyId = searchParams.get("party");
   const { snapshot, isLoading, errorMessage, refreshSnapshot } = useWorkspaceSnapshot(
     profile.id,
@@ -119,12 +122,20 @@ export default function WorkspacePage() {
 
   async function handleCreateProject() {
     if (!snapshot?.currentTeam) {
-      setSubmitError("You need an active team before creating a project.");
+      setSubmitError(
+        language === "fr"
+          ? "Vous avez besoin d’une équipe active avant de créer un projet."
+          : "You need an active team before creating a project."
+      );
       return;
     }
 
     if (!formData.githubRepoUrl.trim()) {
-      setSubmitError("Paste your public GitHub repository URL before creating the project.");
+      setSubmitError(
+        language === "fr"
+          ? "Collez l’URL publique du repository GitHub avant de créer le projet."
+          : "Paste your public GitHub repository URL before creating the project."
+      );
       return;
     }
 
@@ -138,7 +149,7 @@ export default function WorkspacePage() {
     } = await supabase.auth.getSession();
 
     if (sessionError || !session?.access_token) {
-      setSubmitError(sessionError?.message ?? "Missing authenticated session.");
+      setSubmitError(sessionError?.message ?? (language === "fr" ? "Session authentifiée manquante." : "Missing authenticated session."));
       setIsSubmitting(false);
       return;
     }
@@ -150,7 +161,7 @@ export default function WorkspacePage() {
         Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({
-        name: defaultProjectName || "CodeParty Project",
+        name: defaultProjectName || (language === "fr" ? "Projet CodeParty" : "CodeParty Project"),
         description: formData.description.trim() || null,
         githubRepoUrl: formData.githubRepoUrl.trim(),
       }),
@@ -159,19 +170,27 @@ export default function WorkspacePage() {
     const payload = (await response.json()) as { error?: string };
 
     if (!response.ok) {
-      setSubmitError(payload.error ?? "Failed to create the project.");
+      setSubmitError(payload.error ?? (language === "fr" ? "Impossible de créer le projet." : "Failed to create the project."));
       setIsSubmitting(false);
       return;
     }
 
-    setSuccessMessage("Your team project is now live in the workspace.");
+    setSuccessMessage(
+      language === "fr"
+        ? "Le projet de votre équipe est maintenant actif dans l’espace."
+        : "Your team project is now live in the workspace."
+    );
     setIsSubmitting(false);
     await refreshSnapshot();
   }
 
   async function handleRequestCompletion() {
     if (!snapshot?.currentTeam) {
-      setSubmitError("You need an active party before requesting completion.");
+      setSubmitError(
+        language === "fr"
+          ? "Vous avez besoin d’un party actif avant de demander la complétion."
+          : "You need an active party before requesting completion."
+      );
       return;
     }
 
@@ -185,7 +204,7 @@ export default function WorkspacePage() {
     } = await supabase.auth.getSession();
 
     if (sessionError || !session?.access_token) {
-      setSubmitError(sessionError?.message ?? "Missing authenticated session.");
+      setSubmitError(sessionError?.message ?? (language === "fr" ? "Session authentifiée manquante." : "Missing authenticated session."));
       setIsRequestingCompletion(false);
       return;
     }
@@ -200,12 +219,21 @@ export default function WorkspacePage() {
     const payload = (await response.json()) as { error?: string };
 
     if (!response.ok) {
-      setSubmitError(payload.error ?? "Failed to request completion.");
+      setSubmitError(
+        payload.error ??
+          (language === "fr"
+            ? "Impossible d’envoyer la demande de complétion."
+            : "Failed to request completion.")
+      );
       setIsRequestingCompletion(false);
       return;
     }
 
-    setSuccessMessage("Completion request sent to admin for review.");
+    setSuccessMessage(
+      language === "fr"
+        ? "Demande de complétion envoyée à l’admin pour révision."
+        : "Completion request sent to admin for review."
+    );
     setIsRequestingCompletion(false);
     await refreshSnapshot();
   }
@@ -215,10 +243,14 @@ export default function WorkspacePage() {
       <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-none dark:bg-[linear-gradient(135deg,#6d5ce8_0%,#5f50d2_100%)]">
         <CardHeader>
           <CardTitle className="mt-4 text-5xl leading-[0.96] tracking-[-0.05em]">
-            Keep the team and project in one place.
+            {language === "fr"
+              ? "Gardez l’équipe et le projet au même endroit."
+              : "Keep the team and project in one place."}
           </CardTitle>
           <CardDescription className="mt-2 max-w-2xl text-base leading-7 text-white/82">
-            This is the operational view for your current team, your shared repository, and the project setup your group owns together.
+            {language === "fr"
+              ? "Voici la vue opérationnelle de votre équipe actuelle, de votre repository partagé et de la configuration projet que votre groupe possède ensemble."
+              : "This is the operational view for your current team, your shared repository, and the project setup your group owns together."}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -228,21 +260,24 @@ export default function WorkspacePage() {
       {successMessage ? <FeedbackBanner tone="success" message={successMessage} /> : null}
 
       {isLoading ? (
-        <LoadingPanel message="Loading workspace..." />
+        <LoadingPanel message={language === "fr" ? "Chargement de l’espace..." : "Loading workspace..."} />
       ) : !selectedPartyId ? (
         <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
           <CardHeader>
             <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
-              All parties
+              {language === "fr" ? "Toutes les parties" : "All parties"}
             </CardTitle>
             <CardDescription className="text-sm leading-6 text-app-secondary">
-              Select a party to open its dedicated workspace.
+              {language === "fr"
+                ? "Sélectionnez un party pour ouvrir son espace dédié."
+                : "Select a party to open its dedicated workspace."}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {parties.length === 0 ? (
-              <div className="rounded-[1rem] bg-[#faf8ff] p-4 text-sm text-app-secondary dark:bg-[#16161d] dark:text-muted-foreground">
-                No parties available yet.
+              <div className="rounded-[1rem] bg-[#faf8ff] p-4 text-center text-sm text-app-secondary dark:bg-[#16161d] dark:text-muted-foreground">
+                <Mascot pose="sad" size="md" centered className="mb-3" />
+                {language === "fr" ? "Aucun party disponible pour le moment." : "No parties available yet."}
               </div>
             ) : (
               <div className="grid gap-3">
@@ -259,7 +294,7 @@ export default function WorkspacePage() {
                       onBlur={() => {
                         window.setTimeout(() => setShowPartySuggestions(false), 120);
                       }}
-                      placeholder="Search by Party ID"
+                      placeholder={language === "fr" ? "Chercher par ID de party" : "Search by Party ID"}
                       className="h-10 rounded-[0.9rem] border-[#e8e2f7] bg-[#fcfbff] pl-9 dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5]"
                     />
                     {showPartySuggestions && partySuggestions.length > 0 ? (
@@ -276,7 +311,7 @@ export default function WorkspacePage() {
                               Party {party.party_id}
                             </span>
                             <span className="text-[11px] text-app-secondary">
-                              {formatProjectLabel(party.status)}
+                              {formatWorkspaceStatus(party.status, language)}
                             </span>
                           </button>
                         ))}
@@ -288,7 +323,7 @@ export default function WorkspacePage() {
                       type="submit"
                       className="h-10 rounded-full bg-[#7650ff] px-4 text-white hover:bg-[#6744f0]"
                     >
-                      Search
+                      {language === "fr" ? "Rechercher" : "Search"}
                     </Button>
                     {(partySearchInput || partySearchQuery) && (
                       <Button
@@ -297,7 +332,7 @@ export default function WorkspacePage() {
                         onClick={handleClearPartySearch}
                         className="h-10 rounded-full border-[#e8e2f7] bg-white px-4 text-[#1f1c38] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#f2f2f5]"
                       >
-                        Clear
+                        {language === "fr" ? "Effacer" : "Clear"}
                       </Button>
                     )}
                   </div>
@@ -305,7 +340,7 @@ export default function WorkspacePage() {
 
                 {filteredParties.length === 0 ? (
                   <div className="rounded-[1rem] bg-[#faf8ff] p-4 text-sm text-app-secondary dark:bg-[#16161d] dark:text-muted-foreground">
-                    No party matches this ID.
+                    {language === "fr" ? "Aucun party ne correspond à cet ID." : "No party matches this ID."}
                   </div>
                 ) : (
                   <>
@@ -319,17 +354,19 @@ export default function WorkspacePage() {
                           <div>
                             <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">Party {party.party_id}</p>
                             <p className="mt-0.5 text-[11px] text-app-secondary">
-                              {formatProjectLabel(party.status)}
+                              {formatWorkspaceStatus(party.status, language)}
                             </p>
                           </div>
-                          <span className="text-sm font-medium text-[#5b45d9]">Open</span>
+                          <span className="text-sm font-medium text-[#5b45d9]">
+                            {language === "fr" ? "Ouvrir" : "Open"}
+                          </span>
                         </Link>
                       ))}
                     </div>
 
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <p className="text-xs text-app-secondary">
-                        Showing {(effectiveCurrentPartyPage - 1) * partiesPerPage + 1}–{Math.min(effectiveCurrentPartyPage * partiesPerPage, filteredParties.length)} of {filteredParties.length} parties
+                        {language === "fr" ? "Affichage" : "Showing"} {(effectiveCurrentPartyPage - 1) * partiesPerPage + 1}–{Math.min(effectiveCurrentPartyPage * partiesPerPage, filteredParties.length)} {language === "fr" ? "sur" : "of"} {filteredParties.length} {language === "fr" ? "parties" : "parties"}
                       </p>
                       <div className="flex items-center gap-2">
                         <Button
@@ -339,10 +376,10 @@ export default function WorkspacePage() {
                           disabled={effectiveCurrentPartyPage === 1}
                           className="h-9 rounded-full border-[#e8e2f7] bg-white px-3 text-[#1f1c38] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#f2f2f5]"
                         >
-                          Previous
+                          {language === "fr" ? "Précédent" : "Previous"}
                         </Button>
                         <div className="rounded-full bg-[#f6f2ff] px-3 py-1 text-xs font-medium text-[#7650ff] dark:bg-[#23232c] dark:text-[#a698ff]">
-                          Page {effectiveCurrentPartyPage} / {totalPartyPages}
+                          {language === "fr" ? "Page" : "Page"} {effectiveCurrentPartyPage} / {totalPartyPages}
                         </div>
                         <Button
                           type="button"
@@ -351,7 +388,7 @@ export default function WorkspacePage() {
                           disabled={effectiveCurrentPartyPage === totalPartyPages}
                           className="h-9 rounded-full border-[#e8e2f7] bg-white px-3 text-[#1f1c38] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#f2f2f5]"
                         >
-                          Next
+                          {language === "fr" ? "Suivant" : "Next"}
                         </Button>
                       </div>
                     </div>
@@ -364,19 +401,25 @@ export default function WorkspacePage() {
       ) : !snapshot?.currentTeam ? (
         <EmptyStatePanel
           icon={Users}
-          title="Party not found"
-          description="This party is unavailable or no longer attached to your account."
+          title={language === "fr" ? "Party introuvable" : "Party not found"}
+          description={
+            language === "fr"
+              ? "Cette party est indisponible ou n’est plus liée à votre compte."
+              : "This party is unavailable or no longer attached to your account."
+          }
         />
       ) : (
         <>
           <div className="grid gap-4">
             <SignalCard
-              label="Current team"
-              value={activeCurrentTeam ? `Party ${activeCurrentTeam.party_id}` : "No active party"}
+              label={language === "fr" ? "Équipe actuelle" : "Current team"}
+              value={activeCurrentTeam ? `Party ${activeCurrentTeam.party_id}` : language === "fr" ? "Aucun party actif" : "No active party"}
               detail={
                 activeCurrentTeam
-                  ? `${snapshot.teamMembers.length} members · ${formatProjectLabel(activeCurrentTeam.status)}`
-                  : "You do not currently belong to an active party."
+                  ? `${snapshot.teamMembers.length} ${language === "fr" ? "membres" : "members"} · ${formatWorkspaceStatus(activeCurrentTeam.status, language)}`
+                  : language === "fr"
+                    ? "Vous n’appartenez actuellement à aucun party actif."
+                    : "You do not currently belong to an active party."
               }
             />
           </div>
@@ -387,7 +430,7 @@ export default function WorkspacePage() {
               className="inline-flex items-center gap-2 text-sm font-medium text-[#5b45d9] underline-offset-4 hover:underline"
             >
               <ArrowLeft className="size-4" />
-              Back to all parties
+              {language === "fr" ? "Retour à toutes les parties" : "Back to all parties"}
             </Link>
           </div>
 
@@ -396,35 +439,50 @@ export default function WorkspacePage() {
               <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
                 <CardHeader>
                   <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
-                    Team members
+                    {language === "fr" ? "Membres du party" : "Team members"}
                   </CardTitle>
                   <CardDescription className="text-sm leading-6 text-app-secondary">
-                    Everyone currently active in the team and ready for the first shared build.
+                    {language === "fr"
+                      ? "Toutes les personnes actuellement actives dans le party et prêtes pour le premier build partagé."
+                      : "Everyone currently active in the team and ready for the first shared build."}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <CompactTeamMemberList members={snapshot.teamMembers} />
+                  <CompactTeamMemberList language={language} members={snapshot.teamMembers} />
+                  
                 </CardContent>
               </Card>
 
               <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
                 <CardHeader>
                   <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
-                    Create your team project
+                    {language === "fr" ? "Créer le projet du party" : "Create your team project"}
                   </CardTitle>
                   <CardDescription className="text-sm leading-6 text-app-secondary">
-                    Keep the setup lean: add the repo and a short project description.
+                    {language === "fr"
+                      ? "Gardez la configuration légère : ajoutez le repo et une courte description du projet."
+                      : "Keep the setup lean: add the repo and a short project description."}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-3">
                   <div className="rounded-[1rem] bg-[linear-gradient(135deg,rgba(116,72,255,0.12)_0%,rgba(142,107,255,0.16)_100%)] p-3.5 dark:bg-[linear-gradient(135deg,rgba(109,92,232,0.16)_0%,rgba(95,80,210,0.22)_100%)]">
-                    <p className="text-xs uppercase tracking-[0.18em] text-app-overline">Before you paste the repo URL</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-app-overline">
+                      {language === "fr" ? "Avant de coller l’URL du repo" : "Before you paste the repo URL"}
+                    </p>
                     <div className="mt-2 grid gap-1.5">
-                      {[
-                        "1. One teammate creates the repository on GitHub.",
-                        "2. Add the other teammates as collaborators.",
-                        "3. Paste the public repository link here and complete the project setup.",
-                      ].map((item) => (
+                      {(
+                        language === "fr"
+                          ? [
+                              "1. Un membre du party crée le repository sur GitHub.",
+                              "2. Ajoutez les autres membres comme collaborateurs.",
+                              "3. Collez ici le lien du repository public et terminez la configuration du projet.",
+                            ]
+                          : [
+                              "1. One teammate creates the repository on GitHub.",
+                              "2. Add the other teammates as collaborators.",
+                              "3. Paste the public repository link here and complete the project setup.",
+                            ]
+                      ).map((item) => (
                         <div
                           key={item}
                           className="rounded-[0.9rem] border border-white/60 bg-white/70 px-3 py-2 text-sm leading-5 text-[#5f587f] dark:border-[#3a3450] dark:bg-[#1f1f28] dark:text-[#d0cde0]"
@@ -435,27 +493,45 @@ export default function WorkspacePage() {
                     </div>
                   </div>
 
-                  <Field label="Description and goals">
+                  <Field label={language === "fr" ? "Description et objectifs" : "Description and goals"}>
                     <textarea
                       value={formData.description}
                       onChange={(event) =>
-                        setFormData((current) => ({ ...current, description: event.target.value }))
+                        setFormData((current) => ({
+                          ...current,
+                          description: event.target.value.slice(0, 300),
+                        }))
                       }
+                      maxLength={300}
                       rows={3}
-                      placeholder="Describe the project scope, what the team wants to ship, and the main objectives."
+                      placeholder={
+                        language === "fr"
+                          ? "Décrivez la portée du projet, ce que l’équipe veut livrer et les objectifs principaux."
+                          : "Describe the project scope, what the team wants to ship, and the main objectives."
+                      }
                       className="w-full rounded-[0.9rem] border border-[#e8e2f7] bg-[#fcfbff] px-3.5 py-2.5 text-sm text-[#1f1c38] outline-none transition placeholder:text-[#a9a3c2] focus:border-[#7b61ff]/45 dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5] dark:placeholder:text-[#747482]"
                     />
+                    <p className="mt-1 text-right text-[11px] text-app-meta">
+                      {formData.description.length}/300
+                    </p>
                   </Field>
 
-                  <Field label="GitHub repository URL">
+                  <Field label={language === "fr" ? "URL du repository GitHub" : "GitHub repository URL"}>
                     <Input
                       value={formData.githubRepoUrl}
                       onChange={(event) =>
-                        setFormData((current) => ({ ...current, githubRepoUrl: event.target.value }))
+                        setFormData((current) => ({
+                          ...current,
+                          githubRepoUrl: event.target.value.slice(0, 255),
+                        }))
                       }
+                      maxLength={255}
                       placeholder="https://github.com/owner/repo"
                       className="h-10 rounded-[0.9rem] border-[#e8e2f7] bg-[#fcfbff] px-3.5 dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5]"
                     />
+                    <p className="mt-1 text-right text-[11px] text-app-meta">
+                      {formData.githubRepoUrl.length}/255
+                    </p>
                   </Field>
 
                   <Button
@@ -467,12 +543,12 @@ export default function WorkspacePage() {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="size-4 animate-spin" />
-                        Creating project...
+                        {language === "fr" ? "Création du projet..." : "Creating project..."}
                       </>
                     ) : (
                       <>
                         <Sparkles className="size-4" />
-                        Create team project
+                        {language === "fr" ? "Créer le projet du party" : "Create team project"}
                       </>
                     )}
                   </Button>
@@ -485,14 +561,16 @@ export default function WorkspacePage() {
                 <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
                   <CardHeader>
                     <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
-                      Team members
+                      {language === "fr" ? "Membres du party" : "Team members"}
                     </CardTitle>
                     <CardDescription className="text-sm leading-6 text-app-secondary">
-                      The people currently attached to this team.
+                      {language === "fr"
+                        ? "Les personnes actuellement rattachées à ce party."
+                        : "The people currently attached to this team."}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <CompactTeamMemberList members={snapshot.teamMembers} />
+                    <CompactTeamMemberList language={language} members={snapshot.teamMembers} />
                   </CardContent>
                 </Card>
 
@@ -500,20 +578,29 @@ export default function WorkspacePage() {
                   <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
                     <CardHeader>
                       <Badge variant="outline" className="w-fit rounded-full bg-[#f6f2ff] text-[#7650ff] dark:border-[#27272f] dark:bg-[#23232c] dark:text-[#a698ff]">
-                        Repository
+                        {language === "fr" ? "Repository" : "Repository"}
                       </Badge>
                       <CardDescription className="text-sm leading-6 text-app-secondary">
-                        The shared GitHub repository linked to this party.
+                        {language === "fr"
+                          ? "Le repository GitHub partagé lié à ce party."
+                          : "The shared GitHub repository linked to this party."}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="rounded-[1.15rem] bg-[#faf8ff] p-4 dark:bg-[#16161d]">
-                        <p className="text-xs uppercase tracking-[0.18em] text-app-overline">Repository</p>
+                        <p className="text-xs uppercase tracking-[0.18em] text-app-overline">
+                          {language === "fr" ? "Repository" : "Repository"}
+                        </p>
                         <p className="mt-1 text-base font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
                           {snapshot.currentProject.github_repo_url
                             ? repoLabel(snapshot.currentProject.github_repo_url)
-                            : "Not linked yet"}
+                            : language === "fr"
+                              ? "Pas encore lié"
+                              : "Not linked yet"}
                         </p>
+                        {!snapshot.currentProject.github_repo_url ? (
+                          <Mascot pose="sad" size="md" centered className="mt-4" />
+                        ) : null}
                         {snapshot.currentProject.github_repo_url ? (
                           <a
                           href={snapshot.currentProject.github_repo_url}
@@ -522,7 +609,7 @@ export default function WorkspacePage() {
                           className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-[#5b45d9] underline-offset-4 hover:underline dark:text-[#a698ff]"
                         >
                           <Link2 className="size-4" />
-                          Open repository
+                          {language === "fr" ? "Ouvrir le repository" : "Open repository"}
                           </a>
                         ) : null}
                       </div>
@@ -533,24 +620,36 @@ export default function WorkspacePage() {
                     <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
                       <CardHeader>
                         <Badge variant="outline" className="w-fit rounded-full bg-[#f6f2ff] text-[#7650ff] dark:border-[#27272f] dark:bg-[#23232c] dark:text-[#a698ff]">
-                          Completion
+                          {language === "fr" ? "Complétion" : "Completion"}
                         </Badge>
                         <CardDescription className="text-sm leading-6 text-app-secondary">
-                          When the project is done, send a completion request to admin for review.
+                          {language === "fr"
+                            ? "Quand le projet est terminé, envoyez une demande de complétion à l’admin pour révision."
+                            : "When the project is done, send a completion request to admin for review."}
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="grid gap-3">
                         <div className="rounded-[1.15rem] bg-[#faf8ff] p-4 dark:bg-[#16161d]">
-                          <p className="text-xs uppercase tracking-[0.18em] text-app-overline">Status</p>
+                          <p className="text-xs uppercase tracking-[0.18em] text-app-overline">
+                            {language === "fr" ? "Statut" : "Status"}
+                          </p>
                           <p className="mt-1 text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
                             {snapshot.currentTeam.completion_requested_at
-                              ? "Completion review pending"
-                              : "No completion request yet"}
+                              ? language === "fr"
+                                ? "Révision de complétion en attente"
+                                : "Completion review pending"
+                              : language === "fr"
+                                ? "Aucune demande de complétion"
+                                : "No completion request yet"}
                           </p>
                           <p className="mt-1 text-xs leading-5 text-app-secondary">
                             {snapshot.currentTeam.completion_requested_at
-                              ? `Requested ${formatInlineDate(snapshot.currentTeam.completion_requested_at)}${completionRequester ? ` by ${completionRequester}` : ""}.`
-                              : "A party member can submit a completion request once the work is ready for admin review."}
+                              ? language === "fr"
+                                ? `Demandée ${formatInlineDate(snapshot.currentTeam.completion_requested_at, language)}${completionRequester ? ` par ${completionRequester}` : ""}.`
+                                : `Requested ${formatInlineDate(snapshot.currentTeam.completion_requested_at, language)}${completionRequester ? ` by ${completionRequester}` : ""}.`
+                              : language === "fr"
+                                ? "Un membre du party peut envoyer une demande de complétion lorsque le travail est prêt pour la révision admin."
+                                : "A party member can submit a completion request once the work is ready for admin review."}
                           </p>
                         </div>
 
@@ -563,14 +662,16 @@ export default function WorkspacePage() {
                           {isRequestingCompletion ? (
                             <>
                               <Loader2 className="size-4 animate-spin" />
-                              Sending request...
+                              {language === "fr" ? "Envoi..." : "Sending request..."}
                             </>
                           ) : snapshot.currentTeam.completion_requested_at ? (
-                            "Completion request pending"
+                            language === "fr"
+                              ? "Demande de complétion en attente"
+                              : "Completion request pending"
                           ) : (
                             <>
                               <CheckCircle2 className="size-4" />
-                              Request completion
+                              {language === "fr" ? "Demander la complétion" : "Request completion"}
                             </>
                           )}
                         </Button>
@@ -624,8 +725,10 @@ function SignalCard({
 }
 
 function CompactTeamMemberList({
+  language,
   members,
 }: {
+  language: "en" | "fr";
   members: Array<{
     membership: {
       id: string;
@@ -636,7 +739,7 @@ function CompactTeamMemberList({
       display_name: string;
       avatar_url?: string | null;
       language: string;
-      timezone: string;
+      timezone: string | null;
       skills: string[];
     };
   }>;
@@ -659,15 +762,16 @@ function CompactTeamMemberList({
                 {member.profile.display_name}
               </p>
               <p className="mt-0.5 truncate text-[11px] text-app-secondary">
-                {formatLanguageValue(member.profile.language)} · {member.profile.timezone}
+                {formatLanguageValue(member.profile.language, language)} · {formatTimezoneValue(member.profile.timezone)}
               </p>
               <p className="mt-0.5 truncate text-[10px] text-app-overline">
-                {member.profile.skills.slice(0, 3).join(" · ") || "No stack selected"}
+                {member.profile.skills.slice(0, 3).join(" · ") ||
+                  (language === "fr" ? "Aucune stack sélectionnée" : "No stack selected")}
               </p>
             </div>
           </div>
           <Badge variant="outline" className="shrink-0 rounded-full bg-white text-[#7650ff] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#a698ff]">
-            {formatProjectLabel(member.membership.member_status)}
+            {formatWorkspaceStatus(member.membership.member_status, language)}
           </Badge>
         </div>
       ))}
@@ -684,9 +788,9 @@ function repoLabel(repoUrl: string) {
   }
 }
 
-function formatInlineDate(value: string) {
+function formatInlineDate(value: string, language: "en" | "fr" = "en") {
   try {
-    return new Intl.DateTimeFormat("en-US", {
+    return new Intl.DateTimeFormat(language === "fr" ? "fr-CA" : "en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -694,4 +798,18 @@ function formatInlineDate(value: string) {
   } catch {
     return value;
   }
+}
+
+function formatWorkspaceStatus(value: string, language: "en" | "fr") {
+  if (language === "fr") {
+    if (value === "active") return "Active";
+    if (value === "completed") return "Complétée";
+    if (value === "cancelled") return "Annulée";
+    if (value === "waiting") return "En attente";
+    if (value === "matched") return "Matchée";
+    if (value === "left") return "A quitté";
+    if (value === "removed") return "Retirée";
+  }
+
+  return formatProjectLabel(value);
 }

@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Sparkles, Users } from "lucide-react";
+import { Clock3, Code2, Globe2, Layers3, Loader2, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/components/app/language-provider";
+import { Mascot } from "@/components/app/mascot";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FeedbackBanner } from "@/components/app/feedback";
 import { useWorkspaceProfile } from "@/components/app/workspace-shell";
@@ -12,12 +14,13 @@ import {
   ensureWaitingMatchmakingEntry,
   updateMatchmakingEntryStatus,
 } from "@/lib/matchmaking";
-import { formatLanguageValue, formatProjectTypeList } from "@/lib/profile-options";
+import { formatLanguageValue, formatProjectTypeList, formatTimezoneValue } from "@/lib/profile-options";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useWorkspaceSnapshot } from "@/lib/workspace-data";
 
 export default function MatchmakingPage() {
   const profile = useWorkspaceProfile();
+  const { language } = useLanguage();
   const supabase = getSupabaseBrowserClient();
   const { snapshot, isLoading, errorMessage, refreshSnapshot } = useWorkspaceSnapshot(profile.id);
   const [isMutating, setIsMutating] = useState(false);
@@ -84,7 +87,11 @@ export default function MatchmakingPage() {
     }
 
     if (activePartyCountResult.count >= 1) {
-      setActionError("You already belong to an active party.");
+      setActionError(
+        language === "fr"
+          ? "Vous appartenez déjà à un party actif."
+          : "You already belong to an active party."
+      );
       setIsMutating(false);
       return;
     }
@@ -125,7 +132,11 @@ export default function MatchmakingPage() {
     await refreshSnapshot();
   }
 
-  const queueStatusLabel = getQueueStatusLabel(snapshot?.queueEntry?.status, activePartyCount);
+  const queueStatusLabel = getQueueStatusLabel(
+    snapshot?.queueEntry?.status,
+    activePartyCount,
+    language
+  );
   const isWaiting = snapshot?.queueEntry?.status === "waiting";
   const canJoinAnotherParty = activePartyCount < 1;
 
@@ -134,34 +145,50 @@ export default function MatchmakingPage() {
       <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-none dark:bg-[linear-gradient(135deg,#6d5ce8_0%,#5f50d2_100%)]">
         <CardHeader>
           <CardTitle className="mt-4 text-5xl leading-[0.96] tracking-[-0.05em]">
-            Match into the right party, then keep building.
+            {language === "fr"
+              ? "Trouvez la bonne party, puis continuez à construire."
+              : "Match into the right party, then keep building."}
           </CardTitle>
           <CardDescription className="mt-2 max-w-2xl text-base leading-7 text-white/82">
-            Join the queue, track your current status, and stay ready for your next party.
+            {language === "fr"
+              ? "Rejoignez la file, suivez votre statut actuel et restez prêt pour votre prochain party."
+              : "Join the queue, track your current status, and stay ready for your next party."}
           </CardDescription>
         </CardHeader>
       </Card>
 
       {errorMessage || actionError ? (
-        <FeedbackBanner tone="error" message={actionError ?? errorMessage ?? "Unknown error."} />
+        <FeedbackBanner
+          tone="error"
+          message={actionError ?? errorMessage ?? (language === "fr" ? "Erreur inconnue." : "Unknown error.")}
+        />
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
           <CardHeader>
-            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">Queue status</CardTitle>
+            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
+              {language === "fr" ? "Statut de file" : "Queue status"}
+            </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3">
             <div className="rounded-[1rem] bg-[#faf8ff] px-4 py-3 dark:bg-[#16161d]">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-app-overline">Current status</p>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-app-overline">
+                {language === "fr" ? "Statut actuel" : "Current status"}
+              </p>
               <p className="mt-1 text-lg font-semibold text-[#1f1c38] dark:text-[#f2f2f5]">
-                {isLoading ? "Loading..." : queueStatusLabel}
+                {isLoading ? (language === "fr" ? "Chargement..." : "Loading...") : queueStatusLabel}
               </p>
               <p className="mt-1 text-xs leading-5 text-app-secondary">
                 {isLoading
-                  ? "Checking your queue entry..."
-                  : getQueueStatusDescription(snapshot?.queueEntry?.status, activePartyCount)}
+                  ? language === "fr"
+                    ? "Vérification de votre entrée dans la file..."
+                    : "Checking your queue entry..."
+                  : getQueueStatusDescription(snapshot?.queueEntry?.status, activePartyCount, language)}
               </p>
+              {isWaiting ? (
+                <Mascot pose="waiting" size="md" float centered className="mt-4" />
+              ) : null}
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
@@ -173,12 +200,12 @@ export default function MatchmakingPage() {
                 {isMutating && !isWaiting ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />
-                    Updating...
+                    {language === "fr" ? "Mise à jour..." : "Updating..."}
                   </>
                 ) : isWaiting ? (
-                  "Already in queue"
+                  language === "fr" ? "Déjà dans la file" : "Already in queue"
                 ) : (
-                  "Join queue"
+                  language === "fr" ? "Rejoindre la file" : "Join queue"
                 )}
               </Button>
 
@@ -192,10 +219,10 @@ export default function MatchmakingPage() {
                 {isMutating && isWaiting ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />
-                    Cancelling...
+                    {language === "fr" ? "Annulation..." : "Cancelling..."}
                   </>
                 ) : (
-                  "Pause queue"
+                  language === "fr" ? "Quitter la file" : "Pause queue"
                 )}
               </Button>
             </div>
@@ -204,19 +231,26 @@ export default function MatchmakingPage() {
 
         <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
           <CardHeader>
-            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">Profile signals</CardTitle>
+            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
+              {language === "fr" ? "Ce qui influence votre prochain party" : "What shapes your next party"}
+            </CardTitle>
             <CardDescription className="text-sm leading-6 text-app-secondary">
-              Matchmaking combines your language, timezone, project interests, and stack focus.
+              {language === "fr"
+                ? "Le matchmaking combine vos langues, votre fuseau horaire, vos intérêts de projet et votre stack."
+                : "Matchmaking combines your language, timezone, project interests, and stack focus."}
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
-            <Criteria label="Language" value={formatLanguageValue(profile.language)} icon={Users} />
-            <Criteria label="Timezone" value={profile.timezone} icon={Users} />
-            <Criteria label="Project types" value={formatProjectTypeList(profile.project_type)} icon={Sparkles} />
+            <Criteria label={language === "fr" ? "Langue" : "Language"} value={formatLanguageValue(profile.language, language)} icon={Globe2} />
+            <Criteria label={language === "fr" ? "Fuseau horaire" : "Timezone"} value={formatTimezoneValue(profile.timezone)} icon={Clock3} />
+            <Criteria label={language === "fr" ? "Types de projet" : "Project types"} value={formatProjectTypeList(profile.project_type, language)} icon={Layers3} />
             <Criteria
-              label="Selected stack"
-              value={profile.skills.slice(0, 5).join(", ") || "No technologies selected"}
-              icon={Sparkles}
+              label={language === "fr" ? "Stack sélectionnée" : "Selected stack"}
+              value={
+                profile.skills.slice(0, 5).join(", ") ||
+                (language === "fr" ? "Aucune technologie sélectionnée" : "No technologies selected")
+              }
+              icon={Code2}
             />
           </CardContent>
         </Card>
@@ -249,20 +283,26 @@ function Criteria({
   );
 }
 
-function getQueueStatusLabel(status?: string | null, activePartyCount = 0) {
-  if (status === "waiting") return "Waiting for a party";
-  if (activePartyCount >= 1) return "Active party in progress";
-  return "Not in queue";
+function getQueueStatusLabel(status?: string | null, activePartyCount = 0, language: "en" | "fr" = "en") {
+  if (status === "waiting") return language === "fr" ? "En attente d’un party" : "Waiting for a party";
+  if (activePartyCount >= 1) return language === "fr" ? "Party active en cours" : "Active party in progress";
+  return language === "fr" ? "Hors file" : "Not in queue";
 }
 
-function getQueueStatusDescription(status?: string | null, activePartyCount = 0) {
+function getQueueStatusDescription(status?: string | null, activePartyCount = 0, language: "en" | "fr" = "en") {
   if (status === "waiting") {
-    return "Your profile is currently visible for manual or future party matching.";
+    return language === "fr"
+      ? "Votre profil est actuellement visible pour un matching manuel ou futur."
+      : "Your profile is currently visible for manual or future party matching.";
   }
 
   if (activePartyCount >= 1) {
-    return "You already belong to an active party. An admin must mark it completed or cancelled before you rejoin the queue.";
+    return language === "fr"
+      ? "Vous appartenez déjà à un party actif. Un admin doit le marquer comme complété ou annulé avant que vous puissiez revenir dans la file."
+      : "You already belong to an active party. An admin must mark it completed or cancelled before you rejoin the queue.";
   }
 
-  return "You are not in the matchmaking queue yet.";
+  return language === "fr"
+    ? "Vous n’êtes pas encore dans la file de matchmaking."
+    : "You are not in the matchmaking queue yet.";
 }

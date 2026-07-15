@@ -8,6 +8,7 @@ import {
   useWorkspaceProfileActions,
 } from "@/components/app/workspace-shell";
 import { FeedbackBanner } from "@/components/app/feedback";
+import { useLanguage } from "@/components/app/language-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -15,20 +16,26 @@ import type { AppProfile } from "@/lib/profile";
 import {
   deriveLanguageValue,
   formatProjectTypeList,
+  getProfileLanguageOptions,
+  getProfileProjectTypeOptions,
   getTimezonePreview,
   parseLanguageValue,
-  profileLanguageOptions,
-  profileProjectTypeOptions,
   profileTimezoneOptions,
   type ProfileProjectTypeValue,
   type SelectableLanguage,
 } from "@/lib/profile-options";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { maxSelectedSkills, technologyGroups } from "@/lib/technology-options";
+import {
+  formatTechnologyGroupLabel,
+  formatTechnologyLabel,
+  maxSelectedSkills,
+  technologyGroups,
+} from "@/lib/technology-options";
 
 type SettingsFormData = {
   display_name: string;
-  avatar_url: string;
+  bio: string;
+  location: string;
   skills: string[];
   selectedLanguages: SelectableLanguage[];
   timezone: string;
@@ -38,10 +45,12 @@ type SettingsFormData = {
 export default function SettingsPage() {
   const profile = useWorkspaceProfile();
   const { updateProfile } = useWorkspaceProfileActions();
+  const { language } = useLanguage();
   const supabase = getSupabaseBrowserClient();
   const [formData, setFormData] = useState<SettingsFormData>({
     display_name: profile.display_name,
-    avatar_url: profile.avatar_url ?? "",
+    bio: profile.bio ?? "",
+    location: profile.location ?? "",
     skills: profile.skills,
     selectedLanguages: parseLanguageValue(profile.language),
     timezone: profile.timezone,
@@ -56,6 +65,8 @@ export default function SettingsPage() {
     () => getTimezonePreview(formData.timezone),
     [formData.timezone]
   );
+  const languageOptions = useMemo(() => getProfileLanguageOptions(language), [language]);
+  const projectTypeOptions = useMemo(() => getProfileProjectTypeOptions(language), [language]);
 
   async function handleSave() {
     setIsSaving(true);
@@ -65,13 +76,22 @@ export default function SettingsPage() {
     const language = deriveLanguageValue(formData.selectedLanguages);
 
     if (!language) {
-      setErrorMessage("Select at least one language.");
+      setErrorMessage(
+        language === "fr" ? "Sélectionnez au moins une langue." : "Select at least one language."
+      );
+      setIsSaving(false);
+      return;
+    }
+
+    if (!formData.timezone) {
+      setErrorMessage(language === "fr" ? "Le fuseau horaire est requis." : "Timezone is required.");
       setIsSaving(false);
       return;
     }
 
     const payload = {
-      avatar_url: formData.avatar_url.trim() || null,
+      bio: formData.bio.trim() || null,
+      location: formData.location.trim() || null,
       skills: formData.skills,
       language,
       timezone: formData.timezone,
@@ -94,7 +114,8 @@ export default function SettingsPage() {
     if (data) {
       setFormData({
         display_name: data.display_name,
-        avatar_url: data.avatar_url ?? "",
+        bio: data.bio ?? "",
+        location: data.location ?? "",
         skills: data.skills,
         selectedLanguages: parseLanguageValue(data.language),
         timezone: data.timezone,
@@ -103,7 +124,7 @@ export default function SettingsPage() {
       updateProfile(data);
     }
 
-    setSuccessMessage("Profile settings saved.");
+    setSuccessMessage(language === "fr" ? "Paramètres du profil enregistrés." : "Profile settings saved.");
     setIsSaving(false);
   }
 
@@ -114,7 +135,11 @@ export default function SettingsPage() {
       const exists = current.skills.includes(skill);
 
       if (!exists && current.skills.length >= maxSelectedSkills) {
-        setErrorMessage(`You can select up to ${maxSelectedSkills} technologies.`);
+        setErrorMessage(
+          language === "fr"
+            ? `Vous pouvez sélectionner jusqu’à ${maxSelectedSkills} technologies.`
+            : `You can select up to ${maxSelectedSkills} technologies.`
+        );
         return current;
       }
 
@@ -156,10 +181,14 @@ export default function SettingsPage() {
       <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-none dark:bg-[linear-gradient(135deg,#6d5ce8_0%,#5f50d2_100%)]">
         <CardHeader>
           <CardTitle className="mt-4 text-5xl leading-[0.96] tracking-[-0.05em]">
-            Control your profile and preferences.
+            {language === "fr"
+              ? "Contrôlez votre profil et vos préférences."
+              : "Control your profile and preferences."}
           </CardTitle>
           <CardDescription className="mt-2 max-w-2xl text-base leading-7 text-white/82">
-            Keep your public profile accurate. Everything here can be updated anytime.
+            {language === "fr"
+              ? "Gardez votre profil public à jour. Tout ici peut être modifié à tout moment."
+              : "Keep your public profile accurate. Everything here can be updated anytime."}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -167,16 +196,55 @@ export default function SettingsPage() {
       <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
         <CardHeader>
           <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
-            Profile settings
+            {language === "fr" ? "Paramètres du profil" : "Profile settings"}
           </CardTitle>
           <CardDescription className="text-sm leading-6 text-app-secondary">
-            Update the information saved from onboarding.
+            {language === "fr"
+              ? "Mettez à jour les informations enregistrées depuis l’onboarding. Les détails du portfolio public peuvent aussi être modifiés depuis la page Portfolio."
+              : "Update the information saved from onboarding. Public portfolio details can also be edited from the Portfolio page."}
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-5">
-          <Field label="Languages">
+          <Field label={language === "fr" ? "Bio" : "Bio"}>
+            <textarea
+              value={formData.bio}
+              onChange={(event) =>
+                setFormData((current) => ({
+                  ...current,
+                  bio: event.target.value.slice(0, 500),
+                }))
+              }
+              maxLength={500}
+              rows={3}
+              placeholder={
+                language === "fr"
+                  ? "Écrivez une courte introduction pour votre portfolio."
+                  : "Write a short introduction for your portfolio."
+              }
+              className="w-full max-w-[40rem] rounded-[0.9rem] border border-[#e8e2f7] bg-[#fcfbff] px-3.5 py-2.5 text-sm text-[#1f1c38] dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5]"
+            />
+            <p className="text-xs text-app-meta">{formData.bio.length}/500</p>
+          </Field>
+
+          <Field label={language === "fr" ? "Localisation" : "Location"}>
+            <input
+              value={formData.location}
+              onChange={(event) =>
+                setFormData((current) => ({
+                  ...current,
+                  location: event.target.value.slice(0, 120),
+                }))
+              }
+              maxLength={120}
+              placeholder={language === "fr" ? "Montréal, Canada" : "Montreal, Canada"}
+              className="h-10 w-full max-w-[25rem] rounded-[0.9rem] border border-[#e8e2f7] bg-[#fcfbff] px-3.5 text-sm text-[#1f1c38] dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5]"
+            />
+            <p className="text-xs text-app-meta">{formData.location.length}/120</p>
+          </Field>
+
+          <Field label={language === "fr" ? "Langues" : "Languages"}>
             <div className="flex flex-wrap gap-2">
-              {profileLanguageOptions.map((option) => {
+              {languageOptions.map((option) => {
                 const active = formData.selectedLanguages.includes(option.value);
                 return (
                   <button
@@ -196,7 +264,7 @@ export default function SettingsPage() {
             </div>
           </Field>
 
-          <Field label="Timezone">
+          <Field label={language === "fr" ? "Fuseau horaire" : "Timezone"}>
             <select
               value={formData.timezone}
               onChange={(event) =>
@@ -210,12 +278,14 @@ export default function SettingsPage() {
                 </option>
               ))}
             </select>
-            <p className="text-xs text-app-meta">Current local time: {timezonePreview}</p>
+            <p className="text-xs text-app-meta">
+              {language === "fr" ? "Heure locale actuelle :" : "Current local time:"} {timezonePreview}
+            </p>
           </Field>
 
-          <Field label="Project types">
+          <Field label={language === "fr" ? "Types de projet" : "Project types"}>
             <div className="grid max-w-[44rem] gap-3 sm:grid-cols-2">
-              {profileProjectTypeOptions.map((option) => {
+              {projectTypeOptions.map((option) => {
                 const active = formData.project_types.includes(option.value);
                 return (
                   <button
@@ -235,11 +305,11 @@ export default function SettingsPage() {
               })}
             </div>
             <p className="text-xs text-app-meta">
-              Selected: {formatProjectTypeList(formData.project_types)}
+              {language === "fr" ? "Sélection :" : "Selected:"} {formatProjectTypeList(formData.project_types, language)}
             </p>
           </Field>
 
-          <Field label="Technical stack">
+          <Field label={language === "fr" ? "Stack technique" : "Technical stack"}>
             <div className="max-w-[46rem] rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff] dark:border-[#27272f] dark:bg-[#16161d]">
               <button
                 type="button"
@@ -247,11 +317,15 @@ export default function SettingsPage() {
                 className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
               >
                 <div>
-                  <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">Selected technologies</p>
+                  <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
+                    {language === "fr" ? "Technologies sélectionnées" : "Selected technologies"}
+                  </p>
                   <p className="mt-1 text-xs text-app-meta">
                     {formData.skills.length > 0
-                      ? `${formData.skills.length} / ${maxSelectedSkills} selected`
-                      : "No technologies selected yet"}
+                      ? `${formData.skills.length} / ${maxSelectedSkills} ${language === "fr" ? "sélectionnées" : "selected"}`
+                      : language === "fr"
+                        ? "Aucune technologie sélectionnée"
+                        : "No technologies selected yet"}
                   </p>
                 </div>
                 <ChevronDown
@@ -269,12 +343,14 @@ export default function SettingsPage() {
                         onClick={() => toggleSkill(skill)}
                         className="rounded-full border border-[#e8e2f7] bg-white px-3 py-1.5 text-xs font-medium text-[#5b45d9] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#b8acff]"
                       >
-                        {skill.replaceAll(": Other", " · Other")} ×
+                        {formatTechnologyLabel(skill, language)} ×
                       </button>
                     ))
                   ) : (
                     <p className="text-xs text-app-meta">
-                      Choose from the predefined technologies below.
+                      {language === "fr"
+                        ? "Choisissez parmi les technologies prédéfinies ci-dessous."
+                        : "Choose from the predefined technologies below."}
                     </p>
                   )}
                 </div>
@@ -285,11 +361,13 @@ export default function SettingsPage() {
                   <div className="grid gap-4">
                     {technologyGroups.map((group) => (
                       <div key={group.label}>
-                        <p className="mb-2 text-sm font-medium text-app-secondary">{group.label}</p>
+                        <p className="mb-2 text-sm font-medium text-app-secondary">
+                          {formatTechnologyGroupLabel(group.label, language)}
+                        </p>
                         <div className="flex flex-wrap gap-2">
                           {group.technologies.map((tech) => {
                             const selected = formData.skills.includes(tech);
-                            const labelValue = tech.endsWith(": Other") ? "Other" : tech;
+                            const labelValue = formatTechnologyLabel(tech, language);
 
                             return (
                               <button
@@ -327,10 +405,10 @@ export default function SettingsPage() {
             {isSaving ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                Saving...
+                {language === "fr" ? "Enregistrement..." : "Saving..."}
               </>
             ) : (
-              "Save settings"
+              language === "fr" ? "Enregistrer les paramètres" : "Save settings"
             )}
           </Button>
         </CardContent>

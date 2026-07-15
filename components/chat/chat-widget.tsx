@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FeedbackBanner } from "@/components/app/feedback";
+import { useLanguage } from "@/components/app/language-provider";
 import { ProfileAvatar } from "@/components/app/profile-avatar";
+import { Mascot } from "@/components/app/mascot";
 import type { TeamMessageWithProfile } from "@/lib/team-messages";
 import { getWorkspaceSnapshot } from "@/lib/workspace-data";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -27,6 +29,7 @@ type ActiveChatContext = {
 
 export function ChatWidget() {
   const supabase = getSupabaseBrowserClient();
+  const { language } = useLanguage();
   const {
     isOpen,
     openWidget,
@@ -168,7 +171,7 @@ export function ChatWidget() {
       setMessagesError(null);
       setSendError(null);
 
-      const result = await fetchTeamMessages(supabase, chatContext.teamId);
+      const result = await fetchTeamMessages(supabase, chatContext.teamId, language);
 
       if (!mounted) {
         return;
@@ -190,7 +193,7 @@ export function ChatWidget() {
     return () => {
       mounted = false;
     };
-  }, [applySyncedMessages, chatContext, supabase]);
+  }, [applySyncedMessages, chatContext, language, supabase]);
 
   useEffect(() => {
     if (!chatContext) {
@@ -209,7 +212,7 @@ export function ChatWidget() {
         },
         () => {
           void (async () => {
-            const result = await fetchTeamMessages(supabase, chatContext.teamId);
+            const result = await fetchTeamMessages(supabase, chatContext.teamId, language);
 
             if (result.error) {
               setMessagesError(result.error);
@@ -225,7 +228,7 @@ export function ChatWidget() {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [applySyncedMessages, chatContext, supabase]);
+  }, [applySyncedMessages, chatContext, language, supabase]);
 
   useEffect(() => {
     if (!chatContext) {
@@ -243,7 +246,7 @@ export function ChatWidget() {
       isSyncing = true;
 
       void (async () => {
-        const result = await fetchTeamMessages(supabase, chatContext.teamId);
+        const result = await fetchTeamMessages(supabase, chatContext.teamId, language);
 
         if (!isActive) {
           isSyncing = false;
@@ -265,7 +268,7 @@ export function ChatWidget() {
       isActive = false;
       window.clearInterval(intervalId);
     };
-  }, [applySyncedMessages, chatContext, supabase]);
+  }, [applySyncedMessages, chatContext, language, supabase]);
 
   if (isLoading || !chatContext) {
     return null;
@@ -275,6 +278,7 @@ export function ChatWidget() {
     <div className="pointer-events-none fixed right-5 bottom-5 z-50">
       {isOpen ? (
         <ChatWindow
+          language={language}
           currentUserId={chatContext.userId}
           teamName={chatContext.teamName}
           messages={messages}
@@ -292,7 +296,11 @@ export function ChatWidget() {
             } = await supabase.auth.getSession();
 
             if (!session?.access_token) {
-              setSendError("Missing authenticated session.");
+              setSendError(
+                language === "fr"
+                  ? "Session authentifiée manquante."
+                  : "Missing authenticated session."
+              );
               setIsSending(false);
               return false;
             }
@@ -316,11 +324,17 @@ export function ChatWidget() {
               const retryAfterSeconds = response.headers.get("Retry-After");
               const rateLimitMessage =
                 response.status === 429
-                  ? `You're sending messages too quickly. Please wait ${retryAfterSeconds ?? "a few"} seconds and try again.`
+                  ? language === "fr"
+                    ? `Vous envoyez des messages trop vite. Attendez ${retryAfterSeconds ?? "quelques"} secondes puis réessayez.`
+                    : `You're sending messages too quickly. Please wait ${retryAfterSeconds ?? "a few"} seconds and try again.`
                   : null;
 
               setSendError(
-                rateLimitMessage ?? payload.error ?? "Failed to send your message."
+                rateLimitMessage ??
+                  payload.error ??
+                  (language === "fr"
+                    ? "Impossible d’envoyer votre message."
+                    : "Failed to send your message.")
               );
               setIsSending(false);
               return false;
@@ -333,6 +347,7 @@ export function ChatWidget() {
                 profile: {
                   id: chatContext.userId,
                   display_name: chatContext.userDisplayName,
+                  avatar_url: null,
                 },
               },
             ]);
@@ -341,13 +356,14 @@ export function ChatWidget() {
           }}
         />
       ) : (
-        <ChatBubbleButton unreadCount={unreadCount} onOpen={openWidget} />
+        <ChatBubbleButton unreadCount={unreadCount} onOpen={openWidget} language={language} />
       )}
     </div>
   );
 }
 
 function ChatWindow({
+  language,
   currentUserId,
   teamName,
   messages,
@@ -358,6 +374,7 @@ function ChatWindow({
   onMinimize,
   onSend,
 }: {
+  language: "en" | "fr";
   currentUserId: string;
   teamName: string;
   messages: TeamMessageWithProfile[];
@@ -424,14 +441,14 @@ function ChatWindow({
       <CardHeader className="flex flex-row items-start justify-between border-b border-[#f0ebfb] bg-[#fcfbff] px-4 py-3 dark:border-[#27272f] dark:bg-[#16161d]">
         <div className="min-w-0">
           <Badge className="rounded-full bg-[#f1ebff] text-[#7650ff] hover:bg-[#f1ebff] dark:bg-[#272138] dark:text-[#a698ff] dark:hover:bg-[#272138]">
-            Team chat
+            {language === "fr" ? "Chat d’équipe" : "Team chat"}
           </Badge>
           <CardTitle className="mt-2 text-lg tracking-[-0.04em] text-[#1f1c38] dark:text-[#f2f2f5]">
             {teamName}
           </CardTitle>
           <p className="mt-1 flex items-center gap-2 text-sm text-app-secondary">
             <Users className="size-4" />
-            Available on every workspace page
+            {language === "fr" ? "Disponible sur chaque page de l’espace" : "Available on every workspace page"}
           </p>
         </div>
 
@@ -455,7 +472,9 @@ function ChatWindow({
             <div className="flex h-full items-center justify-center">
               <div className="flex flex-col items-center gap-3 text-center">
                 <Loader2 className="size-5 animate-spin text-[#7650ff]" />
-                <p className="text-sm text-app-secondary">Loading team messages...</p>
+                <p className="text-sm text-app-secondary">
+                  {language === "fr" ? "Chargement des messages d’équipe..." : "Loading team messages..."}
+                </p>
               </div>
             </div>
           ) : loadError ? (
@@ -463,11 +482,16 @@ function ChatWindow({
           ) : sortedMessages.length === 0 ? (
             <div className="flex h-full items-center justify-center text-center">
               <div className="max-w-[220px]">
+                <Mascot pose="sad" size="md" centered className="mb-3" />
                 <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
-                  No messages yet, say hello to your team!
+                  {language === "fr"
+                    ? "Aucun message pour le moment, dites bonjour à votre équipe !"
+                    : "No messages yet, say hello to your team!"}
                 </p>
                 <p className="mt-2 text-sm leading-6 text-app-secondary">
-                  This chat stays available across the whole workspace.
+                  {language === "fr"
+                    ? "Ce chat reste disponible partout dans l’espace."
+                    : "This chat stays available across the whole workspace."}
                 </p>
               </div>
             </div>
@@ -504,14 +528,14 @@ function ChatWindow({
                             isCurrentUser ? "text-white/85" : "text-app-secondary"
                           }`}
                         >
-                          {isCurrentUser ? "You" : item.profile.display_name}
+                          {isCurrentUser ? (language === "fr" ? "Vous" : "You") : item.profile.display_name}
                         </p>
                         <p
                           className={`text-[11px] ${
                             isCurrentUser ? "text-white/70" : "text-app-meta"
                           }`}
                         >
-                          {formatMessageTime(item.message.created_at)}
+                          {formatMessageTime(item.message.created_at, language)}
                         </p>
                       </div>
                       <p
@@ -543,7 +567,7 @@ function ChatWindow({
                 void handleSubmit();
               }
             }}
-            placeholder="Write a message..."
+            placeholder={language === "fr" ? "Écrire un message..." : "Write a message..."}
             className="h-10 border-0 bg-transparent px-2 shadow-none focus-visible:ring-0 dark:text-[#f2f2f5] dark:placeholder:text-[#747482]"
           />
           <Button
@@ -558,10 +582,16 @@ function ChatWindow({
           <div className="mt-1 flex items-center justify-between px-2 text-[11px]">
             <span className={isDraftTooLong ? "text-[#dc2626]" : "text-app-meta"}>
               {isCooldownActive
-                ? "Please wait a second before sending again."
+                ? language === "fr"
+                  ? "Veuillez attendre une seconde avant de renvoyer."
+                  : "Please wait a second before sending again."
                 : isDraftTooLong
-                  ? `Maximum ${MAX_CHAT_MESSAGE_LENGTH} characters.`
-                  : "Press Enter to send"}
+                  ? language === "fr"
+                    ? `Maximum ${MAX_CHAT_MESSAGE_LENGTH} caractères.`
+                    : `Maximum ${MAX_CHAT_MESSAGE_LENGTH} characters.`
+                  : language === "fr"
+                    ? "Appuyez sur Entrée pour envoyer"
+                    : "Press Enter to send"}
             </span>
             <span className={isDraftTooLong ? "text-[#dc2626]" : "text-app-meta"}>
               {trimmedDraftLength}/{MAX_CHAT_MESSAGE_LENGTH}
@@ -576,16 +606,19 @@ function ChatWindow({
 function ChatBubbleButton({
   unreadCount,
   onOpen,
+  language = "en",
 }: {
   unreadCount: number;
   onOpen: () => void;
+  language?: "en" | "fr";
 }) {
   return (
     <button
       type="button"
       onClick={onOpen}
       className="pointer-events-auto relative flex size-14 items-center justify-center rounded-full bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-[0_18px_50px_rgba(118,80,255,0.35)] transition duration-200 ease-out hover:scale-[1.02] dark:bg-[linear-gradient(135deg,#6d5ce8_0%,#5f50d2_100%)] dark:shadow-[0_18px_50px_rgba(0,0,0,0.45)]"
-      aria-label="Open team chat"
+      aria-label={language === "fr" ? "Ouvrir le chat du party" : "Open team chat"}
+      title={language === "fr" ? "Ouvrir le chat du party" : "Open team chat"}
     >
       <MessageSquare className="size-5" />
       {unreadCount > 0 ? (
@@ -597,9 +630,9 @@ function ChatBubbleButton({
   );
 }
 
-function formatMessageTime(createdAt: string) {
+function formatMessageTime(createdAt: string, language: "en" | "fr" = "en") {
   try {
-    return new Intl.DateTimeFormat("en-US", {
+    return new Intl.DateTimeFormat(language === "fr" ? "fr-CA" : "en-US", {
       hour: "numeric",
       minute: "2-digit",
     }).format(new Date(createdAt));
@@ -610,7 +643,8 @@ function formatMessageTime(createdAt: string) {
 
 async function fetchTeamMessages(
   supabase: ReturnType<typeof getSupabaseBrowserClient>,
-  teamId: string
+  teamId: string,
+  language: "en" | "fr"
 ) {
   const {
     data: { session },
@@ -619,7 +653,10 @@ async function fetchTeamMessages(
   if (!session?.access_token) {
     return {
       messages: [] as TeamMessageWithProfile[],
-      error: "Missing authenticated session.",
+      error:
+        language === "fr"
+          ? "Session authentifiée manquante."
+          : "Missing authenticated session.",
     };
   }
 
@@ -638,7 +675,11 @@ async function fetchTeamMessages(
   if (!response.ok) {
     return {
       messages: [] as TeamMessageWithProfile[],
-      error: payload.error ?? "Failed to load team messages.",
+      error:
+        payload.error ??
+        (language === "fr"
+          ? "Impossible de charger les messages du party."
+          : "Failed to load team messages."),
     };
   }
 

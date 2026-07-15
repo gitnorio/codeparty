@@ -56,6 +56,13 @@ body {
   color: #1f1c38;
 }
 
+.dark body {
+  background:
+    radial-gradient(circle at top, rgba(109, 92, 232, 0.18), transparent 28%),
+    #0d0d12;
+  color: #f2f2f5;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -63,6 +70,32 @@ html {
 ::selection {
   background: rgba(118, 80, 255, 0.18);
   color: #1f1c38;
+}
+
+.dark ::selection {
+  background: rgba(118, 80, 255, 0.35);
+  color: #f2f2f5;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
+html.theme-fade,
+html.theme-fade body,
+html.theme-fade body * {
+  transition:
+    background-color 300ms ease,
+    color 300ms ease,
+    border-color 300ms ease,
+    fill 300ms ease,
+    stroke 300ms ease;
 }
 
 :root {
@@ -112,7 +145,7 @@ html {
   --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
+  --muted-foreground: #b3b4c2;
   --accent: oklch(0.274 0.006 286.033);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
@@ -147,6 +180,15 @@ html {
 }
 
 @layer utilities {
+  .text-app-secondary {
+    @apply text-[#6a6683] dark:text-muted-foreground;
+  }
+  .text-app-meta {
+    @apply text-[#7a7493] dark:text-muted-foreground;
+  }
+  .text-app-overline {
+    @apply text-[#8f84bc] dark:text-muted-foreground;
+  }
   .bg-grid-pattern {
     background-size: 50px 50px;
     background-image: 

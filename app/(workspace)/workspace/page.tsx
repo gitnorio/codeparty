@@ -181,11 +181,8 @@ export default function WorkspacePage() {
 
   return (
     <div className="grid gap-4">
-      <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-none">
+      <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-none dark:bg-[linear-gradient(135deg,#6d5ce8_0%,#5f50d2_100%)]">
         <CardHeader>
-          <Badge className="w-fit rounded-full bg-white/14 text-white hover:bg-white/14">
-            Workspace
-          </Badge>
           <CardTitle className="mt-4 text-5xl leading-[0.96] tracking-[-0.05em]">
             Keep the team and project in one place.
           </CardTitle>
@@ -202,31 +199,31 @@ export default function WorkspacePage() {
       {isLoading ? (
         <LoadingPanel message="Loading workspace..." />
       ) : !selectedPartyId ? (
-        <Card className="border border-[#ece8f8] shadow-none">
+        <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
           <CardHeader>
-            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
+            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
               All parties
             </CardTitle>
-            <CardDescription className="text-sm leading-6 text-[#6a6683]">
+            <CardDescription className="text-sm leading-6 text-app-secondary">
               Select a party to open its dedicated workspace.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {parties.length === 0 ? (
-              <div className="rounded-[1rem] bg-[#faf8ff] p-4 text-sm text-[#6a6683]">
+              <div className="rounded-[1rem] bg-[#faf8ff] p-4 text-sm text-app-secondary dark:bg-[#16161d] dark:text-muted-foreground">
                 No parties available yet.
               </div>
             ) : (
-              <div className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff]">
+              <div className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff] dark:border-[#27272f] dark:bg-[#16161d]">
                 {parties.map((party) => (
                   <Link
                     key={party.id}
                     href={`/workspace?party=${party.id}`}
-                    className="flex items-center justify-between gap-3 border-b px-4 py-3 transition hover:bg-[#faf8ff] last:border-b-0"
+                    className="flex items-center justify-between gap-3 border-b px-4 py-3 transition hover:bg-[#faf8ff] dark:border-[#27272f] dark:hover:bg-[#1a1a22] last:border-b-0"
                   >
                     <div>
-                      <p className="text-sm font-medium text-[#1f1c38]">Party {party.party_id}</p>
-                      <p className="mt-0.5 text-[11px] text-[#6a6683]">
+                      <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">Party {party.party_id}</p>
+                      <p className="mt-0.5 text-[11px] text-app-secondary">
                         {formatProjectLabel(party.status)}
                       </p>
                     </div>
@@ -265,12 +262,12 @@ export default function WorkspacePage() {
 
           {!snapshot.currentProject ? (
             <div className="grid gap-4 xl:grid-cols-[0.86fr_1.14fr]">
-              <Card className="border border-[#ece8f8] shadow-none">
+              <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
                 <CardHeader>
-                  <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
+                  <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
                     Team members
                   </CardTitle>
-                  <CardDescription className="text-sm leading-6 text-[#6a6683]">
+                  <CardDescription className="text-sm leading-6 text-app-secondary">
                     Everyone currently active in the team and ready for the first shared build.
                   </CardDescription>
                 </CardHeader>
@@ -279,21 +276,21 @@ export default function WorkspacePage() {
                 </CardContent>
               </Card>
 
-              <Card className="border border-[#ece8f8] shadow-none">
+              <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
                 <CardHeader>
-                  <Badge variant="outline" className="w-fit rounded-full bg-[#f6f2ff] text-[#7650ff]">
+                  <Badge variant="outline" className="w-fit rounded-full bg-[#f6f2ff] text-[#7650ff] dark:border-[#27272f] dark:bg-[#23232c] dark:text-[#a698ff]">
                     Team-owned setup
                   </Badge>
-                  <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
+                  <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
                     Create your team project
                   </CardTitle>
-                  <CardDescription className="text-sm leading-6 text-[#6a6683]">
+                  <CardDescription className="text-sm leading-6 text-app-secondary">
                     Keep the setup lean: define the repo, the stack, and one role per teammate.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4">
                   <div className="rounded-[1.15rem] bg-[linear-gradient(135deg,rgba(116,72,255,0.12)_0%,rgba(142,107,255,0.16)_100%)] p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">Before you paste the repo URL</p>
+                    <p className="text-xs uppercase tracking-[0.18em] text-app-overline">Before you paste the repo URL</p>
                     <div className="mt-3 grid gap-2">
                       {[
                         "1. One teammate creates the repository on GitHub.",
@@ -302,7 +299,7 @@ export default function WorkspacePage() {
                       ].map((item) => (
                         <div
                           key={item}
-                          className="rounded-[1rem] border border-white/60 bg-white/70 px-3 py-2 text-sm leading-6 text-[#5f587f]"
+                          className="rounded-[1rem] border border-white/60 bg-white/70 px-3 py-2 text-sm leading-6 text-[#5f587f] dark:border-[#3a3450] dark:bg-[#1f1f28] dark:text-[#c4c4ce]"
                         >
                           {item}
                         </div>
@@ -318,7 +315,7 @@ export default function WorkspacePage() {
                       }
                       rows={3}
                       placeholder="Describe the project scope, what the team wants to ship, and the main objectives."
-                      className="w-full rounded-[0.9rem] border border-[#e8e2f7] bg-[#fcfbff] px-3.5 py-2.5 text-sm text-[#1f1c38] outline-none transition placeholder:text-[#a9a3c2] focus:border-[#7b61ff]/45"
+                      className="w-full rounded-[0.9rem] border border-[#e8e2f7] bg-[#fcfbff] px-3.5 py-2.5 text-sm text-[#1f1c38] outline-none transition placeholder:text-[#a9a3c2] focus:border-[#7b61ff]/45 dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5] dark:placeholder:text-[#747482]"
                     />
                   </Field>
 
@@ -330,7 +327,7 @@ export default function WorkspacePage() {
                           setFormData((current) => ({ ...current, stackInput: event.target.value }))
                         }
                         placeholder="Next.js, TypeScript, Supabase"
-                        className="h-10 rounded-[0.9rem] border-[#e8e2f7] bg-[#fcfbff] px-3.5"
+                        className="h-10 rounded-[0.9rem] border-[#e8e2f7] bg-[#fcfbff] px-3.5 dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5]"
                       />
                     </Field>
 
@@ -341,7 +338,7 @@ export default function WorkspacePage() {
                           setFormData((current) => ({ ...current, githubRepoUrl: event.target.value }))
                         }
                         placeholder="https://github.com/owner/repo"
-                        className="h-10 rounded-[0.9rem] border-[#e8e2f7] bg-[#fcfbff] px-3.5"
+                        className="h-10 rounded-[0.9rem] border-[#e8e2f7] bg-[#fcfbff] px-3.5 dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5]"
                       />
                     </Field>
                   </div>
@@ -351,7 +348,7 @@ export default function WorkspacePage() {
                       ? stackPreview.map((item) => (
                           <span
                             key={item}
-                            className="rounded-full bg-[#f3eeff] px-2.5 py-1 text-xs text-[#5b45d9]"
+                            className="rounded-full bg-[#f3eeff] px-2.5 py-1 text-xs text-[#5b45d9] dark:bg-[#272138] dark:text-[#b8acff]"
                           >
                             {item}
                           </span>
@@ -367,7 +364,7 @@ export default function WorkspacePage() {
                         onChange={(event) =>
                           setFormData((current) => ({ ...current, startDate: event.target.value }))
                         }
-                        className="h-10 rounded-[0.9rem] border-[#e8e2f7] bg-[#fcfbff] px-3.5"
+                        className="h-10 rounded-[0.9rem] border-[#e8e2f7] bg-[#fcfbff] px-3.5 dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5]"
                       />
                     </Field>
                     <Field label="Planned end date">
@@ -377,7 +374,7 @@ export default function WorkspacePage() {
                         onChange={(event) =>
                           setFormData((current) => ({ ...current, endDate: event.target.value }))
                         }
-                        className="h-10 rounded-[0.9rem] border-[#e8e2f7] bg-[#fcfbff] px-3.5"
+                        className="h-10 rounded-[0.9rem] border-[#e8e2f7] bg-[#fcfbff] px-3.5 dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5]"
                       />
                     </Field>
                   </div>
@@ -385,25 +382,25 @@ export default function WorkspacePage() {
                   <div className="grid gap-3">
                     <div>
                       <p className="text-sm font-medium text-[#4f496e]">Member roles</p>
-                      <p className="mt-1 text-sm leading-6 text-[#6a6683]">
+                      <p className="mt-1 text-sm leading-6 text-app-secondary">
                         Assign one clear role per teammate for kickoff.
                       </p>
                     </div>
                     {snapshot.teamMembers.map((member) => (
                       <div
                         key={member.profile.id}
-                        className="rounded-[1.1rem] border border-[#ece8f8] bg-[#fcfbff] p-3.5"
+                        className="rounded-[1.1rem] border border-[#ece8f8] bg-[#fcfbff] p-3.5 dark:border-[#27272f] dark:bg-[#16161d]"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="text-base font-medium text-[#1f1c38]">
+                            <p className="text-base font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
                               {member.profile.display_name}
                             </p>
-                            <p className="mt-1 text-sm text-[#6a6683]">
+                            <p className="mt-1 text-sm text-app-secondary">
                               {formatLanguageValue(member.profile.language)} · {member.profile.timezone}
                             </p>
                           </div>
-                          <Badge variant="outline" className="rounded-full bg-white text-[#7650ff]">
+                          <Badge variant="outline" className="rounded-full bg-white text-[#7650ff] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#a698ff]">
                             Active teammate
                           </Badge>
                         </div>
@@ -427,8 +424,8 @@ export default function WorkspacePage() {
                                 }
                                 className={
                                   selected
-                                    ? "rounded-full border border-[#8d78ff] bg-[#f1ebff] px-3 py-1.5 text-xs font-medium text-[#5b45d9]"
-                                    : "rounded-full border border-[#e8e2f7] bg-white px-3 py-1.5 text-xs font-medium text-[#5f587f]"
+                                    ? "rounded-full border border-[#8d78ff] bg-[#f1ebff] px-3 py-1.5 text-xs font-medium text-[#5b45d9] dark:border-[#6d5ce8] dark:bg-[#2a2340] dark:text-[#b8acff]"
+                                    : "rounded-full border border-[#e8e2f7] bg-white px-3 py-1.5 text-xs font-medium text-[#5f587f] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-muted-foreground"
                                 }
                               >
                                 {formatProjectLabel(role)}
@@ -452,7 +449,7 @@ export default function WorkspacePage() {
                           }
                           rows={2}
                           placeholder="Optional: outline the main contribution this teammate will own."
-                          className="mt-3 w-full rounded-[0.9rem] border border-[#e8e2f7] bg-white px-3.5 py-2.5 text-sm text-[#1f1c38] outline-none transition placeholder:text-[#a9a3c2] focus:border-[#7b61ff]/45"
+                          className="mt-3 w-full rounded-[0.9rem] border border-[#e8e2f7] bg-white px-3.5 py-2.5 text-sm text-[#1f1c38] outline-none transition placeholder:text-[#a9a3c2] focus:border-[#7b61ff]/45 dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#f2f2f5] dark:placeholder:text-[#747482]"
                         />
                       </div>
                     ))}
@@ -487,7 +484,7 @@ export default function WorkspacePage() {
                     <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
                       Team members
                     </CardTitle>
-                    <CardDescription className="text-sm leading-6 text-[#6a6683]">
+                    <CardDescription className="text-sm leading-6 text-app-secondary">
                       The people currently attached to this team and the roles visible in the project.
                     </CardDescription>
                   </CardHeader>
@@ -502,13 +499,13 @@ export default function WorkspacePage() {
                       <Badge variant="outline" className="w-fit rounded-full bg-[#f6f2ff] text-[#7650ff]">
                         Repository
                       </Badge>
-                      <CardDescription className="text-sm leading-6 text-[#6a6683]">
+                      <CardDescription className="text-sm leading-6 text-app-secondary">
                         The shared GitHub repository linked to this party.
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="rounded-[1.15rem] bg-[#faf8ff] p-4">
-                        <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">Repository</p>
+                        <p className="text-xs uppercase tracking-[0.18em] text-app-overline">Repository</p>
                         <p className="mt-1 text-base font-medium text-[#1f1c38]">
                           {snapshot.currentProject.github_repo_url
                             ? repoLabel(snapshot.currentProject.github_repo_url)
@@ -535,19 +532,19 @@ export default function WorkspacePage() {
                         <Badge variant="outline" className="w-fit rounded-full bg-[#f6f2ff] text-[#7650ff]">
                           Completion
                         </Badge>
-                        <CardDescription className="text-sm leading-6 text-[#6a6683]">
+                        <CardDescription className="text-sm leading-6 text-app-secondary">
                           When the project is done, send a completion request to admin for review.
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="grid gap-3">
                         <div className="rounded-[1.15rem] bg-[#faf8ff] p-4">
-                          <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">Status</p>
+                          <p className="text-xs uppercase tracking-[0.18em] text-app-overline">Status</p>
                           <p className="mt-1 text-sm font-medium text-[#1f1c38]">
                             {snapshot.currentTeam.completion_requested_at
                               ? "Completion review pending"
                               : "No completion request yet"}
                           </p>
-                          <p className="mt-1 text-xs leading-5 text-[#6a6683]">
+                          <p className="mt-1 text-xs leading-5 text-app-secondary">
                             {snapshot.currentTeam.completion_requested_at
                               ? `Requested ${formatInlineDate(snapshot.currentTeam.completion_requested_at)}${completionRequester ? ` by ${completionRequester}` : ""}.`
                               : "A party member can submit a completion request once the work is ready for admin review."}
@@ -614,9 +611,9 @@ function SignalCard({
   return (
     <Card className="border border-[#ece8f8] shadow-none">
       <CardContent className="pt-5">
-        <p className="text-sm uppercase tracking-[0.18em] text-[#8f84bc]">{label}</p>
+        <p className="text-sm uppercase tracking-[0.18em] text-app-overline">{label}</p>
         <p className="mt-1 text-xl font-semibold tracking-[-0.04em] text-[#1f1c38]">{value}</p>
-        <p className="mt-1 text-sm leading-6 text-[#6a6683]">{detail}</p>
+        <p className="mt-1 text-sm leading-6 text-app-secondary">{detail}</p>
       </CardContent>
     </Card>
   );
@@ -650,10 +647,10 @@ function CompactTeamMemberList({
             <p className="truncate text-sm font-medium text-[#1f1c38]">
               {member.profile.display_name}
             </p>
-            <p className="mt-0.5 truncate text-[11px] text-[#6a6683]">
+            <p className="mt-0.5 truncate text-[11px] text-app-secondary">
               {formatLanguageValue(member.profile.language)} · {member.profile.timezone}
             </p>
-            <p className="mt-0.5 truncate text-[10px] text-[#8f84bc]">
+            <p className="mt-0.5 truncate text-[10px] text-app-overline">
               {member.profile.skills.slice(0, 3).join(" · ") || "No stack selected"}
             </p>
           </div>

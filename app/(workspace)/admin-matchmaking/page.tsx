@@ -278,12 +278,12 @@ export default function AdminMatchmakingPage() {
   return (
     <div className="grid gap-4">
       {!isAdmin ? (
-        <Card className="border border-red-200 shadow-none">
+        <Card className="border border-red-200 shadow-none dark:border-red-500/20 dark:bg-[#1a1a22]">
           <CardContent className="pt-5">
-            <h1 className="text-2xl font-semibold tracking-[-0.05em] text-[#1f1c38]">
+            <h1 className="text-2xl font-semibold tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
               Access denied
             </h1>
-            <p className="mt-2 text-sm leading-6 text-[#6a6683]">
+            <p className="mt-2 text-sm leading-6 text-app-secondary">
               This admin matchmaking screen is restricted to approved admin email addresses.
             </p>
           </CardContent>
@@ -292,7 +292,7 @@ export default function AdminMatchmakingPage() {
 
       {isAdmin ? (
         <>
-          <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-none">
+          <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-none dark:bg-[linear-gradient(135deg,#6d5ce8_0%,#5f50d2_100%)]">
             <CardHeader>
               <CardTitle className="mt-4 text-5xl leading-[0.96] tracking-[-0.05em]">
                 Build teams manually, supervise lightly.
@@ -304,22 +304,22 @@ export default function AdminMatchmakingPage() {
           </Card>
 
           <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-            <Card className="border border-[#ece8f8] shadow-none">
+            <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
               <CardHeader>
-                <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
+                <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
                   Waiting profiles
                 </CardTitle>
-                <CardDescription className="text-sm leading-6 text-[#6a6683]">
+                <CardDescription className="text-sm leading-6 text-app-secondary">
                   Every user currently marked as `waiting` appears here for manual team creation.
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
-                <div className="flex items-center justify-between rounded-[1.2rem] bg-[#faf8ff] p-4">
+                <div className="flex items-center justify-between rounded-[1.2rem] bg-[#faf8ff] p-4 dark:bg-[#16161d]">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">
+                    <p className="text-xs uppercase tracking-[0.18em] text-app-overline">
                       Waiting users
                     </p>
-                    <p className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-[#1f1c38]">
+                    <p className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-[#1f1c38] dark:text-[#f2f2f5]">
                       {waitingCandidates.length}
                     </p>
                   </div>
@@ -328,7 +328,7 @@ export default function AdminMatchmakingPage() {
                     variant="outline"
                     onClick={() => void loadAdminData({ silent: true })}
                     disabled={isRefreshing}
-                    className="rounded-full border-[#e8e2f7] bg-white text-[#1f1c38]"
+                    className="rounded-full border-[#e8e2f7] bg-white text-[#1f1c38] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#f2f2f5] dark:hover:bg-[#23232c]"
                   >
                     {isRefreshing ? (
                       <>
@@ -345,15 +345,15 @@ export default function AdminMatchmakingPage() {
                 </div>
 
                 {isLoading ? (
-                  <div className="flex min-h-[180px] items-center justify-center rounded-[1.5rem] bg-[#faf8ff]">
+                  <div className="flex min-h-[180px] items-center justify-center rounded-[1.5rem] bg-[#faf8ff] dark:bg-[#16161d]">
                     <Loader2 className="size-6 animate-spin text-[#7650ff]" />
                   </div>
                 ) : waitingCandidates.length === 0 ? (
-                  <div className="rounded-[1.5rem] bg-[#faf8ff] p-6 text-sm text-[#6a6683]">
+                  <div className="rounded-[1.5rem] bg-[#faf8ff] p-6 text-sm text-app-secondary dark:bg-[#16161d] dark:text-muted-foreground">
                     No profiles are currently waiting in the queue.
                   </div>
                 ) : (
-                  <div className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff]">
+                  <div className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff] dark:border-[#27272f] dark:bg-[#1a1a22]">
                   {waitingCandidates.map((candidate) => {
                     const selected = selectedUserIds.includes(candidate.profile.id);
                     const queuedDays = getQueuedDays(candidate.queue.created_at);
@@ -364,26 +364,26 @@ export default function AdminMatchmakingPage() {
                         onClick={() => toggleCandidate(candidate.profile.id)}
                         className={`flex w-full items-center justify-between gap-3 border-b px-3 py-2.5 text-left transition last:border-b-0 ${
                           selected
-                            ? "border-[#e8defd] bg-[#f1ebff]"
-                            : "border-[#ece8f8] bg-[#fcfbff] hover:bg-[#faf8ff]"
+                            ? "border-[#e8defd] bg-[#f1ebff] dark:border-[#3a3450] dark:bg-[#262235]"
+                            : "border-[#ece8f8] bg-[#fcfbff] hover:bg-[#faf8ff] dark:border-[#27272f] dark:bg-[#1a1a22] dark:hover:bg-[#23232c]"
                         }`}
                       >
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-[#1f1c38]">
+                          <p className="truncate text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
                             {candidate.profile.display_name}
                           </p>
-                          <p className="mt-0.5 truncate text-[11px] text-[#6a6683]">
+                          <p className="mt-0.5 truncate text-[11px] text-app-secondary">
                             {formatLanguageValue(candidate.profile.language)} · {candidate.profile.timezone}
                           </p>
-                          <p className="mt-0.5 truncate text-[10px] text-[#8f84bc]">
+                          <p className="mt-0.5 truncate text-[10px] text-app-overline dark:text-[#a698ff]">
                             {candidate.profile.skills.slice(0, 3).join(" · ") || "No stack selected"}
                           </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
-                          <span className="rounded-full border border-[#e8e2f7] bg-white px-2 py-1 text-[10px] font-medium text-[#7650ff]">
+                          <span className="rounded-full border border-[#e8e2f7] bg-white px-2 py-1 text-[10px] font-medium text-[#7650ff] dark:border-[#27272f] dark:bg-[#23232c] dark:text-[#a698ff]">
                             {formatProjectTypeList(candidate.profile.project_type)}
                           </span>
-                          <span className="text-[10px] text-[#8f84bc]">
+                          <span className="text-[10px] text-app-overline">
                             {queuedDays}d
                           </span>
                         </div>
@@ -395,24 +395,24 @@ export default function AdminMatchmakingPage() {
               </CardContent>
             </Card>
 
-            <Card className="border border-[#ece8f8] shadow-none">
+            <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
               <CardHeader>
-                <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
+                <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
                   Party builder
                 </CardTitle>
-                <CardDescription className="text-sm leading-6 text-[#6a6683]">
+                <CardDescription className="text-sm leading-6 text-app-secondary">
                   Select members, then create the party.
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-3">
-                <div className="rounded-[1rem] bg-[#faf8ff] p-3.5">
-                  <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">
+                <div className="rounded-[1rem] bg-[#faf8ff] p-3.5 dark:bg-[#16161d]">
+                  <p className="text-xs uppercase tracking-[0.18em] text-app-overline">
                     Selected members
                   </p>
-                  <p className="mt-1 text-xl font-semibold tracking-[-0.04em] text-[#1f1c38]">
+                  <p className="mt-1 text-xl font-semibold tracking-[-0.04em] text-[#1f1c38] dark:text-[#f2f2f5]">
                     {selectedCandidates.length} / {maxTeamSize}
                   </p>
-                  <p className="mt-1 text-xs text-[#6a6683]">
+                  <p className="mt-1 text-xs text-app-secondary">
                     {minTeamSize} to {maxTeamSize} members recommended.
                   </p>
                 </div>
@@ -422,15 +422,15 @@ export default function AdminMatchmakingPage() {
                     selectedCandidates.map((candidate) => (
                       <div
                         key={candidate.profile.id}
-                        className="rounded-[0.95rem] bg-[#faf8ff] px-3 py-2.5"
+                        className="rounded-[0.95rem] bg-[#faf8ff] px-3 py-2.5 dark:bg-[#16161d]"
                       >
-                        <p className="text-sm font-medium text-[#1f1c38]">
+                        <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
                           {candidate.profile.display_name}
                         </p>
                       </div>
                     ))
                   ) : (
-                    <div className="rounded-[1rem] bg-[#faf8ff] p-4 text-sm text-[#6a6683]">
+                    <div className="rounded-[1rem] bg-[#faf8ff] p-4 text-sm text-app-secondary dark:bg-[#16161d] dark:text-muted-foreground">
                       Select 3 to 4 waiting developers to build a team.
                     </div>
                   )}
@@ -463,45 +463,45 @@ export default function AdminMatchmakingPage() {
             </Card>
           </div>
 
-          <Card className="border border-[#ece8f8] shadow-none">
+          <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
             <CardHeader>
-              <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
+              <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
                 Party history
               </CardTitle>
-              <CardDescription className="text-sm leading-6 text-[#6a6683]">
+              <CardDescription className="text-sm leading-6 text-app-secondary">
                 Minimal admin controls for active, completed, and cancelled parties.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3">
               {isLoading ? (
-                <div className="flex min-h-[160px] items-center justify-center rounded-[1.5rem] bg-[#faf8ff]">
+                <div className="flex min-h-[160px] items-center justify-center rounded-[1.5rem] bg-[#faf8ff] dark:bg-[#16161d]">
                   <Loader2 className="size-6 animate-spin text-[#7650ff]" />
                 </div>
               ) : formedTeams.length === 0 ? (
-                <div className="rounded-[1.5rem] bg-[#faf8ff] p-6 text-sm text-[#6a6683]">
+                <div className="rounded-[1.5rem] bg-[#faf8ff] p-6 text-sm text-app-secondary dark:bg-[#16161d] dark:text-muted-foreground">
                   No parties have been formed yet.
                 </div>
               ) : (
                 formedTeams.map((item) => (
                   <div
                     key={item.team.id}
-                    className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff] p-3.5"
+                    className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff] p-3.5 dark:border-[#27272f] dark:bg-[#16161d]"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold text-[#1f1c38]">
+                        <p className="text-sm font-semibold text-[#1f1c38] dark:text-[#f2f2f5]">
                           Party ID {item.team.party_id}
                         </p>
                         <div className="mt-1 flex items-center gap-2">
                           <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${getPartyStatusClasses(item.team.status)}`}>
                             {formatPartyStatus(item.team.status)}
                           </span>
-                          <span className="text-xs text-[#6a6683]">
+                          <span className="text-xs text-app-secondary">
                             Created {formatCreatedDate(item.team.created_at)}
                           </span>
                         </div>
                         {item.team.completion_requested_at ? (
-                          <p className="mt-1 text-[11px] text-[#5b45d9]">
+                          <p className="mt-1 text-[11px] text-[#5b45d9] dark:text-[#a698ff]">
                             Completion requested {formatCreatedDate(item.team.completion_requested_at)}
                             {item.team.completion_requested_by
                               ? ` by ${item.members.find((member) => member.id === item.team.completion_requested_by)?.display_name ?? "a member"}`
@@ -518,7 +518,7 @@ export default function AdminMatchmakingPage() {
                             actionKey === `completed-${item.team.id}` ||
                             item.team.status === "completed"
                           }
-                          className="h-8 rounded-full border-[#d6efdf] bg-white px-3 text-[#208a52] hover:bg-[#f7fff9]"
+                          className="h-8 rounded-full border-[#d6efdf] bg-white px-3 text-[#208a52] hover:bg-[#f7fff9] dark:border-[#244a35] dark:bg-[#1a1a22] dark:text-[#7dd7a4] dark:hover:bg-[#1f2a24]"
                         >
                           {actionKey === `completed-${item.team.id}` ? (
                             "Updating..."
@@ -535,7 +535,7 @@ export default function AdminMatchmakingPage() {
                             variant="outline"
                             onClick={() => void handleRejectCompletionRequest(item.team.id, item.team.party_id)}
                             disabled={actionKey === `reject-${item.team.id}`}
-                            className="h-8 rounded-full border-[#e8e2f7] bg-white px-3 text-[#5f587f] hover:bg-[#faf8ff]"
+                            className="h-8 rounded-full border-[#e8e2f7] bg-white px-3 text-[#5f587f] hover:bg-[#faf8ff] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#c2bdd8] dark:hover:bg-[#23232c]"
                           >
                             {actionKey === `reject-${item.team.id}` ? "Updating..." : "Reject"}
                           </Button>
@@ -548,7 +548,7 @@ export default function AdminMatchmakingPage() {
                             actionKey === `cancelled-${item.team.id}` ||
                             item.team.status === "cancelled"
                           }
-                          className="h-8 rounded-full border-[#f1d4dc] bg-white px-3 text-[#a14b63] hover:bg-[#fff7f9]"
+                          className="h-8 rounded-full border-[#f1d4dc] bg-white px-3 text-[#a14b63] hover:bg-[#fff7f9] dark:border-[#4a2731] dark:bg-[#1a1a22] dark:text-[#f09ab0] dark:hover:bg-[#2a1d22]"
                         >
                           {actionKey === `cancelled-${item.team.id}` ? (
                             "Updating..."
@@ -566,20 +566,20 @@ export default function AdminMatchmakingPage() {
                       {item.members.map((member) => (
                         <span
                           key={member.id}
-                          className="rounded-full bg-[#f3eeff] px-2 py-1 text-[11px] text-[#5b45d9]"
+                          className="rounded-full bg-[#f3eeff] px-2 py-1 text-[11px] text-[#5b45d9] dark:bg-[#23232c] dark:text-[#a698ff]"
                         >
                           {member.display_name}
                         </span>
                       ))}
                     </div>
 
-                    <p className="mt-2 text-xs text-[#6a6683]">
+                    <p className="mt-2 text-xs text-app-secondary">
                       {item.project?.github_repo_url ? (
                         <a
                           href={item.project.github_repo_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="font-medium text-[#5b45d9] underline-offset-4 hover:underline"
+                          className="font-medium text-[#5b45d9] underline-offset-4 hover:underline dark:text-[#a698ff]"
                         >
                           {item.project.github_repo_url}
                         </a>
@@ -603,9 +603,9 @@ function formatPartyStatus(status: "active" | "completed" | "cancelled") {
 }
 
 function getPartyStatusClasses(status: "active" | "completed" | "cancelled") {
-  if (status === "active") return "bg-[#ece4ff] text-[#5b45d9]";
-  if (status === "completed") return "bg-[#e9f9ef] text-[#208a52]";
-  return "bg-[#fff0f3] text-[#b84b66]";
+  if (status === "active") return "bg-[#ece4ff] text-[#5b45d9] dark:bg-[#272138] dark:text-[#a698ff]";
+  if (status === "completed") return "bg-[#e9f9ef] text-[#208a52] dark:bg-[#1f2a24] dark:text-[#7dd7a4]";
+  return "bg-[#fff0f3] text-[#b84b66] dark:bg-[#2a1d22] dark:text-[#f09ab0]";
 }
 
 function getQueuedDays(createdAt: string) {

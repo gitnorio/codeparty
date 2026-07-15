@@ -428,7 +428,7 @@ function ChatWindow({
           <CardTitle className="mt-2 text-lg tracking-[-0.04em] text-[#1f1c38]">
             {teamName}
           </CardTitle>
-          <p className="mt-1 flex items-center gap-2 text-sm text-[#6a6683]">
+          <p className="mt-1 flex items-center gap-2 text-sm text-app-secondary">
             <Users className="size-4" />
             Available on every workspace page
           </p>
@@ -439,7 +439,7 @@ function ChatWindow({
           variant="ghost"
           size="icon"
           onClick={onMinimize}
-          className="size-8 rounded-full text-[#6a6683] hover:bg-[#f3eeff] hover:text-[#1f1c38]"
+          className="size-8 rounded-full text-app-secondary hover:bg-[#f3eeff] hover:text-[#1f1c38]"
         >
           <Minus className="size-4" />
         </Button>
@@ -454,7 +454,7 @@ function ChatWindow({
             <div className="flex h-full items-center justify-center">
               <div className="flex flex-col items-center gap-3 text-center">
                 <Loader2 className="size-5 animate-spin text-[#7650ff]" />
-                <p className="text-sm text-[#6a6683]">Loading team messages...</p>
+                <p className="text-sm text-app-secondary">Loading team messages...</p>
               </div>
             </div>
           ) : loadError ? (
@@ -465,7 +465,7 @@ function ChatWindow({
                 <p className="text-sm font-medium text-[#1f1c38]">
                   No messages yet, say hello to your team!
                 </p>
-                <p className="mt-2 text-sm leading-6 text-[#6a6683]">
+                <p className="mt-2 text-sm leading-6 text-app-secondary">
                   This chat stays available across the whole workspace.
                 </p>
               </div>
@@ -499,14 +499,14 @@ function ChatWindow({
                         </div>
                         <p
                           className={`text-[11px] font-medium ${
-                            isCurrentUser ? "text-white/85" : "text-[#6a6683]"
+                            isCurrentUser ? "text-white/85" : "text-app-secondary"
                           }`}
                         >
                           {isCurrentUser ? "You" : item.profile.display_name}
                         </p>
                         <p
                           className={`text-[11px] ${
-                            isCurrentUser ? "text-white/70" : "text-[#9a93b5]"
+                            isCurrentUser ? "text-white/70" : "text-app-meta"
                           }`}
                         >
                           {formatMessageTime(item.message.created_at)}
@@ -554,14 +554,14 @@ function ChatWindow({
           </Button>
         </div>
           <div className="mt-1 flex items-center justify-between px-2 text-[11px]">
-            <span className={isDraftTooLong ? "text-[#dc2626]" : "text-[#9a93b5]"}>
+            <span className={isDraftTooLong ? "text-[#dc2626]" : "text-app-meta"}>
               {isCooldownActive
                 ? "Please wait a second before sending again."
                 : isDraftTooLong
                   ? `Maximum ${MAX_CHAT_MESSAGE_LENGTH} characters.`
                   : "Press Enter to send"}
             </span>
-            <span className={isDraftTooLong ? "text-[#dc2626]" : "text-[#9a93b5]"}>
+            <span className={isDraftTooLong ? "text-[#dc2626]" : "text-app-meta"}>
               {trimmedDraftLength}/{MAX_CHAT_MESSAGE_LENGTH}
             </span>
           </div>

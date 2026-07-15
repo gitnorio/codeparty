@@ -8,7 +8,6 @@ import {
   useWorkspaceProfileActions,
 } from "@/components/app/workspace-shell";
 import { FeedbackBanner } from "@/components/app/feedback";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -150,11 +149,8 @@ export default function SettingsPage() {
 
   return (
     <div className="grid gap-4">
-      <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-none">
+      <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-none dark:bg-[linear-gradient(135deg,#6d5ce8_0%,#5f50d2_100%)]">
         <CardHeader>
-          <Badge className="w-fit rounded-full bg-white/14 text-white hover:bg-white/14">
-            Settings
-          </Badge>
           <CardTitle className="mt-4 text-5xl leading-[0.96] tracking-[-0.05em]">
             Control your profile and preferences.
           </CardTitle>
@@ -164,12 +160,12 @@ export default function SettingsPage() {
         </CardHeader>
       </Card>
 
-      <Card className="border border-[#ece8f8] shadow-none">
+      <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
         <CardHeader>
-          <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
+          <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
             Profile settings
           </CardTitle>
-          <CardDescription className="text-sm leading-6 text-[#6a6683]">
+          <CardDescription className="text-sm leading-6 text-app-secondary">
             Update the information saved from onboarding.
           </CardDescription>
         </CardHeader>
@@ -185,8 +181,8 @@ export default function SettingsPage() {
                     onClick={() => toggleLanguage(option.value)}
                     className={
                       active
-                        ? "rounded-full border border-[#8d78ff] bg-[#f1ebff] px-3 py-1.5 text-xs font-medium text-[#5b45d9]"
-                        : "rounded-full border border-[#e8e2f7] bg-white px-3 py-1.5 text-xs font-medium text-[#5f587f]"
+                        ? "rounded-full border border-[#8d78ff] bg-[#f1ebff] px-3 py-1.5 text-xs font-medium text-[#5b45d9] dark:border-[#6d5ce8] dark:bg-[#2a2340] dark:text-[#b8acff]"
+                        : "rounded-full border border-[#e8e2f7] bg-white px-3 py-1.5 text-xs font-medium text-[#5f587f] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-muted-foreground"
                     }
                   >
                     {option.label}
@@ -202,7 +198,7 @@ export default function SettingsPage() {
               onChange={(event) =>
                 setFormData((current) => ({ ...current, timezone: event.target.value }))
               }
-              className="h-10 w-full max-w-[25rem] rounded-[0.9rem] border border-[#e8e2f7] bg-[#fcfbff] px-3.5 text-sm text-[#1f1c38]"
+              className="h-10 w-full max-w-[25rem] rounded-[0.9rem] border border-[#e8e2f7] bg-[#fcfbff] px-3.5 text-sm text-[#1f1c38] dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5]"
             >
               {profileTimezoneOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -210,7 +206,7 @@ export default function SettingsPage() {
                 </option>
               ))}
             </select>
-            <p className="text-xs text-[#7a7493]">Current local time: {timezonePreview}</p>
+            <p className="text-xs text-app-meta">Current local time: {timezonePreview}</p>
           </Field>
 
           <Field label="Project types">
@@ -224,42 +220,42 @@ export default function SettingsPage() {
                     onClick={() => toggleProjectType(option.value)}
                     className={
                       active
-                        ? "rounded-[1rem] border border-[#8d78ff] bg-[#f1ebff] px-4 py-3 text-left shadow-[0_14px_32px_rgba(123,97,255,0.10)]"
-                        : "rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff] px-4 py-3 text-left"
+                        ? "rounded-[1rem] border border-[#8d78ff] bg-[#f1ebff] px-4 py-3 text-left shadow-[0_14px_32px_rgba(123,97,255,0.10)] dark:border-[#6d5ce8] dark:bg-[#2a2340]"
+                        : "rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff] px-4 py-3 text-left dark:border-[#27272f] dark:bg-[#16161d]"
                     }
                   >
-                    <p className="text-sm font-medium text-[#1f1c38]">{option.label}</p>
-                    <p className="mt-1 text-xs leading-6 text-[#6a6683]">{option.description}</p>
+                    <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">{option.label}</p>
+                    <p className="mt-1 text-xs leading-6 text-app-secondary">{option.description}</p>
                   </button>
                 );
               })}
             </div>
-            <p className="text-xs text-[#7a7493]">
+            <p className="text-xs text-app-meta">
               Selected: {formatProjectTypeList(formData.project_types)}
             </p>
           </Field>
 
           <Field label="Technical stack">
-            <div className="max-w-[46rem] rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff]">
+            <div className="max-w-[46rem] rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff] dark:border-[#27272f] dark:bg-[#16161d]">
               <button
                 type="button"
                 onClick={() => setShowTechnicalStack((current) => !current)}
                 className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
               >
                 <div>
-                  <p className="text-sm font-medium text-[#1f1c38]">Selected technologies</p>
-                  <p className="mt-1 text-xs text-[#7a7493]">
+                  <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">Selected technologies</p>
+                  <p className="mt-1 text-xs text-app-meta">
                     {formData.skills.length > 0
                       ? `${formData.skills.length} / ${maxSelectedSkills} selected`
                       : "No technologies selected yet"}
                   </p>
                 </div>
                 <ChevronDown
-                  className={`size-4 text-[#7a7493] transition-transform ${showTechnicalStack ? "rotate-180" : ""}`}
+                  className={`size-4 text-app-meta transition-transform dark:text-muted-foreground ${showTechnicalStack ? "rotate-180" : ""}`}
                 />
               </button>
 
-              <div className="border-t border-[#ece8f8] px-4 py-3">
+              <div className="border-t border-[#ece8f8] px-4 py-3 dark:border-[#27272f]">
                 <div className="flex flex-wrap gap-2">
                   {formData.skills.length > 0 ? (
                     formData.skills.map((skill) => (
@@ -267,13 +263,13 @@ export default function SettingsPage() {
                         key={skill}
                         type="button"
                         onClick={() => toggleSkill(skill)}
-                        className="rounded-full border border-[#e8e2f7] bg-white px-3 py-1.5 text-xs font-medium text-[#5b45d9]"
+                        className="rounded-full border border-[#e8e2f7] bg-white px-3 py-1.5 text-xs font-medium text-[#5b45d9] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#b8acff]"
                       >
                         {skill.replaceAll(": Other", " · Other")} ×
                       </button>
                     ))
                   ) : (
-                    <p className="text-xs text-[#7a7493]">
+                    <p className="text-xs text-app-meta">
                       Choose from the predefined technologies below.
                     </p>
                   )}
@@ -281,11 +277,11 @@ export default function SettingsPage() {
               </div>
 
               {showTechnicalStack ? (
-                <div className="border-t border-[#ece8f8] px-4 py-4">
+                <div className="border-t border-[#ece8f8] px-4 py-4 dark:border-[#27272f]">
                   <div className="grid gap-4">
                     {technologyGroups.map((group) => (
                       <div key={group.label}>
-                        <p className="mb-2 text-sm font-medium text-[#6a6683]">{group.label}</p>
+                        <p className="mb-2 text-sm font-medium text-app-secondary">{group.label}</p>
                         <div className="flex flex-wrap gap-2">
                           {group.technologies.map((tech) => {
                             const selected = formData.skills.includes(tech);
@@ -298,8 +294,8 @@ export default function SettingsPage() {
                                 onClick={() => toggleSkill(tech)}
                                 className={
                                   selected
-                                    ? "rounded-full border border-[#8d78ff] bg-[#f1ebff] px-3 py-1.5 text-xs font-medium text-[#5b45d9]"
-                                    : "rounded-full border border-[#e8e2f7] bg-white px-3 py-1.5 text-xs font-medium text-[#5f587f]"
+                                    ? "rounded-full border border-[#8d78ff] bg-[#f1ebff] px-3 py-1.5 text-xs font-medium text-[#5b45d9] dark:border-[#6d5ce8] dark:bg-[#2a2340] dark:text-[#b8acff]"
+                                    : "rounded-full border border-[#e8e2f7] bg-white px-3 py-1.5 text-xs font-medium text-[#5f587f] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-muted-foreground"
                                 }
                               >
                                 {labelValue}

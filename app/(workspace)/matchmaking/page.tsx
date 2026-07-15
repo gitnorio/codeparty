@@ -133,7 +133,7 @@ export default function MatchmakingPage() {
 
   return (
     <div className="grid gap-4">
-      <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-none">
+      <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-none dark:bg-[linear-gradient(135deg,#6d5ce8_0%,#5f50d2_100%)]">
         <CardHeader>
           <CardTitle className="mt-4 text-5xl leading-[0.96] tracking-[-0.05em]">
             Match into the right party, then keep building.
@@ -146,17 +146,17 @@ export default function MatchmakingPage() {
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="border border-[#ece8f8] shadow-none">
+        <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
           <CardHeader>
-            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">Queue status</CardTitle>
+            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">Queue status</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3">
-            <div className="rounded-[1rem] bg-[#faf8ff] px-4 py-3">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-[#8f84bc]">Current status</p>
-              <p className="mt-1 text-lg font-semibold text-[#1f1c38]">
+            <div className="rounded-[1rem] bg-[#faf8ff] px-4 py-3 dark:bg-[#16161d]">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-app-overline">Current status</p>
+              <p className="mt-1 text-lg font-semibold text-[#1f1c38] dark:text-[#f2f2f5]">
                 {isLoading ? "Loading..." : queueStatusLabel}
               </p>
-              <p className="mt-1 text-xs leading-5 text-[#6a6683]">
+              <p className="mt-1 text-xs leading-5 text-app-secondary">
                 {isLoading
                   ? "Checking your queue entry..."
                   : getQueueStatusDescription(snapshot?.queueEntry?.status, activePartyCount)}
@@ -186,7 +186,7 @@ export default function MatchmakingPage() {
                 variant="outline"
                 onClick={() => void handleCancelQueue()}
                 disabled={isLoading || isMutating || !isWaiting}
-                className="h-11 rounded-full border-[#e8e2f7] bg-white text-[#1f1c38]"
+                className="h-11 rounded-full border-[#e8e2f7] bg-white text-[#1f1c38] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#f2f2f5]"
               >
                 {isMutating && isWaiting ? (
                   <>
@@ -201,10 +201,10 @@ export default function MatchmakingPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-[#ece8f8] shadow-none">
+        <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
           <CardHeader>
-            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">Profile signals</CardTitle>
-            <CardDescription className="text-sm leading-6 text-[#6a6683]">
+            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">Profile signals</CardTitle>
+            <CardDescription className="text-sm leading-6 text-app-secondary">
               Matchmaking combines your language, timezone, project interests, and stack focus.
             </CardDescription>
           </CardHeader>
@@ -221,33 +221,33 @@ export default function MatchmakingPage() {
         </Card>
       </div>
 
-      <Card className="border border-[#ece8f8] shadow-none">
+      <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
         <CardHeader>
-          <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">Parties</CardTitle>
-          <CardDescription className="text-sm leading-6 text-[#6a6683]">
+          <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">Parties</CardTitle>
+          <CardDescription className="text-sm leading-6 text-app-secondary">
             Your full party history lives here: active, completed, and cancelled.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {parties.length === 0 ? (
-            <div className="rounded-[1rem] bg-[#faf8ff] p-4 text-sm text-[#6a6683]">
+            <div className="rounded-[1rem] bg-[#faf8ff] p-4 text-sm text-app-secondary dark:bg-[#16161d] dark:text-muted-foreground">
               No parties yet.
             </div>
           ) : (
-            <div className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff]">
+            <div className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff] dark:border-[#27272f] dark:bg-[#16161d]">
               {parties.map((party) => (
                 <Link
                   key={party.id}
                   href={`/workspace?party=${party.id}`}
-                  className="flex items-center justify-between gap-3 border-b px-4 py-3 transition hover:bg-[#faf8ff] last:border-b-0"
+                  className="flex items-center justify-between gap-3 border-b px-4 py-3 transition hover:bg-[#faf8ff] dark:border-[#27272f] dark:hover:bg-[#1a1a22] last:border-b-0"
                 >
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-[#1f1c38]">Party {party.party_id}</p>
+                    <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">Party {party.party_id}</p>
                     <div className="mt-1 flex items-center gap-2">
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${getPartyStatusClasses(party.status)}`}>
                         {formatPartyStatus(party.status)}
                       </span>
-                      <span className="text-[11px] text-[#6a6683]">
+                      <span className="text-[11px] text-app-secondary">
                         Created {formatShortDate(party.created_at)}
                       </span>
                     </div>
@@ -276,14 +276,14 @@ function Criteria({
   icon: typeof Sparkles;
 }) {
   return (
-    <div className="rounded-[1.1rem] bg-[#faf8ff] p-3.5">
+    <div className="rounded-[1.1rem] bg-[#faf8ff] p-3.5 dark:bg-[#16161d]">
       <div className="flex items-start gap-3">
-        <div className="rounded-xl bg-[#ece4ff] p-2 text-[#7650ff]">
+        <div className="rounded-xl bg-[#ece4ff] p-2 text-[#7650ff] dark:bg-[#272138] dark:text-[#a698ff]">
           <Icon className="size-4" />
         </div>
         <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">{label}</p>
-          <p className="mt-1 text-sm font-medium leading-6 text-[#1f1c38]">{value}</p>
+          <p className="text-xs uppercase tracking-[0.18em] text-app-overline">{label}</p>
+          <p className="mt-1 text-sm font-medium leading-6 text-[#1f1c38] dark:text-[#f2f2f5]">{value}</p>
         </div>
       </div>
     </div>

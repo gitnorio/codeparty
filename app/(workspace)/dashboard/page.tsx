@@ -109,11 +109,8 @@ export default function DashboardPage() {
 
   return (
     <div className="grid gap-4">
-      <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-none">
+      <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-none dark:bg-[linear-gradient(135deg,#6d5ce8_0%,#5f50d2_100%)]">
         <CardHeader>
-          <Badge className="w-fit rounded-full bg-white/14 text-white hover:bg-white/14">
-            Dashboard
-          </Badge>
           <CardTitle className="mt-4 text-5xl leading-[0.96] tracking-[-0.05em]">
             Welcome back,
             <br />
@@ -148,25 +145,25 @@ export default function DashboardPage() {
         />
       </div>
 
-      <Card className="border border-[#ece8f8] bg-white shadow-none">
+      <Card className="border border-[#ece8f8] bg-white shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
         <CardHeader>
-          <Badge variant="outline" className="w-fit rounded-full bg-[#f6f2ff] text-[#7650ff]">
+          <Badge variant="outline" className="w-fit rounded-full bg-[#f6f2ff] text-[#7650ff] dark:border-[#27272f] dark:bg-[#23232c] dark:text-[#a698ff]">
             Project repos
           </Badge>
-          <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
+          <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
             Shared repositories
           </CardTitle>
-          <CardDescription className="text-sm leading-6 text-[#6a6683]">
+          <CardDescription className="text-sm leading-6 text-app-secondary">
             Browse every visible GitHub repository, with the most recent projects first.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {repositoriesError ? <FeedbackBanner tone="error" message={repositoriesError} /> : null}
 
-          <div className="rounded-[1.1rem] bg-[#faf8ff] p-2.5">
+          <div className="rounded-[1.1rem] bg-[#faf8ff] p-2.5 dark:bg-[#16161d]">
             {repositoriesLoading ? (
               <div className="flex min-h-28 items-center justify-center">
-                <div className="flex items-center gap-2 text-sm text-[#6a6683]">
+                <div className="flex items-center gap-2 text-sm text-app-secondary">
                   <Loader2 className="size-4 animate-spin text-[#7650ff]" />
                   Loading repositories...
                 </div>
@@ -174,8 +171,8 @@ export default function DashboardPage() {
             ) : repositories.length === 0 ? (
               <div className="flex min-h-28 items-center justify-center text-center">
                 <div className="max-w-sm">
-                  <p className="text-sm font-medium text-[#1f1c38]">No linked repositories yet.</p>
-                  <p className="mt-2 text-sm leading-6 text-[#6a6683]">
+                  <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">No linked repositories yet.</p>
+                  <p className="mt-2 text-sm leading-6 text-app-secondary">
                     Repositories appear here once a team creates a project and links its GitHub URL.
                   </p>
                 </div>
@@ -185,14 +182,14 @@ export default function DashboardPage() {
                 {repositories.map((repository) => (
                   <div
                     key={repository.id}
-                    className="rounded-[0.95rem] border border-[#ece8f8] bg-white px-3 py-2.5"
+                    className="rounded-[0.95rem] border border-[#ece8f8] bg-white px-3 py-2.5 dark:border-[#27272f] dark:bg-[#1a1a22]"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                          <p className="text-[10px] uppercase tracking-[0.18em] text-[#8f84bc]">
+                          <p className="text-[10px] uppercase tracking-[0.18em] text-app-overline">
                           Party {repository.partyId}
                         </p>
-                        <p className="mt-0.5 text-sm font-medium text-[#1f1c38]">
+                        <p className="mt-0.5 text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
                           {repository.projectName}
                         </p>
                         <a
@@ -205,12 +202,12 @@ export default function DashboardPage() {
                         </a>
                       </div>
 
-                      <div className="shrink-0 rounded-full bg-[#f6f2ff] px-2 py-0.5 text-[10px] font-medium text-[#7650ff]">
+                      <div className="shrink-0 rounded-full bg-[#f6f2ff] px-2 py-0.5 text-[10px] font-medium text-[#7650ff] dark:bg-[#23232c] dark:text-[#a698ff]">
                         {formatDate(repository.createdAt)}
                       </div>
                     </div>
 
-                    <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-[#6a6683]">
+                    <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-app-secondary">
                       <GitBranch className="size-3 text-[#7650ff]" />
                       <span>Open repository</span>
                     </div>
@@ -239,19 +236,19 @@ function StatCard({
   loading?: boolean;
 }) {
   return (
-    <Card className="border border-[#ece8f8] bg-white shadow-none">
+    <Card className="border border-[#ece8f8] bg-white shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
       <CardContent className="pt-5">
         <div className="flex items-start gap-3">
-          <div className="rounded-xl bg-[#ece4ff] p-2 text-[#7650ff]">
+          <div className="rounded-xl bg-[#ece4ff] p-2 text-[#7650ff] dark:bg-[#272138] dark:text-[#a698ff]">
             <Icon className="size-4" />
           </div>
           <div>
-            <p className="text-sm uppercase tracking-[0.18em] text-[#8f84bc]">{title}</p>
+            <p className="text-sm uppercase tracking-[0.18em] text-app-overline">{title}</p>
             <div className="mt-1 flex items-center gap-2">
               {loading ? <Loader2 className="size-4 animate-spin text-[#7650ff]" /> : null}
-              <p className="text-xl font-semibold tracking-[-0.04em] text-[#1f1c38]">{value}</p>
+              <p className="text-xl font-semibold tracking-[-0.04em] text-[#1f1c38] dark:text-[#f2f2f5]">{value}</p>
             </div>
-            <p className="mt-2 text-sm leading-6 text-[#6a6683]">{description}</p>
+            <p className="mt-2 text-sm leading-6 text-app-secondary">{description}</p>
           </div>
         </div>
       </CardContent>

@@ -72,3 +72,5 @@ This file contains a growing ruleset that improves over time. **At session start
 26. [ARCH] Always use a member completion-request flow for party completion, where members can request completion but only admins can approve or reject it — the user explicitly defined this moderation flow.
 27. [DATA] Never allow free-text entry for `Technical stack` in profile settings; always use a controlled predefined technology selection — the user explicitly rejected arbitrary stack values.
 28. [UX] Never show the `Username` section inside `Profile settings` — the user explicitly asked to remove it from Settings.
+29. [UX] Always provide a global dark mode toggle near `Logout`, using moon/sun icons and keeping the same violet accents while replacing white surfaces with dark ones — the user explicitly requested this theme behavior.
+30. [UX] Always use a product-grade dark palette with dark cards, muted borders, softened text, and a slightly subdued violet accent instead of leaving white cards on a black background — the user explicitly rejected the half-finished dark mode look.

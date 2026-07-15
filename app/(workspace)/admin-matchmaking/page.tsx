@@ -1,41 +1,27 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Loader2,
-  RefreshCcw,
-  RotateCcw,
-  ShieldCheck,
-  Sparkles,
-  Users,
-  XCircle,
-} from "lucide-react";
+import { CheckCircle2, Loader2, RefreshCcw, ShieldCheck, XCircle } from "lucide-react";
 
 import {
   useWorkspaceAccess,
-  useWorkspaceProfile,
 } from "@/components/app/workspace-shell";
 import { FeedbackBanner } from "@/components/app/feedback";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import type { FormedTeam, WaitingCandidate } from "@/lib/admin-matchmaking";
+import { formatLanguageValue, formatProjectTypeList } from "@/lib/profile-options";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { formatProjectLabel } from "@/lib/team-projects";
 
 const minTeamSize = 3;
 const maxTeamSize = 4;
 
 export default function AdminMatchmakingPage() {
-  const profile = useWorkspaceProfile();
   const { isAdmin } = useWorkspaceAccess();
   const supabase = getSupabaseBrowserClient();
   const [waitingCandidates, setWaitingCandidates] = useState<WaitingCandidate[]>([]);
-  const [cancelledCandidates, setCancelledCandidates] = useState<WaitingCandidate[]>([]);
   const [formedTeams, setFormedTeams] = useState<FormedTeam[]>([]);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
-  const [teamName, setTeamName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -94,7 +80,6 @@ export default function AdminMatchmakingPage() {
       const payload = (await response.json()) as {
         error?: string;
         waitingCandidates?: WaitingCandidate[];
-        cancelledCandidates?: WaitingCandidate[];
         formedTeams?: FormedTeam[];
       };
 
@@ -106,7 +91,6 @@ export default function AdminMatchmakingPage() {
       }
 
       setWaitingCandidates(payload.waitingCandidates ?? []);
-      setCancelledCandidates(payload.cancelledCandidates ?? []);
       setFormedTeams(payload.formedTeams ?? []);
       setIsLoading(false);
       setIsRefreshing(false);
@@ -135,18 +119,6 @@ export default function AdminMatchmakingPage() {
   );
 
   const canCreateTeam = selectedCandidates.length >= minTeamSize;
-
-  const suggestedTeamName = useMemo(() => {
-    if (selectedCandidates.length === 0) {
-      return "";
-    }
-
-    const primaryProjectType = selectedCandidates[0]?.profile.project_type
-      ?.replaceAll("_", " ")
-      .replace(/\b\w/g, (letter) => letter.toUpperCase());
-
-    return `${primaryProjectType ?? "CodeParty"} Squad`;
-  }, [selectedCandidates]);
 
   function toggleCandidate(userId: string) {
     setSuccessMessage(null);
@@ -177,8 +149,6 @@ export default function AdminMatchmakingPage() {
       return;
     }
 
-    const finalTeamName = teamName.trim() || suggestedTeamName || "CodeParty Squad";
-
     setIsCreating(true);
 
     let accessToken = "";
@@ -197,14 +167,13 @@ export default function AdminMatchmakingPage() {
         Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
-        teamName: finalTeamName,
         queueIds: selectedCandidates.map((candidate) => candidate.queue.id),
       }),
     });
 
     const payload = (await response.json()) as {
       error?: string;
-      team?: { name?: string | null };
+      team?: { name?: string | null; party_id?: string | null };
     };
 
     if (!response.ok) {
@@ -214,9 +183,8 @@ export default function AdminMatchmakingPage() {
     }
 
     setSelectedUserIds([]);
-    setTeamName("");
     setIsCreating(false);
-    setSuccessMessage(`Team "${payload.team?.name}" created successfully.`);
+    setSuccessMessage(`Party ${payload.team?.party_id ?? payload.team?.name} created successfully.`);
     await loadAdminData({ silent: true });
   }
 
@@ -224,7 +192,12 @@ export default function AdminMatchmakingPage() {
     body:
       | { action: "cancelQueue" | "reopenQueue"; queueIds: string[] }
       | {
-          action: "markTeamAbandoned";
+          action: "updateTeamStatus";
+          teamId: string;
+          status: "completed" | "cancelled";
+        }
+      | {
+          action: "rejectTeamCompletionRequest";
           teamId: string;
         },
     options: {
@@ -271,50 +244,33 @@ export default function AdminMatchmakingPage() {
     await loadAdminData({ silent: true });
   }
 
-  async function handleCancelSelectedQueue() {
-    if (selectedCandidates.length === 0) {
-      setErrorMessage("Select at least one waiting developer to cancel.");
-      return;
-    }
-
+  async function handleUpdateTeamStatus(
+    teamId: string,
+    teamName: string,
+    status: "completed" | "cancelled"
+  ) {
     await sendAdminAction(
       {
-        action: "cancelQueue",
-        queueIds: selectedCandidates.map((candidate) => candidate.queue.id),
+        action: "updateTeamStatus",
+        teamId,
+        status,
       },
       {
-        pendingKey: "cancel-selected",
-        successMessage: "Selected queue entries were cancelled.",
-        onSuccess: () => {
-          setSelectedUserIds([]);
-          setTeamName("");
-        },
+        pendingKey: `${status}-${teamId}`,
+        successMessage: `${teamName} was marked as ${status}.`,
       }
     );
   }
 
-  async function handleReopenQueue(queueId: string, displayName: string) {
+  async function handleRejectCompletionRequest(teamId: string, teamName: string) {
     await sendAdminAction(
       {
-        action: "reopenQueue",
-        queueIds: [queueId],
-      },
-      {
-        pendingKey: `reopen-${queueId}`,
-        successMessage: `${displayName} is back in the waiting queue.`,
-      }
-    );
-  }
-
-  async function handleMarkAbandoned(teamId: string, teamName: string) {
-    await sendAdminAction(
-      {
-        action: "markTeamAbandoned",
+        action: "rejectTeamCompletionRequest",
         teamId,
       },
       {
-        pendingKey: `abandon-${teamId}`,
-        successMessage: `${teamName} was marked as abandoned.`,
+        pendingKey: `reject-${teamId}`,
+        successMessage: `Completion request for ${teamName} was rejected.`,
       }
     );
   }
@@ -338,9 +294,6 @@ export default function AdminMatchmakingPage() {
         <>
           <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-none">
             <CardHeader>
-              <Badge className="w-fit rounded-full bg-white/14 text-white hover:bg-white/14">
-                Admin Matchmaking
-              </Badge>
               <CardTitle className="mt-4 text-5xl leading-[0.96] tracking-[-0.05em]">
                 Build teams manually, supervise lightly.
               </CardTitle>
@@ -400,50 +353,44 @@ export default function AdminMatchmakingPage() {
                     No profiles are currently waiting in the queue.
                   </div>
                 ) : (
-                  waitingCandidates.map((candidate) => {
+                  <div className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff]">
+                  {waitingCandidates.map((candidate) => {
                     const selected = selectedUserIds.includes(candidate.profile.id);
+                    const queuedDays = getQueuedDays(candidate.queue.created_at);
                     return (
                       <button
                         key={candidate.profile.id}
                         type="button"
                         onClick={() => toggleCandidate(candidate.profile.id)}
-                        className={`rounded-[1.2rem] border p-4 text-left transition ${
+                        className={`flex w-full items-center justify-between gap-3 border-b px-3 py-2.5 text-left transition last:border-b-0 ${
                           selected
-                            ? "border-[#8d78ff] bg-[#f1ebff] shadow-[0_18px_42px_rgba(123,97,255,0.10)]"
+                            ? "border-[#e8defd] bg-[#f1ebff]"
                             : "border-[#ece8f8] bg-[#fcfbff] hover:bg-[#faf8ff]"
                         }`}
                       >
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <p className="text-lg font-medium text-[#1f1c38]">
-                              {candidate.profile.display_name}
-                            </p>
-                            <p className="mt-1 text-sm leading-6 text-[#6a6683]">
-                              {candidate.profile.goal} · {candidate.profile.language} ·{" "}
-                              {candidate.profile.availability_per_week}h / week
-                            </p>
-                          </div>
-                          <Badge
-                            variant="outline"
-                            className="rounded-full bg-white text-[#7650ff]"
-                          >
-                            {candidate.profile.project_type.replaceAll("_", " ")}
-                          </Badge>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-[#1f1c38]">
+                            {candidate.profile.display_name}
+                          </p>
+                          <p className="mt-0.5 truncate text-[11px] text-[#6a6683]">
+                            {formatLanguageValue(candidate.profile.language)} · {candidate.profile.timezone}
+                          </p>
+                          <p className="mt-0.5 truncate text-[10px] text-[#8f84bc]">
+                            {candidate.profile.skills.slice(0, 3).join(" · ") || "No stack selected"}
+                          </p>
                         </div>
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {candidate.profile.skills.slice(0, 6).map((skill) => (
-                            <span
-                              key={skill}
-                              className="rounded-full bg-white px-2.5 py-1 text-xs text-[#5b45d9]"
-                            >
-                              {skill}
-                            </span>
-                          ))}
+                        <div className="flex shrink-0 items-center gap-2">
+                          <span className="rounded-full border border-[#e8e2f7] bg-white px-2 py-1 text-[10px] font-medium text-[#7650ff]">
+                            {formatProjectTypeList(candidate.profile.project_type)}
+                          </span>
+                          <span className="text-[10px] text-[#8f84bc]">
+                            {queuedDays}d
+                          </span>
                         </div>
                       </button>
                     );
-                  })
+                  })}
+                  </div>
                 )}
               </CardContent>
             </Card>
@@ -451,35 +398,23 @@ export default function AdminMatchmakingPage() {
             <Card className="border border-[#ece8f8] shadow-none">
               <CardHeader>
                 <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
-                  Team builder
+                  Party builder
                 </CardTitle>
                 <CardDescription className="text-sm leading-6 text-[#6a6683]">
-                  Build a team from the waiting queue, pause candidates when needed, and leave project setup to the team itself.
+                  Select members, then create the party.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="grid gap-4">
-                <div className="rounded-[1.2rem] bg-[#faf8ff] p-4">
+              <CardContent className="grid gap-3">
+                <div className="rounded-[1rem] bg-[#faf8ff] p-3.5">
                   <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">
                     Selected members
                   </p>
-                  <p className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-[#1f1c38]">
+                  <p className="mt-1 text-xl font-semibold tracking-[-0.04em] text-[#1f1c38]">
                     {selectedCandidates.length} / {maxTeamSize}
                   </p>
-                  <p className="mt-1 text-sm leading-6 text-[#6a6683]">
-                    Recommended team size: {minTeamSize} to {maxTeamSize} members.
+                  <p className="mt-1 text-xs text-[#6a6683]">
+                    {minTeamSize} to {maxTeamSize} members recommended.
                   </p>
-                </div>
-
-                <div>
-                  <label className="mb-3 block text-sm font-medium text-[#4f496e]">
-                    Team name
-                  </label>
-                  <Input
-                    value={teamName}
-                    onChange={(event) => setTeamName(event.target.value)}
-                    placeholder={suggestedTeamName || "CodeParty Squad"}
-                    className="h-11 rounded-[1rem] border-[#e8e2f7] bg-[#fcfbff] px-3.5"
-                  />
                 </div>
 
                 <div className="grid gap-3">
@@ -487,18 +422,15 @@ export default function AdminMatchmakingPage() {
                     selectedCandidates.map((candidate) => (
                       <div
                         key={candidate.profile.id}
-                        className="rounded-[1.1rem] bg-[#faf8ff] p-3.5"
+                        className="rounded-[0.95rem] bg-[#faf8ff] px-3 py-2.5"
                       >
-                        <p className="text-base font-medium text-[#1f1c38]">
+                        <p className="text-sm font-medium text-[#1f1c38]">
                           {candidate.profile.display_name}
-                        </p>
-                        <p className="mt-1 text-sm text-[#6a6683]">
-                          {candidate.profile.goal} · {candidate.profile.language}
                         </p>
                       </div>
                     ))
                   ) : (
-                    <div className="rounded-[1.3rem] bg-[#faf8ff] p-4 text-sm text-[#6a6683]">
+                    <div className="rounded-[1rem] bg-[#faf8ff] p-4 text-sm text-[#6a6683]">
                       Select 3 to 4 waiting developers to build a team.
                     </div>
                   )}
@@ -517,262 +449,144 @@ export default function AdminMatchmakingPage() {
                   {isCreating ? (
                     <>
                       <Loader2 className="size-4 animate-spin" />
-                      Creating team...
+                      Creating party...
                     </>
                   ) : (
                     <>
                       <ShieldCheck className="size-4" />
-                      Create team match
+                      Create party
                     </>
                   )}
                 </Button>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => void handleCancelSelectedQueue()}
-                  disabled={selectedCandidates.length === 0 || actionKey === "cancel-selected"}
-                  className="h-11 rounded-full border-[#f1d4dc] bg-white text-[#a14b63] hover:bg-[#fff7f9]"
-                >
-                  {actionKey === "cancel-selected" ? (
-                    <>
-                      <Loader2 className="size-4 animate-spin" />
-                      Cancelling selection...
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="size-4" />
-                      Cancel selected queue entries
-                    </>
-                  )}
-                </Button>
-
-                <div className="grid gap-3 md:grid-cols-2">
-                  <CriteriaCard
-                    icon={Sparkles}
-                    title="Review criteria"
-                    detail="Language, availability, project type, goal and stack."
-                  />
-                  <CriteriaCard
-                    icon={Users}
-                    title="Admin action"
-                    detail={`Created by ${profile.display_name} with manual approval.`}
-                  />
-                </div>
               </CardContent>
             </Card>
           </div>
 
           <Card className="border border-[#ece8f8] shadow-none">
-              <CardHeader>
-                <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
-                  Cancelled queue
-                </CardTitle>
-                <CardDescription className="text-sm leading-6 text-[#6a6683]">
-                  Reopen any paused profile and send it back into the active waiting queue.
-                </CardDescription>
-              </CardHeader>
-            <CardContent className="grid gap-4 lg:grid-cols-2">
-              {isLoading ? (
-                <div className="flex min-h-[160px] items-center justify-center rounded-[1.5rem] bg-[#faf8ff] lg:col-span-2">
-                  <Loader2 className="size-6 animate-spin text-[#7650ff]" />
-                </div>
-              ) : cancelledCandidates.length === 0 ? (
-                <div className="rounded-[1.5rem] bg-[#faf8ff] p-6 text-sm text-[#6a6683] lg:col-span-2">
-                  No cancelled queue entries right now.
-                </div>
-              ) : (
-                cancelledCandidates.map((candidate) => (
-                  <div
-                    key={candidate.queue.id}
-                    className="rounded-[1.2rem] border border-[#ece8f8] bg-[#fcfbff] p-4"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-lg font-medium text-[#1f1c38]">
-                          {candidate.profile.display_name}
-                        </p>
-                        <p className="mt-1 text-sm leading-6 text-[#6a6683]">
-                          {candidate.profile.goal} · {candidate.profile.language} ·{" "}
-                          {candidate.profile.availability_per_week}h / week
-                        </p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() =>
-                          void handleReopenQueue(
-                            candidate.queue.id,
-                            candidate.profile.display_name
-                          )
-                        }
-                        disabled={actionKey === `reopen-${candidate.queue.id}`}
-                        className="rounded-full border-[#e8e2f7] bg-white text-[#5b45d9]"
-                      >
-                        {actionKey === `reopen-${candidate.queue.id}` ? (
-                          <>
-                            <Loader2 className="size-4 animate-spin" />
-                            Reopening...
-                          </>
-                        ) : (
-                          <>
-                            <RotateCcw className="size-4" />
-                            Reopen queue
-                          </>
-                        )}
-                      </Button>
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {candidate.profile.skills.slice(0, 6).map((skill) => (
-                        <span
-                          key={skill}
-                          className="rounded-full bg-white px-2.5 py-1 text-xs text-[#5b45d9]"
-                        >
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="border border-[#ece8f8] shadow-none">
-              <CardHeader>
+            <CardHeader>
               <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
-                Formed teams
+                Party history
               </CardTitle>
               <CardDescription className="text-sm leading-6 text-[#6a6683]">
-                Supervise every team already created through the manual admin workflow.
+                Minimal admin controls for active, completed, and cancelled parties.
               </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-4 lg:grid-cols-2">
+            <CardContent className="grid gap-3">
               {isLoading ? (
-                <div className="flex min-h-[160px] items-center justify-center rounded-[1.5rem] bg-[#faf8ff] lg:col-span-2">
+                <div className="flex min-h-[160px] items-center justify-center rounded-[1.5rem] bg-[#faf8ff]">
                   <Loader2 className="size-6 animate-spin text-[#7650ff]" />
                 </div>
               ) : formedTeams.length === 0 ? (
-                <div className="rounded-[1.5rem] bg-[#faf8ff] p-6 text-sm text-[#6a6683] lg:col-span-2">
-                  No teams have been formed yet.
+                <div className="rounded-[1.5rem] bg-[#faf8ff] p-6 text-sm text-[#6a6683]">
+                  No parties have been formed yet.
                 </div>
               ) : (
                 formedTeams.map((item) => (
                   <div
                     key={item.team.id}
-                    className="rounded-[1.2rem] border border-[#ece8f8] bg-[#fcfbff] p-4"
+                    className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff] p-3.5"
                   >
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-lg font-medium text-[#1f1c38]">{item.team.name}</p>
-                        <p className="mt-1 text-sm text-[#6a6683]">
-                          Status: {formatProjectLabel(item.team.status)}
+                        <p className="text-sm font-semibold text-[#1f1c38]">
+                          Party ID {item.team.party_id}
                         </p>
+                        <div className="mt-1 flex items-center gap-2">
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${getPartyStatusClasses(item.team.status)}`}>
+                            {formatPartyStatus(item.team.status)}
+                          </span>
+                          <span className="text-xs text-[#6a6683]">
+                            Created {formatCreatedDate(item.team.created_at)}
+                          </span>
+                        </div>
+                        {item.team.completion_requested_at ? (
+                          <p className="mt-1 text-[11px] text-[#5b45d9]">
+                            Completion requested {formatCreatedDate(item.team.completion_requested_at)}
+                            {item.team.completion_requested_by
+                              ? ` by ${item.members.find((member) => member.id === item.team.completion_requested_by)?.display_name ?? "a member"}`
+                              : ""}
+                          </p>
+                        ) : null}
                       </div>
-                      <Badge variant="outline" className="rounded-full bg-white text-[#7650ff]">
-                        {item.members.length} members
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => void handleUpdateTeamStatus(item.team.id, item.team.party_id, "completed")}
+                          disabled={
+                            actionKey === `completed-${item.team.id}` ||
+                            item.team.status === "completed"
+                          }
+                          className="h-8 rounded-full border-[#d6efdf] bg-white px-3 text-[#208a52] hover:bg-[#f7fff9]"
+                        >
+                          {actionKey === `completed-${item.team.id}` ? (
+                            "Updating..."
+                          ) : (
+                            <>
+                              <CheckCircle2 className="size-3.5" />
+                              Complete
+                            </>
+                          )}
+                        </Button>
+                        {item.team.completion_requested_at ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => void handleRejectCompletionRequest(item.team.id, item.team.party_id)}
+                            disabled={actionKey === `reject-${item.team.id}`}
+                            className="h-8 rounded-full border-[#e8e2f7] bg-white px-3 text-[#5f587f] hover:bg-[#faf8ff]"
+                          >
+                            {actionKey === `reject-${item.team.id}` ? "Updating..." : "Reject"}
+                          </Button>
+                        ) : null}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => void handleUpdateTeamStatus(item.team.id, item.team.party_id, "cancelled")}
+                          disabled={
+                            actionKey === `cancelled-${item.team.id}` ||
+                            item.team.status === "cancelled"
+                          }
+                          className="h-8 rounded-full border-[#f1d4dc] bg-white px-3 text-[#a14b63] hover:bg-[#fff7f9]"
+                        >
+                          {actionKey === `cancelled-${item.team.id}` ? (
+                            "Updating..."
+                          ) : (
+                            <>
+                              <XCircle className="size-3.5" />
+                              Cancel
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     </div>
 
-                    <div className="mt-3 flex flex-wrap gap-2">
+                    <div className="mt-2 flex flex-wrap gap-1.5">
                       {item.members.map((member) => (
                         <span
                           key={member.id}
-                          className="rounded-full bg-[#f3eeff] px-2.5 py-1 text-xs text-[#5b45d9]"
+                          className="rounded-full bg-[#f3eeff] px-2 py-1 text-[11px] text-[#5b45d9]"
                         >
                           {member.display_name}
                         </span>
                       ))}
                     </div>
 
-                    <div className="mt-4 rounded-[1.2rem] bg-[#faf8ff] p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">
-                            Project supervision
-                          </p>
-                          <p className="mt-1 text-base font-medium text-[#1f1c38]">
-                            {item.project?.name ?? "Project not created yet"}
-                          </p>
-                        </div>
-                        <Badge variant="outline" className="rounded-full bg-white text-[#7650ff]">
-                          {formatProjectLabel(item.project?.status ?? "pending")}
-                        </Badge>
-                      </div>
-
-                      <p className="mt-2 text-sm leading-6 text-[#6a6683]">
-                        {item.project
-                          ? item.project.description || "No project description has been added yet."
-                          : "The team will create its own project setup from the workspace once ready."}
-                      </p>
-
+                    <p className="mt-2 text-xs text-[#6a6683]">
                       {item.project?.github_repo_url ? (
                         <a
                           href={item.project.github_repo_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="mt-4 inline-flex text-sm font-medium text-[#5b45d9] underline-offset-4 hover:underline"
+                          className="font-medium text-[#5b45d9] underline-offset-4 hover:underline"
                         >
                           {item.project.github_repo_url}
                         </a>
-                      ) : null}
-
-                      {item.project?.stack.length ? (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {item.project.stack.map((skill) => (
-                            <span
-                              key={skill}
-                              className="rounded-full bg-white px-2.5 py-1 text-xs text-[#5b45d9]"
-                            >
-                              {skill}
-                            </span>
-                          ))}
-                        </div>
-                      ) : null}
-
-                      {item.projectMembers.length > 0 ? (
-                        <div className="mt-4 grid gap-3">
-                          {item.projectMembers.map((member) => (
-                            <div
-                              key={member.membership.id}
-                              className="rounded-[1rem] border border-[#ece8f2] bg-white p-3.5"
-                            >
-                              <p className="text-sm font-medium text-[#1f1c38]">
-                                {member.profile.display_name}
-                              </p>
-                              <p className="mt-1 text-sm text-[#6a6683]">
-                                {formatProjectLabel(member.membership.project_role)}
-                              </p>
-                              <p className="mt-2 text-sm leading-6 text-[#6a6683]">
-                                {member.membership.contribution_summary ||
-                                  "No contribution summary written yet."}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      ) : null}
-
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => void handleMarkAbandoned(item.team.id, item.team.name)}
-                        disabled={
-                          actionKey === `abandon-${item.team.id}` ||
-                          item.team.status === "cancelled"
-                        }
-                        className="mt-4 rounded-full border-[#f1d4dc] bg-white text-[#a14b63] hover:bg-[#fff7f9]"
-                      >
-                        {actionKey === `abandon-${item.team.id}` ? (
-                          <>
-                            <Loader2 className="size-4 animate-spin" />
-                            Updating...
-                          </>
-                        ) : (
-                          "Mark as abandoned"
-                        )}
-                      </Button>
-                    </div>
+                      ) : (
+                        "No GitHub repo linked yet."
+                      )}
+                    </p>
                   </div>
                 ))
               )}
@@ -784,26 +598,27 @@ export default function AdminMatchmakingPage() {
   );
 }
 
-function CriteriaCard({
-  icon: Icon,
-  title,
-  detail,
-}: {
-  icon: typeof Sparkles;
-  title: string;
-  detail: string;
-}) {
-  return (
-    <div className="rounded-[1.1rem] bg-[#faf8ff] p-3.5">
-      <div className="flex items-start gap-3">
-        <div className="rounded-xl bg-[#ece4ff] p-2 text-[#7650ff]">
-          <Icon className="size-4" />
-        </div>
-        <div>
-          <p className="text-base font-medium text-[#1f1c38]">{title}</p>
-          <p className="mt-1 text-sm leading-6 text-[#6a6683]">{detail}</p>
-        </div>
-      </div>
-    </div>
-  );
+function formatPartyStatus(status: "active" | "completed" | "cancelled") {
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function getPartyStatusClasses(status: "active" | "completed" | "cancelled") {
+  if (status === "active") return "bg-[#ece4ff] text-[#5b45d9]";
+  if (status === "completed") return "bg-[#e9f9ef] text-[#208a52]";
+  return "bg-[#fff0f3] text-[#b84b66]";
+}
+
+function getQueuedDays(createdAt: string) {
+  const createdDate = new Date(createdAt);
+  const now = new Date();
+  const difference = now.getTime() - createdDate.getTime();
+  return Math.max(1, Math.ceil(difference / (1000 * 60 * 60 * 24)));
+}
+
+function formatCreatedDate(createdAt: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(createdAt));
 }

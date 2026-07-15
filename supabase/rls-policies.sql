@@ -87,6 +87,10 @@ create table if not exists public.team_messages (
   created_at timestamptz not null default now()
 );
 
+alter table public.teams
+add column if not exists completion_requested_at timestamptz,
+add column if not exists completion_requested_by uuid references public.profiles(id) on delete set null;
+
 create index if not exists team_messages_team_id_idx
 on public.team_messages(team_id);
 
@@ -312,7 +316,7 @@ with check (
     where tm.team_id = projects.team_id
       and tm.user_id = auth.uid()
       and tm.member_status = 'active'
-      and t.status in ('forming', 'active')
+      and t.status = 'active'
   )
 );
 
@@ -329,7 +333,7 @@ using (
     where tm.team_id = projects.team_id
       and tm.user_id = auth.uid()
       and tm.member_status = 'active'
-      and t.status in ('forming', 'active')
+      and t.status = 'active'
   )
 )
 with check (
@@ -341,7 +345,7 @@ with check (
     where tm.team_id = projects.team_id
       and tm.user_id = auth.uid()
       and tm.member_status = 'active'
-      and t.status in ('forming', 'active')
+      and t.status = 'active'
   )
 );
 
@@ -377,7 +381,7 @@ with check (
     where p.id = project_members.project_id
       and tm.user_id = auth.uid()
       and tm.member_status = 'active'
-      and t.status in ('forming', 'active')
+      and t.status = 'active'
   )
 );
 
@@ -395,7 +399,7 @@ using (
     where p.id = project_members.project_id
       and tm.user_id = auth.uid()
       and tm.member_status = 'active'
-      and t.status in ('forming', 'active')
+      and t.status = 'active'
   )
 )
 with check (
@@ -408,7 +412,7 @@ with check (
     where p.id = project_members.project_id
       and tm.user_id = auth.uid()
       and tm.member_status = 'active'
-      and t.status in ('forming', 'active')
+      and t.status = 'active'
   )
 );
 

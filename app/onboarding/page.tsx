@@ -1,170 +1,37 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  Code2,
-  Layers3,
-  MonitorSmartphone,
-  Server,
-  Smartphone,
-  Sparkles,
-  UserRound,
-  Loader2,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Clock3, Code2, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { ensureWaitingMatchmakingEntry } from "@/lib/matchmaking";
+import {
+  deriveLanguageValue,
+  formatLanguageValue,
+  formatProjectTypeList,
+  getDetectedTimezone,
+  getTimezonePreview,
+  profileLanguageOptions,
+  profileProjectTypeOptions,
+  profileTimezoneOptions,
+  type ProfileProjectTypeValue,
+  type SelectableLanguage,
+} from "@/lib/profile-options";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-
-type Level = "beginner" | "junior" | "intermediate";
-type Goal = "frontend" | "backend" | "fullstack" | "mobile";
-type Language = "fr" | "en" | "fr_en";
-type ProjectType = "web_app" | "mobile_app" | "api" | "ai_app";
+import { maxSelectedSkills, technologyGroups } from "@/lib/technology-options";
 
 type FormData = {
   display_name: string;
-  level: Level | "";
+  avatar_url: string;
   skills: string[];
-  goal: Goal | "";
-  availability_per_week: 5 | 10 | 15 | null;
-  language: Language | "";
+  selected_languages: SelectableLanguage[];
   timezone: string;
-  project_type: ProjectType | "";
+  project_types: ProfileProjectTypeValue[];
 };
 
-const totalSteps = 8;
-const maxSelectedSkills = 8;
-
-const technologyGroups = [
-  {
-    label: "Frontend",
-    technologies: [
-      "JavaScript",
-      "TypeScript",
-      "React",
-      "Next.js",
-      "Vue",
-      "Angular",
-      "HTML/CSS",
-      "Tailwind CSS",
-    ],
-  },
-  {
-    label: "Backend",
-    technologies: ["Node.js", "Python", "Java", "PHP", "Ruby", "C#", "Go"],
-  },
-  {
-    label: "Databases",
-    technologies: ["PostgreSQL", "MySQL", "MongoDB", "Supabase", "Firebase"],
-  },
-  {
-    label: "Backend Frameworks",
-    technologies: ["Express", "Django", "Flask", "Spring Boot", "Laravel", ".NET"],
-  },
-  {
-    label: "Mobile",
-    technologies: ["React Native", "Flutter", "Swift", "Kotlin"],
-  },
-  {
-    label: "DevOps & Tools",
-    technologies: ["Git", "Docker", "AWS", "Vercel", "GitHub Actions"],
-  },
-  {
-    label: "Other",
-    technologies: ["SQL", "GraphQL", "REST API", "Tailwind", "Figma"],
-  },
-] as const;
-
-const levelOptions: Array<{
-  label: string;
-  value: Level;
-  description: string;
-}> = [
-  {
-    label: "Beginner",
-    value: "beginner",
-    description: "You know the basics and want a supportive team environment.",
-  },
-  {
-    label: "Junior",
-    value: "junior",
-    description: "You can ship features and want more real-world collaboration.",
-  },
-  {
-    label: "Intermediate",
-    value: "intermediate",
-    description: "You can contribute with confidence and help move the team forward.",
-  },
-];
-
-const goalOptions: Array<{
-  label: string;
-  value: Goal;
-  description: string;
-  icon: typeof MonitorSmartphone;
-}> = [
-  {
-    label: "Frontend",
-    value: "frontend",
-    description: "Interfaces, components, product polish.",
-    icon: MonitorSmartphone,
-  },
-  {
-    label: "Backend",
-    value: "backend",
-    description: "APIs, data models, server logic.",
-    icon: Server,
-  },
-  {
-    label: "Fullstack",
-    value: "fullstack",
-    description: "End-to-end building across product and backend.",
-    icon: Layers3,
-  },
-  {
-    label: "Mobile",
-    value: "mobile",
-    description: "Native or cross-platform app development.",
-    icon: Smartphone,
-  },
-];
-
-const availabilityOptions = [
-  { label: "5h / week", value: 5, note: "Light commitment" },
-  { label: "10h / week", value: 10, note: "Balanced pace" },
-  { label: "15h+ / week", value: 15, note: "High involvement" },
-] as const;
-
-const languageOptions: Array<{
-  label: string;
-  value: Language;
-  description: string;
-}> = [
-  { label: "French", value: "fr", description: "Best if you prefer collaborating in French." },
-  { label: "English", value: "en", description: "Best if you prefer collaborating in English." },
-  {
-    label: "French & English",
-    value: "fr_en",
-    description: "Good if you are comfortable in both languages.",
-  },
-];
-
-const projectCards: Array<{
-  label: string;
-  value: ProjectType;
-  description: string;
-}> = [
-  { label: "Web app", value: "web_app", description: "A browser-first product your team can ship." },
-  { label: "Mobile app", value: "mobile_app", description: "A mobile experience built for iOS or Android." },
-  { label: "API", value: "api", description: "A backend-first service with endpoints and integrations." },
-  { label: "AI app", value: "ai_app", description: "A product that uses AI in a meaningful workflow." },
-];
-
+const totalSteps = 5;
 const stepVariants: Variants = {
   initial: { opacity: 0, x: 44, scale: 0.988 },
   animate: { opacity: 1, x: 0, scale: 1 },
@@ -175,17 +42,15 @@ function extractDisplayName(user: {
   email?: string | null;
   user_metadata?: Record<string, unknown>;
 } | null) {
-  if (!user) {
-    return "";
-  }
+  if (!user) return "";
 
   const metadata = user.user_metadata ?? {};
   const candidates = [
-    metadata.full_name,
-    metadata.name,
     metadata.user_name,
     metadata.preferred_username,
     metadata.nickname,
+    metadata.full_name,
+    metadata.name,
   ];
 
   for (const value of candidates) {
@@ -201,6 +66,21 @@ function extractDisplayName(user: {
   return "";
 }
 
+function extractAvatarUrl(user: {
+  user_metadata?: Record<string, unknown>;
+} | null) {
+  const metadata = user?.user_metadata ?? {};
+  const candidates = [metadata.avatar_url, metadata.picture, metadata.avatar];
+
+  for (const value of candidates) {
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value.trim();
+    }
+  }
+
+  return "";
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
@@ -211,24 +91,17 @@ export default function OnboardingPage() {
   const [showMoreTechnologies, setShowMoreTechnologies] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     display_name: "",
-    level: "",
+    avatar_url: "",
     skills: [],
-    goal: "",
-    availability_per_week: null,
-    language: "",
+    selected_languages: [],
     timezone: "America/Toronto",
-    project_type: "",
+    project_types: [],
   });
 
   useEffect(() => {
     let mounted = true;
 
     async function bootstrap() {
-      let timezone = "America/Toronto";
-      try {
-        timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || timezone;
-      } catch {}
-
       const {
         data: { session },
         error: sessionError,
@@ -264,14 +137,15 @@ export default function OnboardingPage() {
         return;
       }
 
-      const sessionDisplayName = extractDisplayName(session?.user ?? null);
-
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
 
       setFormData((current) => ({
         ...current,
-        display_name: current.display_name || sessionDisplayName,
-        timezone,
+        display_name: current.display_name || extractDisplayName(session.user),
+        avatar_url: current.avatar_url || extractAvatarUrl(session.user),
+        timezone: getDetectedTimezone(),
       }));
     }
 
@@ -292,6 +166,8 @@ export default function OnboardingPage() {
   }, [router, supabase]);
 
   const progressValue = useMemo(() => (step / totalSteps) * 100, [step]);
+  const selectedLanguageValue = deriveLanguageValue(formData.selected_languages);
+  const timezonePreview = getTimezonePreview(formData.timezone);
 
   function goNext() {
     setStep((current) => Math.min(totalSteps, current + 1));
@@ -305,22 +181,9 @@ export default function OnboardingPage() {
     setFormData((current) => ({ ...current, ...patch }));
   }
 
-  function handleSingleChoiceAdvance<T extends Level | Goal | Language | ProjectType | 5 | 10 | 15>(
-    key: keyof FormData,
-    value: T
-  ) {
-    setFormData((current) => ({
-      ...current,
-      [key]: value,
-    }));
-
-    window.setTimeout(() => {
-      setStep((current) => Math.min(totalSteps, current + 1));
-    }, 180);
-  }
-
   function toggleSkill(skill: string) {
     setSkillsLimitMessage(null);
+
     setFormData((current) => {
       const exists = current.skills.includes(skill);
 
@@ -334,6 +197,30 @@ export default function OnboardingPage() {
         skills: exists
           ? current.skills.filter((item) => item !== skill)
           : [...current.skills, skill],
+      };
+    });
+  }
+
+  function toggleLanguage(language: SelectableLanguage) {
+    setFormData((current) => {
+      const exists = current.selected_languages.includes(language);
+      return {
+        ...current,
+        selected_languages: exists
+          ? current.selected_languages.filter((item) => item !== language)
+          : [...current.selected_languages, language].sort(),
+      };
+    });
+  }
+
+  function toggleProjectType(projectType: ProfileProjectTypeValue) {
+    setFormData((current) => {
+      const exists = current.project_types.includes(projectType);
+      return {
+        ...current,
+        project_types: exists
+          ? current.project_types.filter((item) => item !== projectType)
+          : [...current.project_types, projectType],
       };
     });
   }
@@ -360,13 +247,11 @@ export default function OnboardingPage() {
     }
 
     if (
-      !formData.display_name ||
-      !formData.level ||
+      !formData.display_name.trim() ||
       formData.skills.length === 0 ||
-      !formData.goal ||
-      !formData.availability_per_week ||
-      !formData.language ||
-      !formData.project_type
+      !selectedLanguageValue ||
+      !formData.timezone ||
+      formData.project_types.length === 0
     ) {
       setSubmitState("error");
       setSubmitError("Please complete every onboarding step before continuing.");
@@ -375,14 +260,11 @@ export default function OnboardingPage() {
 
     const payload = {
       id: session.user.id,
-      display_name: formData.display_name,
-      level: formData.level,
+      display_name: formData.display_name.trim(),
       skills: formData.skills,
-      goal: formData.goal,
-      availability_per_week: formData.availability_per_week,
-      language: formData.language,
-      timezone: formData.timezone || "America/Toronto",
-      project_type: formData.project_type,
+      language: selectedLanguageValue,
+      timezone: formData.timezone,
+      project_type: formData.project_types,
     };
 
     const { error } = await supabase.from("profiles").upsert(payload, {
@@ -395,19 +277,8 @@ export default function OnboardingPage() {
       return;
     }
 
-    const queueResult = await ensureWaitingMatchmakingEntry(
-      supabase,
-      session.user.id
-    );
-
-    if (queueResult.error) {
-      setSubmitState("error");
-      setSubmitError(queueResult.error.message);
-      return;
-    }
-
     setSubmitState("done");
-    router.replace("/dashboard");
+    router.replace("/matchmaking");
   }
 
   return (
@@ -424,10 +295,7 @@ export default function OnboardingPage() {
               Back
             </button>
           ) : (
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#f3eeff] px-4 py-2 text-sm text-[#7650ff]">
-              <Sparkles className="size-4" />
-              CodeParty onboarding
-            </div>
+            <div />
           )}
 
           <div className="rounded-full border border-[#e8e2f7] bg-white px-4 py-2 text-sm text-[#6a6683]">
@@ -456,17 +324,13 @@ export default function OnboardingPage() {
               className="relative p-7 sm:p-8"
             >
               {step === 1 ? (
-                <WelcomeStep displayName={formData.display_name} onStart={goNext} />
-              ) : null}
-              {step === 2 ? (
-                <IdentityStep
+                <WelcomeStep
                   displayName={formData.display_name}
-                  selectedLevel={formData.level}
-                  onNameChange={(value) => updateFormData({ display_name: value })}
-                  onSelectLevel={(value) => handleSingleChoiceAdvance("level", value)}
+                  avatarUrl={formData.avatar_url}
+                  onStart={goNext}
                 />
               ) : null}
-              {step === 3 ? (
+              {step === 2 ? (
                 <SkillsStep
                   selectedSkills={formData.skills}
                   limitMessage={skillsLimitMessage}
@@ -476,43 +340,30 @@ export default function OnboardingPage() {
                   onContinue={goNext}
                 />
               ) : null}
+              {step === 3 ? (
+                <LanguageStep
+                  selectedLanguages={formData.selected_languages}
+                  timezone={formData.timezone}
+                  timezonePreview={timezonePreview}
+                  onToggleLanguage={toggleLanguage}
+                  onTimezoneChange={(value) => updateFormData({ timezone: value })}
+                  onContinue={goNext}
+                />
+              ) : null}
               {step === 4 ? (
-                <GoalStep
-                  selectedGoal={formData.goal}
-                  onSelectGoal={(value) => handleSingleChoiceAdvance("goal", value)}
+                <ProjectTypeStep
+                  selectedProjectTypes={formData.project_types}
+                  onToggleProjectType={toggleProjectType}
+                  onContinue={goNext}
                 />
               ) : null}
               {step === 5 ? (
-                <AvailabilityStep
-                  selectedValue={formData.availability_per_week}
-                  onSelectAvailability={(value) =>
-                    handleSingleChoiceAdvance("availability_per_week", value)
-                  }
-                />
-              ) : null}
-              {step === 6 ? (
-                <LanguageStep
-                  selectedLanguage={formData.language}
-                  timezone={formData.timezone}
-                  onSelectLanguage={(value) => {
-                    updateFormData({ timezone: "America/Toronto" });
-                    handleSingleChoiceAdvance("language", value);
-                  }}
-                />
-              ) : null}
-              {step === 7 ? (
-                <ProjectTypeStep
-                  selectedProjectType={formData.project_type}
-                  onSelectProjectType={(value) =>
-                    handleSingleChoiceAdvance("project_type", value)
-                  }
-                />
-              ) : null}
-              {step === 8 ? (
                 <SummaryStep
                   formData={formData}
                   submitError={submitError}
                   submitState={submitState}
+                  selectedLanguageValue={selectedLanguageValue}
+                  timezonePreview={timezonePreview}
                   onSubmit={handleFinalSubmit}
                 />
               ) : null}
@@ -526,31 +377,39 @@ export default function OnboardingPage() {
 
 function WelcomeStep({
   displayName,
+  avatarUrl,
   onStart,
 }: {
   displayName: string;
+  avatarUrl: string;
   onStart: () => void;
 }) {
   return (
     <div className="flex min-h-[620px] flex-col justify-between">
       <div>
-        <div className="inline-flex items-center gap-2 rounded-full bg-[#f3eeff] px-4 py-2 text-sm text-[#7650ff]">
-          <Sparkles className="size-4" />
-          CodeParty onboarding
-        </div>
         <h1 className="mt-6 text-5xl font-semibold tracking-[-0.06em] text-[#1f1c38] sm:text-6xl">
           Welcome to CodeParty
         </h1>
-        <p className="mt-5 max-w-[430px] text-lg leading-8 text-[#6a6683]">
-          Let’s configure your profile so we can place you in the right team, project, and collaboration rhythm.
+        <p className="mt-5 max-w-[450px] text-lg leading-8 text-[#6a6683]">
+          Let’s set up your profile so your account is ready across the workspace. You can update everything later in settings.
         </p>
       </div>
 
       <div className="mt-10 rounded-[1.8rem] bg-[#f6f2ff] p-5">
         <div className="flex items-center gap-4">
-          <div className="flex size-16 items-center justify-center rounded-full bg-[linear-gradient(135deg,#7650ff_0%,#a08dff_100%)] text-white shadow-[0_18px_40px_rgba(118,80,255,0.22)]">
-            <UserRound className="size-8" />
-          </div>
+          {avatarUrl ? (
+            <Image
+              src={avatarUrl}
+              alt={displayName || "GitHub profile"}
+              width={64}
+              height={64}
+              className="size-16 rounded-full object-cover shadow-[0_18px_40px_rgba(118,80,255,0.22)]"
+            />
+          ) : (
+            <div className="flex size-16 items-center justify-center rounded-full bg-[linear-gradient(135deg,#7650ff_0%,#a08dff_100%)] text-white shadow-[0_18px_40px_rgba(118,80,255,0.22)]">
+              <Code2 className="size-8" />
+            </div>
+          )}
           <div>
             <p className="text-2xl font-medium text-[#1f1c38]">
               {displayName || "Your GitHub profile"}
@@ -568,52 +427,6 @@ function WelcomeStep({
         Start
         <ArrowRight className="size-4" />
       </Button>
-    </div>
-  );
-}
-
-function IdentityStep({
-  displayName,
-  selectedLevel,
-  onNameChange,
-  onSelectLevel,
-}: {
-  displayName: string;
-  selectedLevel: Level | "";
-  onNameChange: (value: string) => void;
-  onSelectLevel: (value: Level) => void;
-}) {
-  return (
-    <div className="flex min-h-[620px] flex-col">
-      <StepHeader
-        eyebrow="Step 2"
-        title="Who are you?"
-        description="Choose your current level so we can place you in the right project environment."
-      />
-
-      <div className="mt-8">
-        <label className="mb-3 block text-sm font-medium text-[#4f496e]">
-          Display name
-        </label>
-        <input
-          value={displayName}
-          onChange={(event) => onNameChange(event.target.value)}
-          className="h-14 w-full rounded-[1.2rem] border border-[#e8e2f7] bg-[#fcfbff] px-4 text-lg text-[#1f1c38] outline-none transition placeholder:text-[#a9a3c2] focus:border-[#7b61ff]/45"
-          placeholder="Your name"
-        />
-      </div>
-
-      <div className="mt-8 grid gap-3">
-        {levelOptions.map((option) => (
-          <SelectableCard
-            key={option.value}
-            selected={selectedLevel === option.value}
-            onClick={() => onSelectLevel(option.value)}
-            title={option.label}
-            description={option.description}
-          />
-        ))}
-      </div>
     </div>
   );
 }
@@ -639,9 +452,9 @@ function SkillsStep({
   return (
     <div className="flex min-h-[620px] flex-col">
       <StepHeader
-        eyebrow="Step 3"
+        eyebrow="Step 2"
         title="Your technical stack"
-        description="Choose up to 8 technologies you want to use in your next project."
+        description="Choose up to 8 technologies to describe your profile. These choices help matchmaking a bit, and you can change them anytime."
       />
 
       <div className="mt-8 space-y-6">
@@ -715,7 +528,7 @@ function SkillsStep({
                 className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm font-medium text-[#5b45d9]"
               >
                 <Check className="size-3" />
-                {skill}
+                {skill.replaceAll(": Other", " · Other")}
               </span>
             ))
           ) : (
@@ -727,24 +540,15 @@ function SkillsStep({
       </div>
 
       <div className="mt-auto pt-8">
-        <AnimatePresence>
-          {selectedSkills.length > 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 12 }}
-            >
-              <Button
-                type="button"
-                onClick={onContinue}
-                className="h-14 w-full rounded-full bg-[linear-gradient(90deg,#7650ff_0%,#947cff_100%)] text-lg text-white hover:opacity-95"
-              >
-                Continue
-                <ArrowRight className="size-4" />
-              </Button>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
+        <Button
+          type="button"
+          onClick={onContinue}
+          disabled={selectedSkills.length === 0}
+          className="h-14 w-full rounded-full bg-[linear-gradient(90deg,#7650ff_0%,#947cff_100%)] text-lg text-white hover:opacity-95"
+        >
+          Continue
+          <ArrowRight className="size-4" />
+        </Button>
       </div>
     </div>
   );
@@ -767,6 +571,7 @@ function TechnologyGroup({
       <div className="flex flex-wrap gap-3">
         {technologies.map((tech) => {
           const selected = selectedSkills.includes(tech);
+          const labelValue = tech.endsWith(": Other") ? "Other" : tech;
 
           return (
             <motion.button
@@ -781,7 +586,7 @@ function TechnologyGroup({
                   : "border-[#e8e2f7] bg-white text-[#5f587f] hover:bg-[#faf8ff]"
               }`}
             >
-              {tech}
+              {labelValue}
             </motion.button>
           );
         })}
@@ -790,133 +595,129 @@ function TechnologyGroup({
   );
 }
 
-function GoalStep({
-  selectedGoal,
-  onSelectGoal,
+function LanguageStep({
+  selectedLanguages,
+  timezone,
+  timezonePreview,
+  onToggleLanguage,
+  onTimezoneChange,
+  onContinue,
 }: {
-  selectedGoal: Goal | "";
-  onSelectGoal: (value: Goal) => void;
+  selectedLanguages: SelectableLanguage[];
+  timezone: string;
+  timezonePreview: string;
+  onToggleLanguage: (value: SelectableLanguage) => void;
+  onTimezoneChange: (value: string) => void;
+  onContinue: () => void;
 }) {
   return (
     <div className="flex min-h-[620px] flex-col">
       <StepHeader
-        eyebrow="Step 4"
-        title="Your technical goal"
-        description="Tell us which role you want to play inside the team."
+        eyebrow="Step 3"
+        title="What languages do you speak?"
+        description="Choose the languages you can collaborate in, then confirm the timezone attached to your profile."
       />
 
-      <div className="mt-8 grid gap-3 sm:grid-cols-2">
-        {goalOptions.map((option) => {
-          const Icon = option.icon;
+      <div className="mt-8 flex flex-wrap gap-3">
+        {profileLanguageOptions.map((option) => {
+          const active = selectedLanguages.includes(option.value);
           return (
-            <SelectableCard
+            <button
               key={option.value}
-              selected={selectedGoal === option.value}
-              onClick={() => onSelectGoal(option.value)}
-              title={option.label}
-              description={option.description}
-              icon={<Icon className="size-5" />}
-            />
+              type="button"
+              onClick={() => onToggleLanguage(option.value)}
+              className={
+                active
+                  ? "rounded-full border border-[#8d78ff] bg-[#f1ebff] px-4 py-3 text-sm font-medium text-[#5b45d9]"
+                  : "rounded-full border border-[#e8e2f7] bg-white px-4 py-3 text-sm font-medium text-[#5f587f]"
+              }
+            >
+              {option.label}
+            </button>
           );
         })}
       </div>
-    </div>
-  );
-}
-
-function AvailabilityStep({
-  selectedValue,
-  onSelectAvailability,
-}: {
-  selectedValue: 5 | 10 | 15 | null;
-  onSelectAvailability: (value: 5 | 10 | 15) => void;
-}) {
-  return (
-    <div className="flex min-h-[620px] flex-col">
-      <StepHeader
-        eyebrow="Step 5"
-        title="Your availability"
-        description="Choose the pace you can realistically sustain every week."
-      />
 
       <div className="mt-8 grid gap-3">
-        {availabilityOptions.map((option) => (
-          <SelectableCard
-            key={option.value}
-            selected={selectedValue === option.value}
-            onClick={() => onSelectAvailability(option.value)}
-            title={option.label}
-            description={option.note}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function LanguageStep({
-  selectedLanguage,
-  timezone,
-  onSelectLanguage,
-}: {
-  selectedLanguage: Language | "";
-  timezone: string;
-  onSelectLanguage: (value: Language) => void;
-}) {
-  return (
-    <div className="flex min-h-[620px] flex-col">
-      <StepHeader
-        eyebrow="Step 6"
-        title="Collaboration language"
-        description="Choose how you want to communicate with your future team."
-      />
-
-      <div className="mt-8 grid gap-3">
-        {languageOptions.map((option) => (
-          <SelectableCard
-            key={option.value}
-            selected={selectedLanguage === option.value}
-            onClick={() => onSelectLanguage(option.value)}
-            title={option.label}
-            description={option.description}
-          />
-        ))}
+        <label className="text-sm font-medium text-[#4f496e]">Timezone</label>
+        <select
+          value={timezone}
+          onChange={(event) => onTimezoneChange(event.target.value)}
+          className="h-14 w-full rounded-[1.2rem] border border-[#e8e2f7] bg-[#fcfbff] px-4 text-base text-[#1f1c38] outline-none transition focus:border-[#7b61ff]/45"
+        >
+          {profileTimezoneOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
       </div>
 
-      <div className="mt-6 rounded-[1.5rem] bg-[#f8f4ff] p-4 text-sm text-[#5f587f]">
-        Timezone defaults to{" "}
-        <span className="font-medium text-[#1f1c38]">{timezone || "America/Toronto"}</span>
+      <div className="mt-4 rounded-[1.4rem] bg-[#f8f4ff] p-4">
+        <div className="flex items-center gap-2 text-sm font-medium text-[#5b45d9]">
+          <Clock3 className="size-4" />
+          Local time preview
+        </div>
+        <p className="mt-2 text-sm leading-6 text-[#6a6683]">
+          {timezonePreview} in {timezone}
+        </p>
+      </div>
+
+      <div className="mt-auto pt-8">
+        <Button
+          type="button"
+          onClick={onContinue}
+          disabled={selectedLanguages.length === 0 || !timezone}
+          className="h-14 w-full rounded-full bg-[linear-gradient(90deg,#7650ff_0%,#947cff_100%)] text-lg text-white hover:opacity-95"
+        >
+          Continue
+          <ArrowRight className="size-4" />
+        </Button>
       </div>
     </div>
   );
 }
 
 function ProjectTypeStep({
-  selectedProjectType,
-  onSelectProjectType,
+  selectedProjectTypes,
+  onToggleProjectType,
+  onContinue,
 }: {
-  selectedProjectType: ProjectType | "";
-  onSelectProjectType: (value: ProjectType) => void;
+  selectedProjectTypes: ProfileProjectTypeValue[];
+  onToggleProjectType: (value: ProfileProjectTypeValue) => void;
+  onContinue: () => void;
 }) {
   return (
     <div className="flex min-h-[620px] flex-col">
       <StepHeader
-        eyebrow="Step 7"
-        title="Desired project type"
-        description="Choose the type of product you would like to build with your team."
+        eyebrow="Step 4"
+        title="What would you like to build?"
+        description="Select every project type that fits your profile. You can choose one or many."
       />
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2">
-        {projectCards.map((option) => (
+        {profileProjectTypeOptions.map((option) => (
           <SelectableCard
             key={option.value}
-            selected={selectedProjectType === option.value}
-            onClick={() => onSelectProjectType(option.value)}
+            selected={selectedProjectTypes.includes(option.value)}
+            onClick={() => onToggleProjectType(option.value)}
             title={option.label}
             description={option.description}
             icon={<Code2 className="size-5" />}
           />
         ))}
+      </div>
+
+      <div className="mt-auto pt-8">
+        <Button
+          type="button"
+          onClick={onContinue}
+          disabled={selectedProjectTypes.length === 0}
+          className="h-14 w-full rounded-full bg-[linear-gradient(90deg,#7650ff_0%,#947cff_100%)] text-lg text-white hover:opacity-95"
+        >
+          Continue
+          <ArrowRight className="size-4" />
+        </Button>
       </div>
     </div>
   );
@@ -926,33 +727,43 @@ function SummaryStep({
   formData,
   submitError,
   submitState,
+  selectedLanguageValue,
+  timezonePreview,
   onSubmit,
 }: {
   formData: FormData;
   submitError: string | null;
   submitState: "idle" | "saving" | "done" | "error";
+  selectedLanguageValue: string | null;
+  timezonePreview: string;
   onSubmit: () => void | Promise<void>;
 }) {
   const summaryItems = [
-    { label: "Display name", value: formData.display_name },
-    { label: "Level", value: formData.level || "Not selected" },
-    { label: "Skills", value: formData.skills.join(", ") || "Not selected" },
-    { label: "Goal", value: formData.goal || "Not selected" },
+    { label: "Username", value: formData.display_name || "Not selected" },
     {
-      label: "Availability",
-      value: formData.availability_per_week ? `${formData.availability_per_week}h / week` : "Not selected",
+      label: "Languages",
+      value: formatLanguageValue(selectedLanguageValue),
     },
-    { label: "Language", value: formData.language || "Not selected" },
-    { label: "Timezone", value: formData.timezone || "America/Toronto" },
-    { label: "Project type", value: formData.project_type || "Not selected" },
+    { label: "Timezone", value: formData.timezone || "Not selected" },
+    { label: "Local time preview", value: timezonePreview },
+    {
+      label: "Technical stack",
+      value:
+        formData.skills.map((skill) => skill.replaceAll(": Other", " · Other")).join(", ") ||
+        "Not selected",
+    },
+    {
+      label: "Project types",
+      value: formatProjectTypeList(formData.project_types),
+    },
   ];
 
   return (
     <div className="flex min-h-[620px] flex-col">
       <StepHeader
-        eyebrow="Step 8"
-        title="Final summary"
-        description="Here’s the profile we will use to match you with the right team and project."
+        eyebrow="Step 5"
+        title="Your profile summary"
+        description="This is the profile setup that will be saved to your account. You can edit it later in settings."
       />
 
       <div className="mt-8 grid gap-3">
@@ -986,7 +797,7 @@ function SummaryStep({
             </>
           ) : (
             <>
-              Join matchmaking
+              Join a party!
               <ArrowRight className="size-4" />
             </>
           )}
@@ -1011,7 +822,7 @@ function SummaryStep({
               exit={{ opacity: 0, y: 12 }}
               className="mt-4 rounded-[1.2rem] border border-[#d8cff8] bg-[#f3eeff] px-4 py-3 text-sm text-[#5b45d9]"
             >
-              Profile saved successfully. Redirecting to your dashboard...
+              Profile saved successfully. Redirecting to matchmaking...
             </motion.p>
           ) : null}
         </AnimatePresence>
@@ -1037,7 +848,7 @@ function StepHeader({
       <h2 className="mt-4 text-4xl font-semibold tracking-[-0.05em] text-[#1f1c38] sm:text-5xl">
         {title}
       </h2>
-      <p className="mt-4 max-w-[430px] text-base leading-8 text-[#6a6683] sm:text-lg">
+      <p className="mt-4 max-w-[460px] text-base leading-8 text-[#6a6683] sm:text-lg">
         {description}
       </p>
     </div>

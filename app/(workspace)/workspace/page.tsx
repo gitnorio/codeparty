@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState, type ReactNode } from "react";
-import { Link2, Loader2, Sparkles, Users } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { ArrowLeft, CheckCircle2, Link2, Loader2, Sparkles, Users } from "lucide-react";
 
 import { EmptyStatePanel, FeedbackBanner, LoadingPanel } from "@/components/app/feedback";
 import { useWorkspaceProfile } from "@/components/app/workspace-shell";
@@ -10,10 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { formatLanguageValue } from "@/lib/profile-options";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import {
   formatProjectLabel,
-  mapGoalToProjectRole,
+  getDefaultProjectRole,
   normalizeProjectStack,
   projectRoleOptions,
   type ProjectRole,
@@ -29,18 +32,17 @@ type ProjectFormAssignment = Record<
 >;
 
 export default function WorkspacePage() {
+  const searchParams = useSearchParams();
   const supabase = getSupabaseBrowserClient();
   const profile = useWorkspaceProfile();
-  const { snapshot, isLoading, errorMessage, refreshSnapshot } = useWorkspaceSnapshot(profile.id);
-  const currentUserProjectMember = snapshot?.projectMembers.find(
-    (item) => item.profile.id === profile.id
+  const selectedPartyId = searchParams.get("party");
+  const { snapshot, isLoading, errorMessage, refreshSnapshot } = useWorkspaceSnapshot(
+    profile.id,
+    selectedPartyId
   );
-  const projectMembersByUserId = new Map(
-    (snapshot?.projectMembers ?? []).map((item) => [item.profile.id, item] as const)
-  );
+  const parties = snapshot?.allTeams ?? [];
 
   const [formData, setFormData] = useState({
-    name: "",
     description: "",
     stackInput: "",
     githubRepoUrl: "",
@@ -49,6 +51,7 @@ export default function WorkspacePage() {
   });
   const [assignments, setAssignments] = useState<ProjectFormAssignment>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRequestingCompletion, setIsRequestingCompletion] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -57,8 +60,15 @@ export default function WorkspacePage() {
     [formData.stackInput]
   );
   const defaultProjectName = snapshot?.currentTeam
-    ? `${snapshot.currentTeam.name} Project`
+    ? `Party ${snapshot.currentTeam.party_id} Project`
     : "";
+  const completionRequester = useMemo(
+    () =>
+      snapshot?.teamMembers.find(
+        (member) => member.profile.id === snapshot.currentTeam?.completion_requested_by
+      )?.profile.display_name ?? null,
+    [snapshot]
+  );
 
   async function handleCreateProject() {
     if (!snapshot?.currentTeam) {
@@ -67,11 +77,6 @@ export default function WorkspacePage() {
     }
 
     const stack = normalizeProjectStack(formData.stackInput);
-
-    if (!formData.name.trim()) {
-      setSubmitError("Project name is required.");
-      return;
-    }
 
     if (stack.length === 0) {
       setSubmitError("Add at least one technology to your project stack.");
@@ -105,7 +110,7 @@ export default function WorkspacePage() {
         Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({
-        name: formData.name.trim(),
+        name: defaultProjectName || "CodeParty Project",
         description: formData.description.trim() || null,
         stack,
         githubRepoUrl: formData.githubRepoUrl.trim(),
@@ -113,9 +118,7 @@ export default function WorkspacePage() {
         endDate: formData.endDate || null,
         assignments: snapshot.teamMembers.map((member) => ({
           userId: member.profile.id,
-          projectRole:
-            assignments[member.profile.id]?.projectRole ??
-            mapGoalToProjectRole(member.profile.goal),
+          projectRole: assignments[member.profile.id]?.projectRole ?? getDefaultProjectRole(),
           contributionSummary:
             assignments[member.profile.id]?.contributionSummary.trim() || null,
         })),
@@ -132,6 +135,47 @@ export default function WorkspacePage() {
 
     setSuccessMessage("Your team project is now live in the workspace.");
     setIsSubmitting(false);
+    await refreshSnapshot();
+  }
+
+  async function handleRequestCompletion() {
+    if (!snapshot?.currentTeam) {
+      setSubmitError("You need an active party before requesting completion.");
+      return;
+    }
+
+    setIsRequestingCompletion(true);
+    setSubmitError(null);
+    setSuccessMessage(null);
+
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !session?.access_token) {
+      setSubmitError(sessionError?.message ?? "Missing authenticated session.");
+      setIsRequestingCompletion(false);
+      return;
+    }
+
+    const response = await fetch(`/api/teams/${snapshot.currentTeam.id}/completion-request`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+
+    const payload = (await response.json()) as { error?: string };
+
+    if (!response.ok) {
+      setSubmitError(payload.error ?? "Failed to request completion.");
+      setIsRequestingCompletion(false);
+      return;
+    }
+
+    setSuccessMessage("Completion request sent to admin for review.");
+    setIsRequestingCompletion(false);
     await refreshSnapshot();
   }
 
@@ -157,38 +201,66 @@ export default function WorkspacePage() {
 
       {isLoading ? (
         <LoadingPanel message="Loading workspace..." />
+      ) : !selectedPartyId ? (
+        <Card className="border border-[#ece8f8] shadow-none">
+          <CardHeader>
+            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
+              All parties
+            </CardTitle>
+            <CardDescription className="text-sm leading-6 text-[#6a6683]">
+              Select a party to open its dedicated workspace.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {parties.length === 0 ? (
+              <div className="rounded-[1rem] bg-[#faf8ff] p-4 text-sm text-[#6a6683]">
+                No parties available yet.
+              </div>
+            ) : (
+              <div className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff]">
+                {parties.map((party) => (
+                  <Link
+                    key={party.id}
+                    href={`/workspace?party=${party.id}`}
+                    className="flex items-center justify-between gap-3 border-b px-4 py-3 transition hover:bg-[#faf8ff] last:border-b-0"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-[#1f1c38]">Party {party.party_id}</p>
+                      <p className="mt-0.5 text-[11px] text-[#6a6683]">
+                        {formatProjectLabel(party.status)}
+                      </p>
+                    </div>
+                    <span className="text-sm font-medium text-[#5b45d9]">Open</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       ) : !snapshot?.currentTeam ? (
         <EmptyStatePanel
           icon={Users}
-          title="No active team yet"
-          description="Once you are matched, this screen becomes the single place for your team members, project setup, and GitHub link."
+          title="Party not found"
+          description="This party is unavailable or no longer attached to your account."
         />
       ) : (
         <>
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid gap-4">
             <SignalCard
               label="Current team"
-              value={snapshot.currentTeam.name}
+              value={`Party ${snapshot.currentTeam.party_id}`}
               detail={`${snapshot.teamMembers.length} members · ${formatProjectLabel(snapshot.currentTeam.status)}`}
             />
-            <SignalCard
-              label="Current project"
-              value={snapshot.currentProject?.name ?? "Not created yet"}
-              detail={
-                snapshot.currentProject
-                  ? formatProjectLabel(snapshot.currentProject.status)
-                  : "Create the first shared project for this team."
-              }
-            />
-            <SignalCard
-              label="Your role"
-              value={
-                currentUserProjectMember
-                  ? formatProjectLabel(currentUserProjectMember.membership.project_role)
-                  : "Not assigned"
-              }
-              detail="Roles stay visible here once the project is created."
-            />
+          </div>
+
+          <div>
+            <Link
+              href="/workspace"
+              className="inline-flex items-center gap-2 text-sm font-medium text-[#5b45d9] underline-offset-4 hover:underline"
+            >
+              <ArrowLeft className="size-4" />
+              Back to all parties
+            </Link>
           </div>
 
           {!snapshot.currentProject ? (
@@ -202,52 +274,8 @@ export default function WorkspacePage() {
                     Everyone currently active in the team and ready for the first shared build.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="grid gap-3">
-                  {snapshot.teamMembers.map((member) => {
-                    const projectMember = projectMembersByUserId.get(member.profile.id);
-
-                    return (
-                      <div
-                        key={member.profile.id}
-                        className="rounded-[1.1rem] border border-[#ece8f8] bg-[#fcfbff] p-3.5"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-base font-medium text-[#1f1c38]">
-                              {member.profile.display_name}
-                            </p>
-                            <p className="mt-1 text-sm text-[#6a6683]">
-                              {formatProjectLabel(member.profile.level)} · {formatProjectLabel(member.profile.goal)}
-                            </p>
-                          </div>
-                          <Badge variant="outline" className="rounded-full bg-white text-[#7650ff]">
-                            {formatProjectLabel(member.membership.member_status)}
-                          </Badge>
-                        </div>
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {member.profile.skills.slice(0, 4).map((skill) => (
-                            <span
-                              key={skill}
-                              className="rounded-full bg-[#f3eeff] px-2.5 py-1 text-xs text-[#5b45d9]"
-                            >
-                              {skill}
-                            </span>
-                          ))}
-                        </div>
-
-                        <p className="mt-3 text-sm leading-6 text-[#6a6683]">
-                          {member.profile.availability_per_week}h / week · {formatProjectLabel(member.profile.project_type)}
-                        </p>
-
-                        <p className="mt-2 text-sm leading-6 text-[#6a6683]">
-                          {projectMember
-                            ? `Planned role: ${formatProjectLabel(projectMember.membership.project_role)}`
-                            : "Project role will be set during project creation."}
-                        </p>
-                      </div>
-                    );
-                  })}
+                <CardContent>
+                  <CompactTeamMemberList members={snapshot.teamMembers} />
                 </CardContent>
               </Card>
 
@@ -281,17 +309,6 @@ export default function WorkspacePage() {
                       ))}
                     </div>
                   </div>
-
-                  <Field label="Project name">
-                    <Input
-                      value={formData.name}
-                      onChange={(event) =>
-                        setFormData((current) => ({ ...current, name: event.target.value }))
-                      }
-                      placeholder={defaultProjectName || "CodeParty Project"}
-                      className="h-10 rounded-[0.9rem] border-[#e8e2f7] bg-[#fcfbff] px-3.5"
-                    />
-                  </Field>
 
                   <Field label="Description and goals">
                     <textarea
@@ -383,7 +400,7 @@ export default function WorkspacePage() {
                               {member.profile.display_name}
                             </p>
                             <p className="mt-1 text-sm text-[#6a6683]">
-                              {formatProjectLabel(member.profile.goal)} · {formatProjectLabel(member.profile.level)}
+                              {formatLanguageValue(member.profile.language)} · {member.profile.timezone}
                             </p>
                           </div>
                           <Badge variant="outline" className="rounded-full bg-white text-[#7650ff]">
@@ -428,7 +445,7 @@ export default function WorkspacePage() {
                               [member.profile.id]: {
                                 projectRole:
                                   current[member.profile.id]?.projectRole ??
-                                  mapGoalToProjectRole(member.profile.goal),
+                                  getDefaultProjectRole(),
                                 contributionSummary: event.target.value,
                               },
                             }))
@@ -474,44 +491,8 @@ export default function WorkspacePage() {
                       The people currently attached to this team and the roles visible in the project.
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="grid gap-3">
-                    {snapshot.teamMembers.map((member) => {
-                      const projectMember = projectMembersByUserId.get(member.profile.id);
-
-                      return (
-                        <div
-                          key={member.profile.id}
-                          className="rounded-[1.1rem] border border-[#ece8f8] bg-[#fcfbff] p-3.5"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <p className="text-base font-medium text-[#1f1c38]">
-                                {member.profile.display_name}
-                              </p>
-                              <p className="mt-1 text-sm text-[#6a6683]">
-                                {formatProjectLabel(member.profile.level)} · {formatProjectLabel(member.profile.goal)}
-                              </p>
-                            </div>
-                            <Badge variant="outline" className="rounded-full bg-white text-[#7650ff]">
-                              {projectMember
-                                ? formatProjectLabel(projectMember.membership.project_role)
-                                : formatProjectLabel(member.membership.member_status)}
-                            </Badge>
-                          </div>
-
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {member.profile.skills.slice(0, 4).map((skill) => (
-                              <span
-                                key={skill}
-                                className="rounded-full bg-[#f3eeff] px-2.5 py-1 text-xs text-[#5b45d9]"
-                              >
-                                {skill}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <CardContent>
+                    <CompactTeamMemberList members={snapshot.teamMembers} />
                   </CardContent>
                 </Card>
 
@@ -519,16 +500,13 @@ export default function WorkspacePage() {
                   <Card className="border border-[#ece8f8] shadow-none">
                     <CardHeader>
                       <Badge variant="outline" className="w-fit rounded-full bg-[#f6f2ff] text-[#7650ff]">
-                        Project details
+                        Repository
                       </Badge>
-                      <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
-                        {snapshot.currentProject.name}
-                      </CardTitle>
                       <CardDescription className="text-sm leading-6 text-[#6a6683]">
-                        {snapshot.currentProject.description || "The team has not added a description yet."}
+                        The shared GitHub repository linked to this party.
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="grid gap-3">
+                    <CardContent>
                       <div className="rounded-[1.15rem] bg-[#faf8ff] p-4">
                         <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">Repository</p>
                         <p className="mt-1 text-base font-medium text-[#1f1c38]">
@@ -548,66 +526,57 @@ export default function WorkspacePage() {
                           </a>
                         ) : null}
                       </div>
-
-                      <div className="rounded-[1.15rem] bg-[#faf8ff] p-4">
-                        <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">Core stack</p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {snapshot.currentProject.stack.map((item) => (
-                            <span
-                              key={item}
-                              className="rounded-full bg-white px-2.5 py-1 text-xs text-[#5b45d9]"
-                            >
-                              {item}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="border border-[#ece8f8] shadow-none">
-                    <CardHeader>
-                      <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
-                        Project roles
-                      </CardTitle>
-                      <CardDescription className="text-sm leading-6 text-[#6a6683]">
-                        The visible project responsibilities attached to the current team build.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid gap-3">
-                      {snapshot.projectMembers.length > 0 ? (
-                        snapshot.projectMembers.map((item) => (
-                          <div
-                            key={item.membership.id}
-                            className="rounded-[1.1rem] border border-[#ece8f8] bg-[#fcfbff] p-3.5"
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <p className="text-base font-medium text-[#1f1c38]">
-                                  {item.profile.display_name}
-                                </p>
-                                <p className="mt-1 text-sm text-[#6a6683]">
-                                  {formatProjectLabel(item.membership.project_role)}
-                                </p>
-                              </div>
-                              <Badge variant="outline" className="rounded-full bg-white text-[#7650ff]">
-                                {formatProjectLabel(item.profile.level)}
-                              </Badge>
-                            </div>
-                            {item.membership.contribution_summary ? (
-                              <p className="mt-2 text-sm leading-6 text-[#6a6683]">
-                                {item.membership.contribution_summary}
-                              </p>
-                            ) : null}
-                          </div>
-                        ))
-                      ) : (
-                        <div className="rounded-[1.15rem] bg-[#faf8ff] p-4 text-sm text-[#6a6683]">
-                          Project roles have not been assigned yet.
+                  {snapshot.currentTeam.status === "active" ? (
+                    <Card className="border border-[#ece8f8] shadow-none">
+                      <CardHeader>
+                        <Badge variant="outline" className="w-fit rounded-full bg-[#f6f2ff] text-[#7650ff]">
+                          Completion
+                        </Badge>
+                        <CardDescription className="text-sm leading-6 text-[#6a6683]">
+                          When the project is done, send a completion request to admin for review.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="grid gap-3">
+                        <div className="rounded-[1.15rem] bg-[#faf8ff] p-4">
+                          <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">Status</p>
+                          <p className="mt-1 text-sm font-medium text-[#1f1c38]">
+                            {snapshot.currentTeam.completion_requested_at
+                              ? "Completion review pending"
+                              : "No completion request yet"}
+                          </p>
+                          <p className="mt-1 text-xs leading-5 text-[#6a6683]">
+                            {snapshot.currentTeam.completion_requested_at
+                              ? `Requested ${formatInlineDate(snapshot.currentTeam.completion_requested_at)}${completionRequester ? ` by ${completionRequester}` : ""}.`
+                              : "A party member can submit a completion request once the work is ready for admin review."}
+                          </p>
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
+
+                        <Button
+                          type="button"
+                          onClick={() => void handleRequestCompletion()}
+                          disabled={isRequestingCompletion || Boolean(snapshot.currentTeam.completion_requested_at)}
+                          className="h-11 rounded-full bg-[linear-gradient(90deg,#7650ff_0%,#947cff_100%)] text-white hover:opacity-95"
+                        >
+                          {isRequestingCompletion ? (
+                            <>
+                              <Loader2 className="size-4 animate-spin" />
+                              Sending request...
+                            </>
+                          ) : snapshot.currentTeam.completion_requested_at ? (
+                            "Completion request pending"
+                          ) : (
+                            <>
+                              <CheckCircle2 className="size-4" />
+                              Request completion
+                            </>
+                          )}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ) : null}
                 </div>
               </div>
             </>
@@ -653,11 +622,67 @@ function SignalCard({
   );
 }
 
+function CompactTeamMemberList({
+  members,
+}: {
+  members: Array<{
+    membership: {
+      id: string;
+      member_status: string;
+    };
+    profile: {
+      id: string;
+      display_name: string;
+      language: string;
+      timezone: string;
+      skills: string[];
+    };
+  }>;
+}) {
+  return (
+    <div className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff]">
+      {members.map((member) => (
+        <div
+          key={member.membership.id}
+          className="flex items-center justify-between gap-3 border-b px-4 py-3 last:border-b-0"
+        >
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-[#1f1c38]">
+              {member.profile.display_name}
+            </p>
+            <p className="mt-0.5 truncate text-[11px] text-[#6a6683]">
+              {formatLanguageValue(member.profile.language)} · {member.profile.timezone}
+            </p>
+            <p className="mt-0.5 truncate text-[10px] text-[#8f84bc]">
+              {member.profile.skills.slice(0, 3).join(" · ") || "No stack selected"}
+            </p>
+          </div>
+          <Badge variant="outline" className="shrink-0 rounded-full bg-white text-[#7650ff]">
+            {formatProjectLabel(member.membership.member_status)}
+          </Badge>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function repoLabel(repoUrl: string) {
   try {
     const url = new URL(repoUrl);
     return url.pathname.replace(/^\//, "");
   } catch {
     return repoUrl;
+  }
+}
+
+function formatInlineDate(value: string) {
+  try {
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(new Date(value));
+  } catch {
+    return value;
   }
 }

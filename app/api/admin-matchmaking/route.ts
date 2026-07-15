@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 
 import {
   createManualTeamMatch,
-  getCancelledCandidates,
   getFormedTeams,
-  markTeamAbandoned,
+  rejectTeamCompletionRequest,
+  updateTeamStatusByAdmin,
   getWaitingCandidates,
   updateQueueEntriesStatus,
 } from "@/lib/admin-matchmaking";
@@ -23,9 +23,8 @@ export async function GET(request: Request) {
   }
 
   const supabase = getSupabaseServiceRoleClient();
-  const [waitingResult, cancelledResult, teamsResult] = await Promise.all([
+  const [waitingResult, teamsResult] = await Promise.all([
     getWaitingCandidates(supabase),
-    getCancelledCandidates(supabase),
     getFormedTeams(supabase),
   ]);
 
@@ -43,16 +42,8 @@ export async function GET(request: Request) {
     );
   }
 
-  if (cancelledResult.error) {
-    return NextResponse.json(
-      { error: cancelledResult.error.message },
-      { status: 500 }
-    );
-  }
-
   return NextResponse.json({
     waitingCandidates: waitingResult.data,
-    cancelledCandidates: cancelledResult.data,
     formedTeams: teamsResult.data,
   });
 }
@@ -70,13 +61,12 @@ export async function POST(request: Request) {
   }
 
   const body = (await request.json()) as {
-    teamName?: string;
     queueIds?: string[];
   };
 
-  if (!body.teamName || !body.queueIds || body.queueIds.length === 0) {
+  if (!body.queueIds || body.queueIds.length === 0) {
     return NextResponse.json(
-      { error: "Missing teamName or queueIds." },
+      { error: "Missing queueIds." },
       { status: 400 }
     );
   }
@@ -102,7 +92,6 @@ export async function POST(request: Request) {
   }
 
   const result = await createManualTeamMatch(supabase, {
-    teamName: body.teamName,
     createdBy: adminAuth.user.id,
     queueEntries,
   });
@@ -135,7 +124,12 @@ export async function PATCH(request: Request) {
         queueIds?: string[];
       }
     | {
-        action?: "markTeamAbandoned";
+        action?: "updateTeamStatus";
+        teamId?: string;
+        status?: "completed" | "cancelled";
+      }
+    | {
+        action?: "rejectTeamCompletionRequest";
         teamId?: string;
       };
 
@@ -167,16 +161,17 @@ export async function PATCH(request: Request) {
     });
   }
 
-  if (body.action === "markTeamAbandoned") {
-    if (!body.teamId) {
+  if (body.action === "updateTeamStatus") {
+    if (!body.teamId || !body.status) {
       return NextResponse.json(
-        { error: "Missing teamId." },
+        { error: "Missing teamId or status." },
         { status: 400 }
       );
     }
 
-    const result = await markTeamAbandoned(supabase, {
+    const result = await updateTeamStatusByAdmin(supabase, {
       teamId: body.teamId,
+      status: body.status,
     });
 
     if (result.error) {
@@ -188,6 +183,30 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({
       project: result.project,
+    });
+  }
+
+  if (body.action === "rejectTeamCompletionRequest") {
+    if (!body.teamId) {
+      return NextResponse.json(
+        { error: "Missing teamId." },
+        { status: 400 }
+      );
+    }
+
+    const result = await rejectTeamCompletionRequest(supabase, {
+      teamId: body.teamId,
+    });
+
+    if (result.error) {
+      return NextResponse.json(
+        { error: result.error.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      team: result.team,
     });
   }
 

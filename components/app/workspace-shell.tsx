@@ -250,10 +250,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
                   <div className="flex size-9 items-center justify-center rounded-full bg-[#e9e0ff] text-sm font-semibold text-[#7650ff]">
                     {profile.display_name.slice(0, 2).toUpperCase()}
                   </div>
-                  <div className="text-left">
-                    <p className="text-sm font-medium text-[#1f1c38]">{profile.display_name}</p>
-                    <p className="text-xs text-[#7a7493]">{profile.level}</p>
-                  </div>
+                  <p className="text-sm font-medium text-[#1f1c38]">{profile.display_name}</p>
                 </div>
 
                 <Button

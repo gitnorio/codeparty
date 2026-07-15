@@ -23,6 +23,8 @@ export type ProjectMemberWithProfile = {
 
 export type WorkspaceSnapshot = {
   queueEntry: MatchmakingQueueRow | null;
+  allMemberships: TeamMemberRow[];
+  allTeams: TeamRow[];
   currentTeam: TeamRow | null;
   currentMembership: TeamMemberRow | null;
   teamMembers: TeamMemberWithProfile[];
@@ -33,7 +35,8 @@ export type WorkspaceSnapshot = {
 
 export async function getWorkspaceSnapshot(
   supabase: SupabaseBrowserClient,
-  userId: string
+  userId: string,
+  selectedTeamId?: string | null
 ) {
   const queueResult = await getLatestMatchmakingEntry(supabase, userId);
 
@@ -62,6 +65,8 @@ export async function getWorkspaceSnapshot(
     return {
       data: {
         queueEntry: queueResult.data,
+        allMemberships: [],
+        allTeams: [],
         currentTeam: null,
         currentMembership: null,
         teamMembers: [],
@@ -87,12 +92,23 @@ export async function getWorkspaceSnapshot(
   }
 
   const teamsById = new Map((teams ?? []).map((team) => [team.id, team] as const));
+  const availableTeams = memberships
+    .map((membership) => teamsById.get(membership.team_id) ?? null)
+    .filter((team): team is TeamRow => Boolean(team));
+
+  const selectedMembership =
+    selectedTeamId
+      ? memberships.find((membership) => membership.team_id === selectedTeamId) ?? null
+      : null;
 
   const currentMembership =
+    selectedMembership ??
     memberships.find((membership) => {
       const team = teamsById.get(membership.team_id);
       return membership.member_status === "active" && team?.status !== "cancelled";
-    }) ?? memberships[0] ?? null;
+    }) ??
+    memberships[0] ??
+    null;
 
   const currentTeam = currentMembership
     ? teamsById.get(currentMembership.team_id) ?? null
@@ -102,6 +118,8 @@ export async function getWorkspaceSnapshot(
     return {
       data: {
         queueEntry: queueResult.data,
+        allMemberships: memberships,
+        allTeams: availableTeams,
         currentTeam: null,
         currentMembership: null,
         teamMembers: [],
@@ -169,6 +187,8 @@ export async function getWorkspaceSnapshot(
     return {
       data: {
         queueEntry: queueResult.data,
+        allMemberships: memberships,
+        allTeams: availableTeams,
         currentTeam,
         currentMembership,
         teamMembers: teamMemberList,
@@ -229,6 +249,8 @@ export async function getWorkspaceSnapshot(
   return {
     data: {
       queueEntry: queueResult.data,
+      allMemberships: memberships,
+      allTeams: availableTeams,
       currentTeam,
       currentMembership,
       teamMembers: teamMemberList,
@@ -241,7 +263,7 @@ export async function getWorkspaceSnapshot(
   };
 }
 
-export function useWorkspaceSnapshot(userId: string) {
+export function useWorkspaceSnapshot(userId: string, selectedTeamId?: string | null) {
   const supabase = getSupabaseBrowserClient();
   const [snapshot, setSnapshot] = useState<WorkspaceSnapshot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -251,7 +273,7 @@ export function useWorkspaceSnapshot(userId: string) {
     setErrorMessage(null);
     setIsLoading(true);
 
-    const result = await getWorkspaceSnapshot(supabase, userId);
+    const result = await getWorkspaceSnapshot(supabase, userId, selectedTeamId);
 
     if (result.error) {
       setErrorMessage(result.error.message);
@@ -262,7 +284,7 @@ export function useWorkspaceSnapshot(userId: string) {
 
     setSnapshot(result.data);
     setIsLoading(false);
-  }, [supabase, userId]);
+  }, [selectedTeamId, supabase, userId]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {

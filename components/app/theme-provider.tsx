@@ -6,7 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useState,
+  useSyncExternalStore,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
 } from "react";
@@ -23,6 +23,7 @@ type ThemeContextValue = {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 const storageKey = "codeparty-theme";
+const themeChangeEvent = "codeparty-theme-change";
 const fallbackTransitionClass = "theme-fade";
 
 type ViewTransitionController = {
@@ -33,23 +34,58 @@ type DocumentWithViewTransition = Document & {
   startViewTransition?: (callback: () => void) => ViewTransitionController;
 };
 
+function getThemeSnapshot(): Theme {
+  if (typeof window === "undefined") {
+    return "light";
+  }
+
+  const storedTheme = window.localStorage.getItem(storageKey);
+  if (storedTheme === "dark" || storedTheme === "light") {
+    return storedTheme;
+  }
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function subscribeToTheme(onStoreChange: () => void) {
+  if (typeof window === "undefined") {
+    return () => undefined;
+  }
+
+  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key === storageKey) {
+      onStoreChange();
+    }
+  };
+
+  const handleThemeChange = () => {
+    onStoreChange();
+  };
+
+  const handleMediaChange = () => {
+    if (!window.localStorage.getItem(storageKey)) {
+      onStoreChange();
+    }
+  };
+
+  window.addEventListener("storage", handleStorage);
+  window.addEventListener(themeChangeEvent, handleThemeChange);
+  mediaQuery.addEventListener("change", handleMediaChange);
+
+  return () => {
+    window.removeEventListener("storage", handleStorage);
+    window.removeEventListener(themeChangeEvent, handleThemeChange);
+    mediaQuery.removeEventListener("change", handleMediaChange);
+  };
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === "undefined") {
-      return "light";
-    }
-
-    const storedTheme = window.localStorage.getItem(storageKey);
-    if (storedTheme === "dark" || storedTheme === "light") {
-      return storedTheme;
-    }
-
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  });
+  const theme = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, () => "light");
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
-    window.localStorage.setItem(storageKey, theme);
   }, [theme]);
 
   const toggleTheme = useCallback(async (event?: ThemeToggleEvent) => {
@@ -70,7 +106,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     const applyTheme = () => {
       flushSync(() => {
-        setTheme(nextTheme);
+        window.localStorage.setItem(storageKey, nextTheme);
+        window.dispatchEvent(new Event(themeChangeEvent));
       });
     };
 
@@ -97,7 +134,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     await transition.ready;
 
-    document.documentElement.animate(
+    const animation = document.documentElement.animate(
       {
         clipPath: [
           `circle(0px at ${originX}px ${originY}px)`,
@@ -110,6 +147,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         pseudoElement: "::view-transition-new(root)",
       }
     );
+
+    await animation.finished.catch(() => undefined);
   }, [theme]);
 
   const value = useMemo(

@@ -124,7 +124,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#fbfaff] px-4 py-4 text-[#1f1c38] dark:bg-transparent dark:text-[#f2f2f5] md:px-6">
+    <main className="min-h-screen bg-[#fbfaff] px-4 py-4 text-[#1f1c38] dark:bg-[#0d0d12] dark:text-[#f2f2f5] md:px-6">
       <div className="mx-auto max-w-7xl overflow-hidden rounded-[2.25rem] border border-[#ece8f8] bg-white shadow-[0_30px_100px_rgba(113,87,255,0.08)] dark:border-[#27272f] dark:bg-[#16161d] dark:shadow-[0_30px_100px_rgba(0,0,0,0.35)]">
         <header className="flex items-center justify-between px-6 py-4 dark:border-b dark:border-[#27272f] md:px-8">
           <div className="flex items-center gap-8">

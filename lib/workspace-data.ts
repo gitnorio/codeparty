@@ -105,9 +105,8 @@ export async function getWorkspaceSnapshot(
     selectedMembership ??
     memberships.find((membership) => {
       const team = teamsById.get(membership.team_id);
-      return membership.member_status === "active" && team?.status !== "cancelled";
+      return membership.member_status === "active" && team?.status === "active";
     }) ??
-    memberships[0] ??
     null;
 
   const currentTeam = currentMembership

@@ -261,6 +261,7 @@ export default function OnboardingPage() {
     const payload = {
       id: session.user.id,
       display_name: formData.display_name.trim(),
+      avatar_url: formData.avatar_url.trim() || null,
       skills: formData.skills,
       language: selectedLanguageValue,
       timezone: formData.timezone,
@@ -282,7 +283,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#fbfaff] px-4 py-8 text-[#1f1c38] md:px-6">
+    <main className="flex min-h-screen items-start justify-center bg-[#fbfaff] px-4 py-8 text-[#1f1c38] md:px-6 md:py-10">
       <section className="w-full max-w-[620px]">
         <div className="mb-5 flex items-center justify-between">
           {step > 1 ? (
@@ -385,7 +386,7 @@ function WelcomeStep({
   onStart: () => void;
 }) {
   return (
-    <div className="flex min-h-[620px] flex-col justify-between">
+    <div className="flex flex-col gap-10">
       <div>
         <h1 className="mt-6 text-5xl font-semibold tracking-[-0.06em] text-[#1f1c38] sm:text-6xl">
           Welcome to CodeParty
@@ -450,7 +451,7 @@ function SkillsStep({
   const secondaryGroups = technologyGroups.slice(3);
 
   return (
-    <div className="flex min-h-[620px] flex-col">
+    <div className="flex flex-col">
       <StepHeader
         eyebrow="Step 2"
         title="Your technical stack"
@@ -611,7 +612,7 @@ function LanguageStep({
   onContinue: () => void;
 }) {
   return (
-    <div className="flex min-h-[620px] flex-col">
+    <div className="flex flex-col">
       <StepHeader
         eyebrow="Step 3"
         title="What languages do you speak?"
@@ -688,7 +689,7 @@ function ProjectTypeStep({
   onContinue: () => void;
 }) {
   return (
-    <div className="flex min-h-[620px] flex-col">
+    <div className="flex flex-col">
       <StepHeader
         eyebrow="Step 4"
         title="What would you like to build?"
@@ -759,7 +760,7 @@ function SummaryStep({
   ];
 
   return (
-    <div className="flex min-h-[620px] flex-col">
+    <div className="flex flex-col">
       <StepHeader
         eyebrow="Step 5"
         title="Your profile summary"

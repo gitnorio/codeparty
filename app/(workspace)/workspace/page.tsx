@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, CheckCircle2, Link2, Loader2, Sparkles, Users } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Link2, Loader2, Search, Sparkles, Users } from "lucide-react";
 
 import { EmptyStatePanel, FeedbackBanner, LoadingPanel } from "@/components/app/feedback";
+import { ProfileAvatar } from "@/components/app/profile-avatar";
 import { useWorkspaceProfile } from "@/components/app/workspace-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,22 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatLanguageValue } from "@/lib/profile-options";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import {
-  formatProjectLabel,
-  getDefaultProjectRole,
-  normalizeProjectStack,
-  projectRoleOptions,
-  type ProjectRole,
-} from "@/lib/team-projects";
+import { formatProjectLabel } from "@/lib/team-projects";
 import { useWorkspaceSnapshot } from "@/lib/workspace-data";
-
-type ProjectFormAssignment = Record<
-  string,
-  {
-    projectRole: ProjectRole;
-    contributionSummary: string;
-  }
->;
 
 export default function WorkspacePage() {
   const searchParams = useSearchParams();
@@ -40,25 +27,21 @@ export default function WorkspacePage() {
     profile.id,
     selectedPartyId
   );
-  const parties = snapshot?.allTeams ?? [];
+  const parties = useMemo(() => snapshot?.allTeams ?? [], [snapshot?.allTeams]);
+  const [partySearchInput, setPartySearchInput] = useState("");
+  const [partySearchQuery, setPartySearchQuery] = useState("");
+  const [currentPartyPage, setCurrentPartyPage] = useState(1);
+  const [showPartySuggestions, setShowPartySuggestions] = useState(false);
+  const partiesPerPage = 5;
 
   const [formData, setFormData] = useState({
     description: "",
-    stackInput: "",
     githubRepoUrl: "",
-    startDate: "",
-    endDate: "",
   });
-  const [assignments, setAssignments] = useState<ProjectFormAssignment>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRequestingCompletion, setIsRequestingCompletion] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  const stackPreview = useMemo(
-    () => normalizeProjectStack(formData.stackInput),
-    [formData.stackInput]
-  );
   const defaultProjectName = snapshot?.currentTeam
     ? `Party ${snapshot.currentTeam.party_id} Project`
     : "";
@@ -69,17 +52,74 @@ export default function WorkspacePage() {
       )?.profile.display_name ?? null,
     [snapshot]
   );
+  const filteredParties = useMemo(() => {
+    const normalizedQuery = partySearchQuery.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+      return parties;
+    }
+
+    return parties.filter((party) => party.party_id.toLowerCase().includes(normalizedQuery));
+  }, [parties, partySearchQuery]);
+  const partySuggestions = useMemo(() => {
+    const normalizedInput = partySearchInput.trim().toLowerCase();
+
+    if (!normalizedInput) {
+      return [];
+    }
+
+    return [...parties]
+      .filter((party) => party.party_id.toLowerCase().includes(normalizedInput))
+      .sort((firstParty, secondParty) => {
+        const firstStartsWith = firstParty.party_id.toLowerCase().startsWith(normalizedInput);
+        const secondStartsWith = secondParty.party_id.toLowerCase().startsWith(normalizedInput);
+
+        if (firstStartsWith && !secondStartsWith) return -1;
+        if (!firstStartsWith && secondStartsWith) return 1;
+        return firstParty.party_id.localeCompare(secondParty.party_id);
+      })
+      .slice(0, 5);
+  }, [parties, partySearchInput]);
+  const totalPartyPages = Math.max(1, Math.ceil(filteredParties.length / partiesPerPage));
+  const effectiveCurrentPartyPage = Math.min(currentPartyPage, totalPartyPages);
+  const activeCurrentTeam =
+    snapshot?.currentTeam?.status === "active" ? snapshot.currentTeam : null;
+  const paginatedParties = useMemo(() => {
+    const startIndex = (effectiveCurrentPartyPage - 1) * partiesPerPage;
+    return filteredParties.slice(startIndex, startIndex + partiesPerPage);
+  }, [effectiveCurrentPartyPage, filteredParties]);
+
+  function handlePartySearchSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPartySearchQuery(partySearchInput);
+    setCurrentPartyPage(1);
+    setShowPartySuggestions(false);
+  }
+
+  function handlePartySearchChange(value: string) {
+    setPartySearchInput(value);
+    setPartySearchQuery(value);
+    setCurrentPartyPage(1);
+    setShowPartySuggestions(true);
+  }
+
+  function handlePartySuggestionSelect(partyId: string) {
+    setPartySearchInput(partyId);
+    setPartySearchQuery(partyId);
+    setCurrentPartyPage(1);
+    setShowPartySuggestions(false);
+  }
+
+  function handleClearPartySearch() {
+    setPartySearchInput("");
+    setPartySearchQuery("");
+    setCurrentPartyPage(1);
+    setShowPartySuggestions(false);
+  }
 
   async function handleCreateProject() {
     if (!snapshot?.currentTeam) {
       setSubmitError("You need an active team before creating a project.");
-      return;
-    }
-
-    const stack = normalizeProjectStack(formData.stackInput);
-
-    if (stack.length === 0) {
-      setSubmitError("Add at least one technology to your project stack.");
       return;
     }
 
@@ -112,16 +152,7 @@ export default function WorkspacePage() {
       body: JSON.stringify({
         name: defaultProjectName || "CodeParty Project",
         description: formData.description.trim() || null,
-        stack,
         githubRepoUrl: formData.githubRepoUrl.trim(),
-        startDate: formData.startDate || null,
-        endDate: formData.endDate || null,
-        assignments: snapshot.teamMembers.map((member) => ({
-          userId: member.profile.id,
-          projectRole: assignments[member.profile.id]?.projectRole ?? getDefaultProjectRole(),
-          contributionSummary:
-            assignments[member.profile.id]?.contributionSummary.trim() || null,
-        })),
       }),
     });
 
@@ -214,22 +245,118 @@ export default function WorkspacePage() {
                 No parties available yet.
               </div>
             ) : (
-              <div className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff] dark:border-[#27272f] dark:bg-[#16161d]">
-                {parties.map((party) => (
-                  <Link
-                    key={party.id}
-                    href={`/workspace?party=${party.id}`}
-                    className="flex items-center justify-between gap-3 border-b px-4 py-3 transition hover:bg-[#faf8ff] dark:border-[#27272f] dark:hover:bg-[#1a1a22] last:border-b-0"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">Party {party.party_id}</p>
-                      <p className="mt-0.5 text-[11px] text-app-secondary">
-                        {formatProjectLabel(party.status)}
-                      </p>
+              <div className="grid gap-3">
+                <form
+                  onSubmit={handlePartySearchSubmit}
+                  className="flex flex-col gap-2 sm:flex-row sm:items-center"
+                >
+                  <div className="relative flex-1">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-app-secondary" />
+                    <Input
+                      value={partySearchInput}
+                      onChange={(event) => handlePartySearchChange(event.target.value)}
+                      onFocus={() => setShowPartySuggestions(true)}
+                      onBlur={() => {
+                        window.setTimeout(() => setShowPartySuggestions(false), 120);
+                      }}
+                      placeholder="Search by Party ID"
+                      className="h-10 rounded-[0.9rem] border-[#e8e2f7] bg-[#fcfbff] pl-9 dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5]"
+                    />
+                    {showPartySuggestions && partySuggestions.length > 0 ? (
+                      <div className="absolute left-0 right-0 top-[calc(100%+0.35rem)] z-20 overflow-hidden rounded-[1rem] border border-[#e8e2f7] bg-white shadow-[0_18px_45px_rgba(113,87,255,0.12)] dark:border-[#27272f] dark:bg-[#1a1a22] dark:shadow-[0_18px_45px_rgba(0,0,0,0.3)]">
+                        {partySuggestions.map((party) => (
+                          <button
+                            key={party.id}
+                            type="button"
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => handlePartySuggestionSelect(party.party_id)}
+                            className="flex w-full items-center justify-between border-b border-[#f0ebfb] px-3 py-2.5 text-left transition hover:bg-[#faf8ff] dark:border-[#27272f] dark:hover:bg-[#23232c] last:border-b-0"
+                          >
+                            <span className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
+                              Party {party.party_id}
+                            </span>
+                            <span className="text-[11px] text-app-secondary">
+                              {formatProjectLabel(party.status)}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="submit"
+                      className="h-10 rounded-full bg-[#7650ff] px-4 text-white hover:bg-[#6744f0]"
+                    >
+                      Search
+                    </Button>
+                    {(partySearchInput || partySearchQuery) && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleClearPartySearch}
+                        className="h-10 rounded-full border-[#e8e2f7] bg-white px-4 text-[#1f1c38] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#f2f2f5]"
+                      >
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+                </form>
+
+                {filteredParties.length === 0 ? (
+                  <div className="rounded-[1rem] bg-[#faf8ff] p-4 text-sm text-app-secondary dark:bg-[#16161d] dark:text-muted-foreground">
+                    No party matches this ID.
+                  </div>
+                ) : (
+                  <>
+                    <div className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff] dark:border-[#27272f] dark:bg-[#16161d]">
+                      {paginatedParties.map((party) => (
+                        <Link
+                          key={party.id}
+                          href={`/workspace?party=${party.id}`}
+                          className="flex items-center justify-between gap-3 border-b px-4 py-3 transition hover:bg-[#faf8ff] dark:border-[#27272f] dark:hover:bg-[#1a1a22] last:border-b-0"
+                        >
+                          <div>
+                            <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">Party {party.party_id}</p>
+                            <p className="mt-0.5 text-[11px] text-app-secondary">
+                              {formatProjectLabel(party.status)}
+                            </p>
+                          </div>
+                          <span className="text-sm font-medium text-[#5b45d9]">Open</span>
+                        </Link>
+                      ))}
                     </div>
-                    <span className="text-sm font-medium text-[#5b45d9]">Open</span>
-                  </Link>
-                ))}
+
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="text-xs text-app-secondary">
+                        Showing {(effectiveCurrentPartyPage - 1) * partiesPerPage + 1}–{Math.min(effectiveCurrentPartyPage * partiesPerPage, filteredParties.length)} of {filteredParties.length} parties
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setCurrentPartyPage((page) => Math.max(1, page - 1))}
+                          disabled={effectiveCurrentPartyPage === 1}
+                          className="h-9 rounded-full border-[#e8e2f7] bg-white px-3 text-[#1f1c38] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#f2f2f5]"
+                        >
+                          Previous
+                        </Button>
+                        <div className="rounded-full bg-[#f6f2ff] px-3 py-1 text-xs font-medium text-[#7650ff] dark:bg-[#23232c] dark:text-[#a698ff]">
+                          Page {effectiveCurrentPartyPage} / {totalPartyPages}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setCurrentPartyPage((page) => Math.min(totalPartyPages, page + 1))}
+                          disabled={effectiveCurrentPartyPage === totalPartyPages}
+                          className="h-9 rounded-full border-[#e8e2f7] bg-white px-3 text-[#1f1c38] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#f2f2f5]"
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </CardContent>
@@ -245,8 +372,12 @@ export default function WorkspacePage() {
           <div className="grid gap-4">
             <SignalCard
               label="Current team"
-              value={`Party ${snapshot.currentTeam.party_id}`}
-              detail={`${snapshot.teamMembers.length} members · ${formatProjectLabel(snapshot.currentTeam.status)}`}
+              value={activeCurrentTeam ? `Party ${activeCurrentTeam.party_id}` : "No active party"}
+              detail={
+                activeCurrentTeam
+                  ? `${snapshot.teamMembers.length} members · ${formatProjectLabel(activeCurrentTeam.status)}`
+                  : "You do not currently belong to an active party."
+              }
             />
           </div>
 
@@ -261,7 +392,7 @@ export default function WorkspacePage() {
           </div>
 
           {!snapshot.currentProject ? (
-            <div className="grid gap-4 xl:grid-cols-[0.86fr_1.14fr]">
+            <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
               <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
                 <CardHeader>
                   <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
@@ -278,20 +409,17 @@ export default function WorkspacePage() {
 
               <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
                 <CardHeader>
-                  <Badge variant="outline" className="w-fit rounded-full bg-[#f6f2ff] text-[#7650ff] dark:border-[#27272f] dark:bg-[#23232c] dark:text-[#a698ff]">
-                    Team-owned setup
-                  </Badge>
                   <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
                     Create your team project
                   </CardTitle>
                   <CardDescription className="text-sm leading-6 text-app-secondary">
-                    Keep the setup lean: define the repo, the stack, and one role per teammate.
+                    Keep the setup lean: add the repo and a short project description.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="grid gap-4">
-                  <div className="rounded-[1.15rem] bg-[linear-gradient(135deg,rgba(116,72,255,0.12)_0%,rgba(142,107,255,0.16)_100%)] p-4">
+                <CardContent className="grid gap-3">
+                  <div className="rounded-[1rem] bg-[linear-gradient(135deg,rgba(116,72,255,0.12)_0%,rgba(142,107,255,0.16)_100%)] p-3.5 dark:bg-[linear-gradient(135deg,rgba(109,92,232,0.16)_0%,rgba(95,80,210,0.22)_100%)]">
                     <p className="text-xs uppercase tracking-[0.18em] text-app-overline">Before you paste the repo URL</p>
-                    <div className="mt-3 grid gap-2">
+                    <div className="mt-2 grid gap-1.5">
                       {[
                         "1. One teammate creates the repository on GitHub.",
                         "2. Add the other teammates as collaborators.",
@@ -299,7 +427,7 @@ export default function WorkspacePage() {
                       ].map((item) => (
                         <div
                           key={item}
-                          className="rounded-[1rem] border border-white/60 bg-white/70 px-3 py-2 text-sm leading-6 text-[#5f587f] dark:border-[#3a3450] dark:bg-[#1f1f28] dark:text-[#c4c4ce]"
+                          className="rounded-[0.9rem] border border-white/60 bg-white/70 px-3 py-2 text-sm leading-5 text-[#5f587f] dark:border-[#3a3450] dark:bg-[#1f1f28] dark:text-[#d0cde0]"
                         >
                           {item}
                         </div>
@@ -319,141 +447,16 @@ export default function WorkspacePage() {
                     />
                   </Field>
 
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Field label="Project stack">
-                      <Input
-                        value={formData.stackInput}
-                        onChange={(event) =>
-                          setFormData((current) => ({ ...current, stackInput: event.target.value }))
-                        }
-                        placeholder="Next.js, TypeScript, Supabase"
-                        className="h-10 rounded-[0.9rem] border-[#e8e2f7] bg-[#fcfbff] px-3.5 dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5]"
-                      />
-                    </Field>
-
-                    <Field label="GitHub repository URL">
-                      <Input
-                        value={formData.githubRepoUrl}
-                        onChange={(event) =>
-                          setFormData((current) => ({ ...current, githubRepoUrl: event.target.value }))
-                        }
-                        placeholder="https://github.com/owner/repo"
-                        className="h-10 rounded-[0.9rem] border-[#e8e2f7] bg-[#fcfbff] px-3.5 dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5]"
-                      />
-                    </Field>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {stackPreview.length > 0
-                      ? stackPreview.map((item) => (
-                          <span
-                            key={item}
-                            className="rounded-full bg-[#f3eeff] px-2.5 py-1 text-xs text-[#5b45d9] dark:bg-[#272138] dark:text-[#b8acff]"
-                          >
-                            {item}
-                          </span>
-                        ))
-                      : null}
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Field label="Planned start date">
-                      <Input
-                        type="date"
-                        value={formData.startDate}
-                        onChange={(event) =>
-                          setFormData((current) => ({ ...current, startDate: event.target.value }))
-                        }
-                        className="h-10 rounded-[0.9rem] border-[#e8e2f7] bg-[#fcfbff] px-3.5 dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5]"
-                      />
-                    </Field>
-                    <Field label="Planned end date">
-                      <Input
-                        type="date"
-                        value={formData.endDate}
-                        onChange={(event) =>
-                          setFormData((current) => ({ ...current, endDate: event.target.value }))
-                        }
-                        className="h-10 rounded-[0.9rem] border-[#e8e2f7] bg-[#fcfbff] px-3.5 dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5]"
-                      />
-                    </Field>
-                  </div>
-
-                  <div className="grid gap-3">
-                    <div>
-                      <p className="text-sm font-medium text-[#4f496e]">Member roles</p>
-                      <p className="mt-1 text-sm leading-6 text-app-secondary">
-                        Assign one clear role per teammate for kickoff.
-                      </p>
-                    </div>
-                    {snapshot.teamMembers.map((member) => (
-                      <div
-                        key={member.profile.id}
-                        className="rounded-[1.1rem] border border-[#ece8f8] bg-[#fcfbff] p-3.5 dark:border-[#27272f] dark:bg-[#16161d]"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-base font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
-                              {member.profile.display_name}
-                            </p>
-                            <p className="mt-1 text-sm text-app-secondary">
-                              {formatLanguageValue(member.profile.language)} · {member.profile.timezone}
-                            </p>
-                          </div>
-                          <Badge variant="outline" className="rounded-full bg-white text-[#7650ff] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#a698ff]">
-                            Active teammate
-                          </Badge>
-                        </div>
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {projectRoleOptions.map((role) => {
-                            const selected = assignments[member.profile.id]?.projectRole === role;
-                            return (
-                              <button
-                                key={role}
-                                type="button"
-                                onClick={() =>
-                                  setAssignments((current) => ({
-                                    ...current,
-                                    [member.profile.id]: {
-                                      projectRole: role,
-                                      contributionSummary:
-                                        current[member.profile.id]?.contributionSummary ?? "",
-                                    },
-                                  }))
-                                }
-                                className={
-                                  selected
-                                    ? "rounded-full border border-[#8d78ff] bg-[#f1ebff] px-3 py-1.5 text-xs font-medium text-[#5b45d9] dark:border-[#6d5ce8] dark:bg-[#2a2340] dark:text-[#b8acff]"
-                                    : "rounded-full border border-[#e8e2f7] bg-white px-3 py-1.5 text-xs font-medium text-[#5f587f] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-muted-foreground"
-                                }
-                              >
-                                {formatProjectLabel(role)}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        <textarea
-                          value={assignments[member.profile.id]?.contributionSummary ?? ""}
-                          onChange={(event) =>
-                            setAssignments((current) => ({
-                              ...current,
-                              [member.profile.id]: {
-                                projectRole:
-                                  current[member.profile.id]?.projectRole ??
-                                  getDefaultProjectRole(),
-                                contributionSummary: event.target.value,
-                              },
-                            }))
-                          }
-                          rows={2}
-                          placeholder="Optional: outline the main contribution this teammate will own."
-                          className="mt-3 w-full rounded-[0.9rem] border border-[#e8e2f7] bg-white px-3.5 py-2.5 text-sm text-[#1f1c38] outline-none transition placeholder:text-[#a9a3c2] focus:border-[#7b61ff]/45 dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#f2f2f5] dark:placeholder:text-[#747482]"
-                        />
-                      </div>
-                    ))}
-                  </div>
+                  <Field label="GitHub repository URL">
+                    <Input
+                      value={formData.githubRepoUrl}
+                      onChange={(event) =>
+                        setFormData((current) => ({ ...current, githubRepoUrl: event.target.value }))
+                      }
+                      placeholder="https://github.com/owner/repo"
+                      className="h-10 rounded-[0.9rem] border-[#e8e2f7] bg-[#fcfbff] px-3.5 dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5]"
+                    />
+                  </Field>
 
                   <Button
                     type="button"
@@ -479,13 +482,13 @@ export default function WorkspacePage() {
           ) : (
             <>
               <div className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
-                <Card className="border border-[#ece8f8] shadow-none">
+                <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
                   <CardHeader>
-                    <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">
+                    <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
                       Team members
                     </CardTitle>
                     <CardDescription className="text-sm leading-6 text-app-secondary">
-                      The people currently attached to this team and the roles visible in the project.
+                      The people currently attached to this team.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -494,9 +497,9 @@ export default function WorkspacePage() {
                 </Card>
 
                 <div className="grid gap-4">
-                  <Card className="border border-[#ece8f8] shadow-none">
+                  <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
                     <CardHeader>
-                      <Badge variant="outline" className="w-fit rounded-full bg-[#f6f2ff] text-[#7650ff]">
+                      <Badge variant="outline" className="w-fit rounded-full bg-[#f6f2ff] text-[#7650ff] dark:border-[#27272f] dark:bg-[#23232c] dark:text-[#a698ff]">
                         Repository
                       </Badge>
                       <CardDescription className="text-sm leading-6 text-app-secondary">
@@ -504,22 +507,22 @@ export default function WorkspacePage() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="rounded-[1.15rem] bg-[#faf8ff] p-4">
+                      <div className="rounded-[1.15rem] bg-[#faf8ff] p-4 dark:bg-[#16161d]">
                         <p className="text-xs uppercase tracking-[0.18em] text-app-overline">Repository</p>
-                        <p className="mt-1 text-base font-medium text-[#1f1c38]">
+                        <p className="mt-1 text-base font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
                           {snapshot.currentProject.github_repo_url
                             ? repoLabel(snapshot.currentProject.github_repo_url)
                             : "Not linked yet"}
                         </p>
                         {snapshot.currentProject.github_repo_url ? (
                           <a
-                            href={snapshot.currentProject.github_repo_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-[#5b45d9] underline-offset-4 hover:underline"
-                          >
-                            <Link2 className="size-4" />
-                            Open repository
+                          href={snapshot.currentProject.github_repo_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="mt-2 inline-flex items-center gap-2 text-sm font-medium text-[#5b45d9] underline-offset-4 hover:underline dark:text-[#a698ff]"
+                        >
+                          <Link2 className="size-4" />
+                          Open repository
                           </a>
                         ) : null}
                       </div>
@@ -527,9 +530,9 @@ export default function WorkspacePage() {
                   </Card>
 
                   {snapshot.currentTeam.status === "active" ? (
-                    <Card className="border border-[#ece8f8] shadow-none">
+                    <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
                       <CardHeader>
-                        <Badge variant="outline" className="w-fit rounded-full bg-[#f6f2ff] text-[#7650ff]">
+                        <Badge variant="outline" className="w-fit rounded-full bg-[#f6f2ff] text-[#7650ff] dark:border-[#27272f] dark:bg-[#23232c] dark:text-[#a698ff]">
                           Completion
                         </Badge>
                         <CardDescription className="text-sm leading-6 text-app-secondary">
@@ -537,9 +540,9 @@ export default function WorkspacePage() {
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="grid gap-3">
-                        <div className="rounded-[1.15rem] bg-[#faf8ff] p-4">
+                        <div className="rounded-[1.15rem] bg-[#faf8ff] p-4 dark:bg-[#16161d]">
                           <p className="text-xs uppercase tracking-[0.18em] text-app-overline">Status</p>
-                          <p className="mt-1 text-sm font-medium text-[#1f1c38]">
+                          <p className="mt-1 text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
                             {snapshot.currentTeam.completion_requested_at
                               ? "Completion review pending"
                               : "No completion request yet"}
@@ -578,6 +581,7 @@ export default function WorkspacePage() {
               </div>
             </>
           )}
+
         </>
       )}
     </div>
@@ -593,7 +597,7 @@ function Field({
 }) {
   return (
     <div>
-      <Label className="mb-2 block text-sm font-medium text-[#4f496e]">{label}</Label>
+      <Label className="mb-2 block text-sm font-medium text-[#4f496e] dark:text-[#d2cede]">{label}</Label>
       {children}
     </div>
   );
@@ -609,10 +613,10 @@ function SignalCard({
   detail: string;
 }) {
   return (
-    <Card className="border border-[#ece8f8] shadow-none">
+    <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
       <CardContent className="pt-5">
         <p className="text-sm uppercase tracking-[0.18em] text-app-overline">{label}</p>
-        <p className="mt-1 text-xl font-semibold tracking-[-0.04em] text-[#1f1c38]">{value}</p>
+        <p className="mt-1 text-xl font-semibold tracking-[-0.04em] text-[#1f1c38] dark:text-[#f2f2f5]">{value}</p>
         <p className="mt-1 text-sm leading-6 text-app-secondary">{detail}</p>
       </CardContent>
     </Card>
@@ -630,6 +634,7 @@ function CompactTeamMemberList({
     profile: {
       id: string;
       display_name: string;
+      avatar_url?: string | null;
       language: string;
       timezone: string;
       skills: string[];
@@ -637,24 +642,31 @@ function CompactTeamMemberList({
   }>;
 }) {
   return (
-    <div className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff]">
+    <div className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff] dark:border-[#27272f] dark:bg-[#16161d]">
       {members.map((member) => (
         <div
           key={member.membership.id}
-          className="flex items-center justify-between gap-3 border-b px-4 py-3 last:border-b-0"
+          className="flex items-center justify-between gap-3 border-b px-4 py-3 last:border-b-0 dark:border-[#27272f]"
         >
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-[#1f1c38]">
-              {member.profile.display_name}
-            </p>
-            <p className="mt-0.5 truncate text-[11px] text-app-secondary">
-              {formatLanguageValue(member.profile.language)} · {member.profile.timezone}
-            </p>
-            <p className="mt-0.5 truncate text-[10px] text-app-overline">
-              {member.profile.skills.slice(0, 3).join(" · ") || "No stack selected"}
-            </p>
+          <div className="min-w-0 flex flex-1 items-center gap-3">
+            <ProfileAvatar
+              name={member.profile.display_name}
+              avatarUrl={member.profile.avatar_url}
+              className="size-9 shrink-0"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
+                {member.profile.display_name}
+              </p>
+              <p className="mt-0.5 truncate text-[11px] text-app-secondary">
+                {formatLanguageValue(member.profile.language)} · {member.profile.timezone}
+              </p>
+              <p className="mt-0.5 truncate text-[10px] text-app-overline">
+                {member.profile.skills.slice(0, 3).join(" · ") || "No stack selected"}
+              </p>
+            </div>
           </div>
-          <Badge variant="outline" className="shrink-0 rounded-full bg-white text-[#7650ff]">
+          <Badge variant="outline" className="shrink-0 rounded-full bg-white text-[#7650ff] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#a698ff]">
             {formatProjectLabel(member.membership.member_status)}
           </Badge>
         </div>

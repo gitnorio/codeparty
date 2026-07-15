@@ -404,7 +404,7 @@ export default function WorkspacePage() {
           title={language === "fr" ? "Party introuvable" : "Party not found"}
           description={
             language === "fr"
-              ? "Cette party est indisponible ou n’est plus liée à votre compte."
+              ? "Ce party est indisponible ou n’est plus lié à votre compte."
               : "This party is unavailable or no longer attached to your account."
           }
         />

@@ -45,13 +45,6 @@ check (description is null or char_length(description) <= 300),
 add constraint projects_github_repo_url_length_check
 check (github_repo_url is null or char_length(github_repo_url) <= 255);
 
-alter table public.project_members
-drop constraint if exists project_members_contribution_summary_length_check;
-
-alter table public.project_members
-add constraint project_members_contribution_summary_length_check
-check (contribution_summary is null or char_length(contribution_summary) <= 300);
-
 alter table public.team_messages
 drop constraint if exists team_messages_content_length_check;
 

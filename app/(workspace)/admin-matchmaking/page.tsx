@@ -151,7 +151,7 @@ export default function AdminMatchmakingPage() {
       if (current.length >= maxTeamSize) {
         setErrorMessage(
           language === "fr"
-            ? `Vous pouvez sélectionner jusqu’à ${maxTeamSize} membres pour une party.`
+            ? `Vous pouvez sélectionner jusqu’à ${maxTeamSize} membres pour un party.`
             : `You can select up to ${maxTeamSize} members for one team.`
         );
         return current;
@@ -168,7 +168,7 @@ export default function AdminMatchmakingPage() {
     if (selectedCandidates.length < minTeamSize) {
       setErrorMessage(
         language === "fr"
-          ? `Sélectionnez au moins ${minTeamSize} membres pour créer une party.`
+          ? `Sélectionnez au moins ${minTeamSize} membres pour créer un party.`
           : `Select at least ${minTeamSize} members to create a team.`
       );
       return;
@@ -204,7 +204,7 @@ export default function AdminMatchmakingPage() {
     if (!response.ok) {
       setErrorMessage(
         payload.error ??
-          (language === "fr" ? "Impossible de créer la party." : "Failed to create team.")
+          (language === "fr" ? "Impossible de créer le party." : "Failed to create team.")
       );
       setIsCreating(false);
       return;
@@ -214,7 +214,7 @@ export default function AdminMatchmakingPage() {
     setIsCreating(false);
     setSuccessMessage(
       language === "fr"
-        ? `La party ${payload.team?.party_id ?? payload.team?.name} a été créée avec succès.`
+        ? `Le party ${payload.team?.party_id ?? payload.team?.name} a été créé avec succès.`
         : `Party ${payload.team?.party_id ?? payload.team?.name} created successfully.`
     );
     await loadAdminData({ silent: true });
@@ -294,7 +294,7 @@ export default function AdminMatchmakingPage() {
         pendingKey: `${status}-${teamId}`,
         successMessage:
           language === "fr"
-            ? `La party ${teamName} a été marquée comme ${formatPartyStatus(status, language).toLowerCase()}.`
+            ? `Le party ${teamName} a été marqué comme ${formatPartyStatus(status, language).toLowerCase()}.`
             : `${teamName} was marked as ${status}.`,
       }
     );
@@ -310,7 +310,7 @@ export default function AdminMatchmakingPage() {
         pendingKey: `reject-${teamId}`,
         successMessage:
           language === "fr"
-            ? `La demande de complétion pour la party ${teamName} a été refusée.`
+            ? `La demande de complétion pour le party ${teamName} a été refusée.`
             : `Completion request for ${teamName} was rejected.`,
       }
     );
@@ -461,7 +461,7 @@ export default function AdminMatchmakingPage() {
                 </CardTitle>
                 <CardDescription className="text-sm leading-6 text-app-secondary">
                   {language === "fr"
-                    ? "Sélectionnez les membres, puis créez la party."
+                    ? "Sélectionnez les membres, puis créez le party."
                     : "Select members, then create the party."}
                 </CardDescription>
               </CardHeader>
@@ -500,7 +500,7 @@ export default function AdminMatchmakingPage() {
                   ) : (
                     <div className="rounded-[1rem] bg-[#faf8ff] p-4 text-sm text-app-secondary dark:bg-[#16161d] dark:text-muted-foreground">
                       {language === "fr"
-                        ? "Sélectionnez 3 à 4 développeurs en attente pour créer une party."
+                        ? "Sélectionnez 3 à 4 développeurs en attente pour créer un party."
                         : "Select 3 to 4 waiting developers to build a party."}
                     </div>
                   )}
@@ -526,12 +526,12 @@ export default function AdminMatchmakingPage() {
                   {isCreating ? (
                     <>
                       <Loader2 className="size-4 animate-spin" />
-                      {language === "fr" ? "Création de la party..." : "Creating party..."}
+                      {language === "fr" ? "Création du party..." : "Creating party..."}
                     </>
                   ) : (
                     <>
                       <ShieldCheck className="size-4" />
-                      {language === "fr" ? "Créer la party" : "Create party"}
+                      {language === "fr" ? "Créer le party" : "Create party"}
                     </>
                   )}
                 </Button>

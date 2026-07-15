@@ -117,8 +117,6 @@ export type Database = {
           stack: string[];
           github_repo_url: string | null;
           status: "planning" | "active" | "completed" | "cancelled";
-          start_date: string | null;
-          end_date: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -130,8 +128,6 @@ export type Database = {
           stack?: string[];
           github_repo_url?: string | null;
           status?: "planning" | "active" | "completed" | "cancelled";
-          start_date?: string | null;
-          end_date?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -142,36 +138,6 @@ export type Database = {
           stack?: string[];
           github_repo_url?: string | null;
           status?: "planning" | "active" | "completed" | "cancelled";
-          start_date?: string | null;
-          end_date?: string | null;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
-      project_members: {
-        Row: {
-          id: string;
-          project_id: string;
-          user_id: string;
-          project_role: "frontend" | "backend" | "fullstack" | "mobile" | "designer" | "lead";
-          contribution_summary: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          project_id: string;
-          user_id: string;
-          project_role: "frontend" | "backend" | "fullstack" | "mobile" | "designer" | "lead";
-          contribution_summary?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          project_id?: string;
-          user_id?: string;
-          project_role?: "frontend" | "backend" | "fullstack" | "mobile" | "designer" | "lead";
-          contribution_summary?: string | null;
           updated_at?: string;
         };
         Relationships: [];

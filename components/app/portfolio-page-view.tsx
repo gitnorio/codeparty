@@ -8,11 +8,13 @@ import {
   Clock3,
   Copy,
   ExternalLink,
+  FileText,
   Globe,
   MapPin,
   Moon,
   PencilLine,
   Share2,
+  Sparkles,
   Sun,
   Users,
 } from "lucide-react";
@@ -217,17 +219,6 @@ export function PortfolioPageView({
                     </div>
                   </div>
                 </div>
-
-                <div className="w-fit rounded-full border border-white/70 bg-white/80 px-4 py-2 text-sm font-medium text-[#5b45d9] shadow-sm backdrop-blur dark:border-[#3a3450] dark:bg-[#1a1a22]/80 dark:text-[#b8acff]">
-                  <span className={`mr-2 inline-block size-2 rounded-full ${data.availableForOpportunities ? "bg-emerald-500" : "bg-amber-500"}`} />
-                  {data.availableForOpportunities
-                    ? language === "fr"
-                      ? "Disponible pour de nouvelles opportunités"
-                      : "Available for new opportunities"
-                    : language === "fr"
-                      ? "Travaille actuellement avec un party"
-                      : "Currently building with a party"}
-                </div>
               </div>
 
               <div className="flex flex-wrap gap-3">
@@ -364,55 +355,78 @@ export function PortfolioPageView({
           </CardContent>
         </Card>
 
-        <Card className="mt-6 border border-[#ece8f8] bg-white shadow-[0_20px_60px_rgba(113,87,255,0.06)] dark:border-[#27272f] dark:bg-[#16161d]">
-          <CardContent className="flex flex-col gap-5 p-6 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-start gap-4">
-              <div className="flex size-12 items-center justify-center rounded-full bg-[#efe9ff] text-[#7650ff] dark:bg-[#272138] dark:text-[#b8acff]">
-                <ExternalLink className="size-5" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
-                  {language === "fr"
-                    ? "Construisons de belles choses ensemble"
-                    : "Let's build awesome things together"}
-                </p>
-                <p className="mt-2 text-sm leading-7 text-app-secondary">
-                  {language === "fr"
-                    ? "Je suis toujours partant pour rejoindre de nouvelles équipes et construire des projets concrets."
-                    : "I'm always open to joining new teams and building impactful projects."}
-                </p>
+        <section className="relative mt-6 min-h-[220px] overflow-hidden rounded-[1.7rem] border border-[#ddd3fa] bg-[linear-gradient(115deg,#f1ebff_0%,#f8f5ff_48%,#e7ddff_100%)] shadow-[0_24px_70px_rgba(113,87,255,0.12)] dark:border-[#40365c] dark:bg-[linear-gradient(115deg,#211a33_0%,#1a1528_48%,#2a2042_100%)] dark:shadow-[0_24px_70px_rgba(0,0,0,0.28)]">
+          <div className="pointer-events-none absolute -bottom-24 left-[46%] size-56 rounded-full bg-white/65 dark:bg-[#58478f]/14" />
+          <div className="pointer-events-none absolute -right-20 -top-16 size-56 rounded-full bg-white/45 dark:bg-[#7258bd]/12" />
+          <Sparkles className="pointer-events-none absolute left-[55%] top-14 size-5 text-[#a991ff] dark:text-[#806bd0]" />
+          <Sparkles className="pointer-events-none absolute right-12 top-8 size-4 text-[#b6a4ff] dark:text-[#725fc4]" />
+
+          <div className="relative grid min-h-[220px] items-center gap-5 px-7 py-7 sm:grid-cols-[1fr_0.9fr] sm:px-10 md:px-12">
+            <div className="relative z-10 max-w-lg">
+              <h2 className="text-3xl leading-[1.02] font-semibold tracking-[-0.055em] text-[#1f1c38] dark:text-[#f2f2f5] sm:text-4xl">
+                {language === "fr" ? (
+                  <>
+                    Construisons quelque chose
+                    <br />
+                    de formidable ensemble
+                  </>
+                ) : (
+                  <>
+                    Let&apos;s build something
+                    <br />
+                    great together
+                  </>
+                )}
+              </h2>
+              <p className="mt-3 max-w-md text-sm leading-6 text-[#625b78] dark:text-[#aaa1b8] sm:text-base">
+                {language === "fr"
+                  ? "Ouvert aux opportunités pensées pour les juniors et aux équipes collaboratives."
+                  : "Open to thoughtful junior-friendly opportunities and collaborative teams."}
+              </p>
+
+              <div className="mt-5 flex flex-col items-start gap-2">
+                {data.resumeUrl ? (
+                  <a
+                    href={data.resumeUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group relative inline-flex h-12 items-center justify-center overflow-hidden rounded-lg border border-[#8f7cff]/35 bg-[linear-gradient(135deg,#6f49ff_0%,#8f6dff_52%,#7958f4_100%)] px-6 text-sm font-semibold text-white shadow-[0_15px_36px_rgba(118,80,255,0.3)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_48px_rgba(118,80,255,0.38)] dark:border-[#8d7cff]/30 dark:bg-[linear-gradient(135deg,#6b58e8_0%,#7b67ef_52%,#6958dc_100%)]"
+                  >
+                    <span className="pointer-events-none absolute inset-0 translate-x-[-130%] bg-[linear-gradient(110deg,transparent_20%,rgba(255,255,255,0.28)_48%,transparent_72%)] transition-transform duration-700 group-hover:translate-x-[130%]" />
+                    <span className="relative inline-flex items-center gap-2">
+                      <FileText className="size-4 transition-transform group-hover:scale-105" />
+                      {language === "fr" ? "Voir mon CV" : "Get my resume"}
+                    </span>
+                  </a>
+                ) : (
+                  <span
+                    aria-disabled="true"
+                    className="inline-flex h-12 cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-[#8c75e8] px-6 text-sm font-semibold text-white/80 shadow-[0_12px_28px_rgba(118,80,255,0.18)] dark:bg-[#5f51a4]"
+                  >
+                    <FileText className="size-4" />
+                    {language === "fr" ? "Voir mon CV" : "Get my resume"}
+                  </span>
+                )}
+                {!data.resumeUrl ? (
+                  <p className="text-xs text-[#756d88] dark:text-[#9f96ad]">
+                    {isOwner
+                      ? language === "fr"
+                        ? "Importez votre CV en mode édition pour activer ce bouton."
+                        : "Upload your resume in edit mode to activate this button."
+                      : language === "fr"
+                        ? "CV non disponible."
+                        : "Resume not available."}
+                  </p>
+                ) : null}
               </div>
             </div>
 
-            <div className="flex flex-col items-start gap-3 md:items-end">
-              {data.resumeUrl ? (
-                <a
-                  href={data.resumeUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group relative inline-flex h-12 items-center justify-center overflow-hidden rounded-full border border-[#8f7cff]/35 bg-[linear-gradient(135deg,#6f49ff_0%,#8f6dff_45%,#a68dff_100%)] px-6 text-sm font-semibold text-white shadow-[0_18px_50px_rgba(118,80,255,0.28)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(118,80,255,0.34)] dark:border-[#8d7cff]/30 dark:bg-[linear-gradient(135deg,#6b58e8_0%,#7b67ef_45%,#9687f5_100%)] dark:shadow-[0_18px_50px_rgba(64,48,140,0.38)]"
-                >
-                  <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent_0%,rgba(255,255,255,0.24)_18%,transparent_36%)] opacity-0 transition duration-500 group-hover:translate-x-full group-hover:opacity-100" />
-                  <span className="pointer-events-none absolute inset-[1px] rounded-full bg-[linear-gradient(135deg,rgba(255,255,255,0.14),rgba(255,255,255,0.04))]" />
-                  <span className="relative inline-flex items-center gap-2">
-                    <ExternalLink className="size-4 transition group-hover:scale-105" />
-                    {language === "fr" ? "Voir mon CV" : "Get my resume"}
-                  </span>
-                </a>
-              ) : isOwner ? (
-                <p className="text-sm text-[#7a73a0] dark:text-muted-foreground">
-                  {language === "fr"
-                    ? "Importez votre CV en mode édition pour le publier ici."
-                    : "Upload your resume in edit mode to publish it here."}
-                </p>
-              ) : (
-                <p className="text-sm text-[#7a73a0] dark:text-muted-foreground">
-                  {language === "fr" ? "CV non disponible." : "Resume not available."}
-                </p>
-              )}
+            <div className="relative hidden h-full min-h-44 items-center justify-center sm:flex">
+              <div className="absolute bottom-3 h-6 w-44 rounded-[50%] bg-[#6f49ff]/12 blur-md dark:bg-black/25" />
+              <Mascot pose="celebration" size="xl" animate className="relative z-10" />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       </div>
     </main>
   );

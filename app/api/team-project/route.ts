@@ -18,19 +18,6 @@ export async function POST(request: Request) {
     description?: string | null;
     stack?: string[];
     githubRepoUrl?: string;
-    startDate?: string | null;
-    endDate?: string | null;
-    assignments?: Array<{
-      userId: string;
-      projectRole:
-        | "frontend"
-        | "backend"
-        | "fullstack"
-        | "mobile"
-        | "designer"
-        | "lead";
-      contributionSummary?: string | null;
-    }>;
   };
 
   if (
@@ -78,30 +65,12 @@ export async function POST(request: Request) {
     );
   }
 
-  if (
-    (body.assignments ?? []).some(
-      (assignment) => (assignment.contributionSummary?.trim().length ?? 0) > 300
-    )
-  ) {
-    return NextResponse.json(
-      { error: "Contribution summaries must be 300 characters or fewer." },
-      { status: 400 }
-    );
-  }
-
   const supabase = getSupabaseServiceRoleClient();
   const result = await createTeamProjectForMember(supabase, auth.user.id, {
     name: body.name.trim(),
     description: body.description?.trim() || null,
     stack: (body.stack ?? []).map((value) => value.trim()).filter(Boolean),
     githubRepoUrl: body.githubRepoUrl.trim(),
-    startDate: body.startDate || null,
-    endDate: body.endDate || null,
-    assignments: body.assignments?.map((assignment) => ({
-      userId: assignment.userId,
-      projectRole: assignment.projectRole,
-      contributionSummary: assignment.contributionSummary?.trim() || null,
-    })),
   });
 
   if (result.error) {

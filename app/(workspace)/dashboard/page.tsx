@@ -388,7 +388,7 @@ function getDashboardSuggestedAction(snapshot: WorkspaceSnapshot | null, languag
         title: language === "fr" ? "Votre projet a encore besoin d’un repository." : "Your project still needs a repository.",
         description:
           language === "fr"
-            ? "Liez le repository GitHub public pour donner à la party un seul endroit commun où construire."
+            ? "Liez le repository GitHub public pour donner au party un seul endroit commun où construire."
             : "Link the public GitHub repository to give the party one shared place to build from.",
         ctaLabel: language === "fr" ? "Lier le repository" : "Link repository",
         href: `/workspace?party=${activeTeam.id}`,
@@ -401,7 +401,7 @@ function getDashboardSuggestedAction(snapshot: WorkspaceSnapshot | null, languag
         title: language === "fr" ? "Votre demande de complétion est en révision." : "Your completion request is under review.",
         description:
           language === "fr"
-            ? "Ouvrez l’espace de la party pour revoir les derniers détails du projet pendant que l’admin vérifie la complétion."
+            ? "Ouvrez l’espace du party pour revoir les derniers détails du projet pendant que l’admin vérifie la complétion."
             : "Open the party workspace to review the latest project details while admin checks completion.",
         ctaLabel: language === "fr" ? "Ouvrir l’espace" : "Open workspace",
         href: `/workspace?party=${activeTeam.id}`,
@@ -410,7 +410,7 @@ function getDashboardSuggestedAction(snapshot: WorkspaceSnapshot | null, languag
 
     return {
       badge: language === "fr" ? "Prochaine action suggérée" : "Suggested next step",
-      title: language === "fr" ? "Faites avancer votre party active." : "Keep your active party moving.",
+      title: language === "fr" ? "Faites avancer votre party actif." : "Keep your active party moving.",
       description:
         language === "fr"
           ? "Ouvrez l’espace pour coordonner l’équipe, vérifier le repo et garder le projet sur les rails."

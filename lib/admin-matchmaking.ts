@@ -407,6 +407,7 @@ export async function updateTeamLifecycle(
     .from("teams")
     .update({
       status,
+      completed_at: status === "completed" ? new Date().toISOString() : null,
       completion_requested_at: status === "active" ? undefined : null,
       completion_requested_by: status === "active" ? undefined : null,
     })

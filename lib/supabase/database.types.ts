@@ -80,6 +80,7 @@ export type Database = {
           created_by: string;
           completion_requested_at: string | null;
           completion_requested_by: string | null;
+          completed_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -91,6 +92,7 @@ export type Database = {
           created_by: string;
           completion_requested_at?: string | null;
           completion_requested_by?: string | null;
+          completed_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -101,6 +103,7 @@ export type Database = {
           created_by?: string;
           completion_requested_at?: string | null;
           completion_requested_by?: string | null;
+          completed_at?: string | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -178,6 +181,11 @@ export type Database = {
           id: string;
           display_name: string;
           avatar_url: string | null;
+          bio: string | null;
+          location: string | null;
+          resume_path: string | null;
+          show_location_on_portfolio: boolean;
+          show_timezone_on_portfolio: boolean;
           skills: string[];
           language: "fr" | "en" | "fr_en";
           timezone: string;
@@ -189,6 +197,11 @@ export type Database = {
           id: string;
           display_name: string;
           avatar_url?: string | null;
+          bio?: string | null;
+          location?: string | null;
+          resume_path?: string | null;
+          show_location_on_portfolio?: boolean;
+          show_timezone_on_portfolio?: boolean;
           skills?: string[];
           language: "fr" | "en" | "fr_en";
           timezone?: string;
@@ -199,6 +212,11 @@ export type Database = {
         Update: {
           display_name?: string;
           avatar_url?: string | null;
+          bio?: string | null;
+          location?: string | null;
+          resume_path?: string | null;
+          show_location_on_portfolio?: boolean;
+          show_timezone_on_portfolio?: boolean;
           skills?: string[];
           language?: "fr" | "en" | "fr_en";
           timezone?: string;

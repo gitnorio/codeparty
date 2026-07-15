@@ -11,7 +11,7 @@ import { ProfileAvatar } from "@/components/app/profile-avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { FormedTeam, WaitingCandidate } from "@/lib/admin-matchmaking";
-import { formatLanguageValue, formatProjectTypeList } from "@/lib/profile-options";
+import { formatLanguageValue, formatProjectTypeList, formatTimezoneValue } from "@/lib/profile-options";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const minTeamSize = 3;
@@ -380,7 +380,7 @@ export default function AdminMatchmakingPage() {
                               {candidate.profile.display_name}
                             </p>
                             <p className="mt-0.5 truncate text-[11px] text-app-secondary">
-                              {formatLanguageValue(candidate.profile.language)} · {candidate.profile.timezone}
+                              {formatLanguageValue(candidate.profile.language)} · {formatTimezoneValue(candidate.profile.timezone)}
                             </p>
                             <p className="mt-0.5 truncate text-[10px] text-app-overline dark:text-[#a698ff]">
                               {candidate.profile.skills.slice(0, 3).join(" · ") || "No stack selected"}

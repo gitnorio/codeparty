@@ -12,7 +12,7 @@ import {
   ensureWaitingMatchmakingEntry,
   updateMatchmakingEntryStatus,
 } from "@/lib/matchmaking";
-import { formatLanguageValue, formatProjectTypeList } from "@/lib/profile-options";
+import { formatLanguageValue, formatProjectTypeList, formatTimezoneValue } from "@/lib/profile-options";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useWorkspaceSnapshot } from "@/lib/workspace-data";
 
@@ -211,7 +211,7 @@ export default function MatchmakingPage() {
           </CardHeader>
           <CardContent className="grid gap-3">
             <Criteria label="Language" value={formatLanguageValue(profile.language)} icon={Users} />
-            <Criteria label="Timezone" value={profile.timezone} icon={Users} />
+            <Criteria label="Timezone" value={formatTimezoneValue(profile.timezone)} icon={Users} />
             <Criteria label="Project types" value={formatProjectTypeList(profile.project_type)} icon={Sparkles} />
             <Criteria
               label="Selected stack"

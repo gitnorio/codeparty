@@ -9,6 +9,7 @@ import {
   Loader2,
   LogOut,
   Moon,
+  Share2,
   Settings,
   Sparkles,
   Sun,
@@ -39,6 +40,7 @@ const navItems = [
   { href: "/matchmaking", label: "Matchmaking", icon: Sparkles },
   { href: "/admin-matchmaking", label: "Admin Matchmaking", icon: ShieldCheck },
   { href: "/workspace", label: "Workspace", icon: Users },
+  { href: "/portfolio", label: "Portfolio", icon: Share2 },
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;
 

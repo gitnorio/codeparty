@@ -103,7 +103,11 @@ export function getDetectedTimezone() {
   }
 }
 
-export function getTimezonePreview(timezone: string) {
+export function getTimezonePreview(timezone: string | null | undefined) {
+  if (!timezone) {
+    return "Not shared";
+  }
+
   try {
     return new Intl.DateTimeFormat("en-US", {
       timeZone: timezone,
@@ -114,4 +118,13 @@ export function getTimezonePreview(timezone: string) {
   } catch {
     return "Unavailable";
   }
+}
+
+export function formatTimezoneValue(timezone: string | null | undefined) {
+  if (!timezone) {
+    return "Not shared";
+  }
+
+  const option = profileTimezoneOptions.find((item) => item.value === timezone);
+  return option?.label ?? timezone;
 }

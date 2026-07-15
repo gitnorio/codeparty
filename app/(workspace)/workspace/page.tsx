@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatLanguageValue } from "@/lib/profile-options";
+import { formatLanguageValue, formatTimezoneValue } from "@/lib/profile-options";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { formatProjectLabel } from "@/lib/team-projects";
 import { useWorkspaceSnapshot } from "@/lib/workspace-data";
@@ -636,7 +636,7 @@ function CompactTeamMemberList({
       display_name: string;
       avatar_url?: string | null;
       language: string;
-      timezone: string;
+      timezone: string | null;
       skills: string[];
     };
   }>;
@@ -659,7 +659,7 @@ function CompactTeamMemberList({
                 {member.profile.display_name}
               </p>
               <p className="mt-0.5 truncate text-[11px] text-app-secondary">
-                {formatLanguageValue(member.profile.language)} · {member.profile.timezone}
+                {formatLanguageValue(member.profile.language)} · {formatTimezoneValue(member.profile.timezone)}
               </p>
               <p className="mt-0.5 truncate text-[10px] text-app-overline">
                 {member.profile.skills.slice(0, 3).join(" · ") || "No stack selected"}

@@ -62,6 +62,7 @@ This file contains a growing ruleset that improves over time. **At session start
 16. [UX] Always make the main parent container responsive and content-driven in height — it should grow when a page has many elements and shrink when a page has few, instead of forcing oversized fixed-height shells.
 17. [DATA] Always treat the user avatar as a persisted profile field in Supabase and prefer the user’s Discord avatar URL when available, with a safe fallback when it is missing.
 18. [DATA] Always use the user’s GitHub avatar as the profile avatar source for this app when available — user corrected the earlier Discord wording.
+19. [ARCH] Always provide a real Portfolio page when the user asks for it, backed by public-shareable portfolio data rather than a placeholder redirect.
 16. [ARCH] Always add a reliable sync fallback for realtime chat updates instead of depending on Supabase Realtime alone — realtime proved unreliable across two real browser sessions and the chat must update without manual refresh.
 17. [ARCH] Always treat onboarding as profile configuration, not as next-matchmaking configuration — the user explicitly redefined onboarding’s product purpose.
 18. [DATA] Always treat `display_name` as the immutable account username in the UI and product flow — the user explicitly said it is now the username and must not be editable.
@@ -77,3 +78,11 @@ This file contains a growing ruleset that improves over time. **At session start
 28. [UX] Never show the `Username` section inside `Profile settings` — the user explicitly asked to remove it from Settings.
 29. [UX] Always provide a global dark mode toggle near `Logout`, using moon/sun icons and keeping the same violet accents while replacing white surfaces with dark ones — the user explicitly requested this theme behavior.
 30. [UX] Always use a product-grade dark palette with dark cards, muted borders, softened text, and a slightly subdued violet accent instead of leaving white cards on a black background — the user explicitly rejected the half-finished dark mode look.
+
+31. [UX] Always make the portfolio owner view visibly editable with a clear Edit button on the actual in-app Portfolio route, not only on the public share page — the user must immediately see how to edit their portfolio.
+
+32. [DATA] Never relax required profile fields globally when the user only asks for optional display in Portfolio — keep profile data rules strict and change only portfolio visibility.
+
+33. [UX] Always keep only one clear portfolio edit entry and one top-level copy-link action — duplicate edit/copy buttons in the portfolio UI confuse the user.
+
+34. [CODE] Never render `window`-derived absolute URLs during the initial SSR pass of a Client Component — compute them after mount or only inside click handlers to avoid hydration mismatches.

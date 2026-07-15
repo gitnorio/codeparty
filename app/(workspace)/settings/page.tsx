@@ -28,7 +28,8 @@ import { maxSelectedSkills, technologyGroups } from "@/lib/technology-options";
 
 type SettingsFormData = {
   display_name: string;
-  avatar_url: string;
+  bio: string;
+  location: string;
   skills: string[];
   selectedLanguages: SelectableLanguage[];
   timezone: string;
@@ -41,7 +42,8 @@ export default function SettingsPage() {
   const supabase = getSupabaseBrowserClient();
   const [formData, setFormData] = useState<SettingsFormData>({
     display_name: profile.display_name,
-    avatar_url: profile.avatar_url ?? "",
+    bio: profile.bio ?? "",
+    location: profile.location ?? "",
     skills: profile.skills,
     selectedLanguages: parseLanguageValue(profile.language),
     timezone: profile.timezone,
@@ -70,8 +72,21 @@ export default function SettingsPage() {
       return;
     }
 
+    if (!formData.location.trim()) {
+      setErrorMessage("Location is required.");
+      setIsSaving(false);
+      return;
+    }
+
+    if (!formData.timezone) {
+      setErrorMessage("Timezone is required.");
+      setIsSaving(false);
+      return;
+    }
+
     const payload = {
-      avatar_url: formData.avatar_url.trim() || null,
+      bio: formData.bio.trim() || null,
+      location: formData.location.trim(),
       skills: formData.skills,
       language,
       timezone: formData.timezone,
@@ -94,7 +109,8 @@ export default function SettingsPage() {
     if (data) {
       setFormData({
         display_name: data.display_name,
-        avatar_url: data.avatar_url ?? "",
+        bio: data.bio ?? "",
+        location: data.location ?? "",
         skills: data.skills,
         selectedLanguages: parseLanguageValue(data.language),
         timezone: data.timezone,
@@ -170,10 +186,33 @@ export default function SettingsPage() {
             Profile settings
           </CardTitle>
           <CardDescription className="text-sm leading-6 text-app-secondary">
-            Update the information saved from onboarding.
+            Update the information saved from onboarding. Public portfolio details can also be edited from the Portfolio page.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-5">
+          <Field label="Bio">
+            <textarea
+              value={formData.bio}
+              onChange={(event) =>
+                setFormData((current) => ({ ...current, bio: event.target.value }))
+              }
+              rows={3}
+              placeholder="Write a short introduction for your portfolio."
+              className="w-full max-w-[40rem] rounded-[0.9rem] border border-[#e8e2f7] bg-[#fcfbff] px-3.5 py-2.5 text-sm text-[#1f1c38] dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5]"
+            />
+          </Field>
+
+          <Field label="Location">
+            <input
+              value={formData.location}
+              onChange={(event) =>
+                setFormData((current) => ({ ...current, location: event.target.value }))
+              }
+              placeholder="Montreal, Canada"
+              className="h-10 w-full max-w-[25rem] rounded-[0.9rem] border border-[#e8e2f7] bg-[#fcfbff] px-3.5 text-sm text-[#1f1c38] dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#f2f2f5]"
+            />
+          </Field>
+
           <Field label="Languages">
             <div className="flex flex-wrap gap-2">
               {profileLanguageOptions.map((option) => {

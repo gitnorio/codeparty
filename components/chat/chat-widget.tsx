@@ -333,6 +333,7 @@ export function ChatWidget() {
                 profile: {
                   id: chatContext.userId,
                   display_name: chatContext.userDisplayName,
+                  avatar_url: null,
                 },
               },
             ]);

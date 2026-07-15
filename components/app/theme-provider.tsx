@@ -82,7 +82,7 @@ function subscribeToTheme(onStoreChange: () => void) {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const theme = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, () => "light");
+  const theme = useSyncExternalStore<Theme>(subscribeToTheme, getThemeSnapshot, () => "light");
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");

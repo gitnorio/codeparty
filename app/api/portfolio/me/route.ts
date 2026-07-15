@@ -73,16 +73,16 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Select a valid timezone." }, { status: 400 });
   }
 
-  if (!location) {
-    return NextResponse.json({ error: "Location is required." }, { status: 400 });
-  }
-
   if (bio.length > 500) {
     return NextResponse.json({ error: "Bio must stay under 500 characters." }, { status: 400 });
   }
 
   if (location.length > 120) {
     return NextResponse.json({ error: "Location must stay under 120 characters." }, { status: 400 });
+  }
+
+  if (resumePath && resumePath.length > 255) {
+    return NextResponse.json({ error: "Resume path must stay under 255 characters." }, { status: 400 });
   }
 
   if (resumePath && !resumePath.toLowerCase().endsWith(".pdf")) {
@@ -109,7 +109,7 @@ export async function PATCH(request: Request) {
     .from("profiles")
     .update({
       bio: bio || null,
-      location,
+      location: location || null,
       resume_path: resumePath || null,
       show_location_on_portfolio: showLocationOnPortfolio,
       show_timezone_on_portfolio: showTimezoneOnPortfolio,

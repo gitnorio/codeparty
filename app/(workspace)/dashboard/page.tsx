@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { ArrowRight, GitBranch, Loader2, Users, type LucideIcon } from "lucide-react";
 
 import { FeedbackBanner } from "@/components/app/feedback";
+import { useLanguage } from "@/components/app/language-provider";
+import { Mascot } from "@/components/app/mascot";
 import { useWorkspaceProfile } from "@/components/app/workspace-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,6 +36,7 @@ type SuggestedAction = {
 
 export default function DashboardPage() {
   const profile = useWorkspaceProfile();
+  const { language } = useLanguage();
   const { snapshot, isLoading, errorMessage } = useWorkspaceSnapshot(profile.id);
   const [repositories, setRepositories] = useState<RepositoryListItem[]>([]);
   const [repositoriesLoading, setRepositoriesLoading] = useState(true);
@@ -103,7 +106,7 @@ export default function DashboardPage() {
           id: project.id,
           repoUrl: project.github_repo_url ?? "",
           repoLabel: getRepoLabel(project.github_repo_url ?? ""),
-          partyId: teamsById.get(project.team_id) ?? "Unknown",
+          partyId: teamsById.get(project.team_id) ?? (language === "fr" ? "Inconnu" : "Unknown"),
           projectName: project.name,
           createdAt: project.created_at,
         }))
@@ -116,20 +119,28 @@ export default function DashboardPage() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [language]);
 
-  const suggestedAction = getDashboardSuggestedAction(snapshot);
+  const suggestedAction = getDashboardSuggestedAction(snapshot, language);
 
   return (
     <div className="grid gap-4">
       <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-none dark:bg-[linear-gradient(135deg,#6d5ce8_0%,#5f50d2_100%)]">
         <CardHeader>
-          <CardTitle className="mt-4 text-5xl leading-[0.96] tracking-[-0.05em]">
-            {`Welcome back, ${profile.display_name}`}
-          </CardTitle>
-          <CardDescription className="mt-2 max-w-2xl text-base leading-7 text-white/82">
-            Keep your team context and linked repositories visible in one place.
-          </CardDescription>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle className="mt-4 text-5xl leading-[0.96] tracking-[-0.05em]">
+                {language === "fr"
+                  ? `Bon retour, ${profile.display_name}`
+                  : `Welcome back, ${profile.display_name}`}
+              </CardTitle>
+              <CardDescription className="mt-2 max-w-2xl text-base leading-7 text-white/82">
+                {language === "fr"
+                  ? "Gardez le contexte de votre équipe et vos repositories liés au même endroit."
+                  : "Keep your team context and linked repositories visible in one place."}
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
       </Card>
 
@@ -145,12 +156,17 @@ export default function DashboardPage() {
               {suggestedAction.badge}
             </Badge>
           ) : null}
-          <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
-            {suggestedAction.title}
-          </CardTitle>
-          <CardDescription className="text-sm leading-6 text-app-secondary">
-            {suggestedAction.description}
-          </CardDescription>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
+              {suggestedAction.title}
+            </CardTitle>
+              <CardDescription className="text-sm leading-6 text-app-secondary">
+              {suggestedAction.description}
+              </CardDescription>
+            </div>
+            <Mascot pose="encouragement" size="md" className="shrink-0" />
+          </div>
         </CardHeader>
         {suggestedAction.ctaLabel && suggestedAction.href ? (
           <CardContent>
@@ -167,12 +183,14 @@ export default function DashboardPage() {
 
       <div className="grid gap-4">
         <StatCard
-          title="Current team"
-          value={activeCurrentTeam ? `Party ${activeCurrentTeam.party_id}` : "No active party"}
+          title={language === "fr" ? "Équipe actuelle" : "Current team"}
+          value={activeCurrentTeam ? `Party ${activeCurrentTeam.party_id}` : language === "fr" ? "Aucun party actif" : "No active party"}
           description={
             activeCurrentTeam
-              ? `${teamCount} members · ${formatLabel(activeCurrentTeam.status)} status`
-              : "You do not currently belong to an active party."
+              ? `${teamCount} ${language === "fr" ? "membres" : "members"} · ${formatLabel(activeCurrentTeam.status, language)}`
+              : language === "fr"
+                ? "Vous n’appartenez actuellement à aucun party actif."
+                : "You do not currently belong to an active party."
           }
           icon={Users}
           loading={isLoading}
@@ -182,13 +200,15 @@ export default function DashboardPage() {
       <Card className="border border-[#ece8f8] bg-white shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
         <CardHeader>
           <Badge variant="outline" className="w-fit rounded-full bg-[#f6f2ff] text-[#7650ff] dark:border-[#27272f] dark:bg-[#23232c] dark:text-[#a698ff]">
-            Project repos
+            {language === "fr" ? "Repos projet" : "Project repos"}
           </Badge>
           <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
-            Shared repositories
+            {language === "fr" ? "Repositories partagés" : "Shared repositories"}
           </CardTitle>
           <CardDescription className="text-sm leading-6 text-app-secondary">
-            Browse every visible GitHub repository, with the most recent projects first.
+            {language === "fr"
+              ? "Parcourez tous les repositories GitHub visibles, avec les projets les plus récents en premier."
+              : "Browse every visible GitHub repository, with the most recent projects first."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -199,15 +219,20 @@ export default function DashboardPage() {
               <div className="flex min-h-28 items-center justify-center">
                 <div className="flex items-center gap-2 text-sm text-app-secondary">
                   <Loader2 className="size-4 animate-spin text-[#7650ff]" />
-                  Loading repositories...
+                  {language === "fr" ? "Chargement des repositories..." : "Loading repositories..."}
                 </div>
               </div>
             ) : repositories.length === 0 ? (
               <div className="flex min-h-28 items-center justify-center text-center">
                 <div className="max-w-sm">
-                  <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">No linked repositories yet.</p>
+                  <Mascot pose="sad" size="md" centered className="mb-3" />
+                  <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
+                    {language === "fr" ? "Aucun repository lié pour le moment." : "No linked repositories yet."}
+                  </p>
                   <p className="mt-2 text-sm leading-6 text-app-secondary">
-                    Repositories appear here once a team creates a project and links its GitHub URL.
+                    {language === "fr"
+                      ? "Les repositories apparaissent ici une fois qu’une équipe crée un projet et lie son URL GitHub."
+                      : "Repositories appear here once a team creates a project and links its GitHub URL."}
                   </p>
                 </div>
               </div>
@@ -243,7 +268,7 @@ export default function DashboardPage() {
 
                     <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-app-secondary">
                       <GitBranch className="size-3 text-[#7650ff]" />
-                      <span>Open repository</span>
+                      <span>{language === "fr" ? "Ouvrir le repository" : "Open repository"}</span>
                     </div>
                   </div>
                 ))}
@@ -255,9 +280,13 @@ export default function DashboardPage() {
 
       <Card className="border border-[#ece8f8] bg-white shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
         <CardHeader>
-          <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">My Parties</CardTitle>
+          <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
+            {language === "fr" ? "Mes parties" : "My Parties"}
+          </CardTitle>
           <CardDescription className="text-sm leading-6 text-app-secondary">
-            Keep your active and past parties close to your project repository list.
+            {language === "fr"
+              ? "Gardez vos parties actives et passées près de votre liste de repositories."
+              : "Keep your active and past parties close to your project repository list."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -273,23 +302,24 @@ export default function DashboardPage() {
                     <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">Party {party.party_id}</p>
                     <div className="mt-1 flex items-center gap-2">
                       <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${getPartyStatusClasses(party.status)}`}>
-                        {formatPartyStatus(party.status)}
+                        {formatPartyStatus(party.status, language)}
                       </span>
                       <span className="text-[11px] text-app-secondary">
-                        Created {formatDate(party.created_at)}
+                        {language === "fr" ? "Créée" : "Created"} {formatDate(party.created_at, language)}
                       </span>
                     </div>
                   </div>
                   <span className="inline-flex items-center gap-1 text-sm font-medium text-[#5b45d9]">
-                    Open
+                    {language === "fr" ? "Ouvrir" : "Open"}
                     <ArrowRight className="size-4" />
                   </span>
                 </Link>
               ))}
             </div>
           ) : (
-            <div className="rounded-[1rem] bg-[#faf8ff] p-4 text-sm text-app-secondary dark:bg-[#16161d] dark:text-muted-foreground">
-              No parties yet.
+            <div className="rounded-[1rem] bg-[#faf8ff] p-4 text-center text-sm text-app-secondary dark:bg-[#16161d] dark:text-muted-foreground">
+              <Mascot pose="sad" size="md" centered className="mb-3" />
+              {language === "fr" ? "Aucun party pour le moment." : "No parties yet."}
             </div>
           )}
         </CardContent>
@@ -332,7 +362,7 @@ function StatCard({
   );
 }
 
-function getDashboardSuggestedAction(snapshot: WorkspaceSnapshot | null): SuggestedAction {
+function getDashboardSuggestedAction(snapshot: WorkspaceSnapshot | null, language: "en" | "fr" = "en"): SuggestedAction {
   const activeTeam = snapshot?.allTeams.find((team) => team.status === "active") ?? null;
   const currentTeam = snapshot?.currentTeam ?? null;
   const hasPastParties = (snapshot?.allTeams.length ?? 0) > 0;
@@ -341,43 +371,51 @@ function getDashboardSuggestedAction(snapshot: WorkspaceSnapshot | null): Sugges
   if (activeTeam && currentTeam?.id === activeTeam.id) {
     if (!snapshot?.currentProject) {
       return {
-        badge: "Suggested next step",
-        title: "Your party is ready to start.",
+        badge: language === "fr" ? "Prochaine action suggérée" : "Suggested next step",
+        title: language === "fr" ? "Votre party est prête à démarrer." : "Your party is ready to start.",
         description:
-          "Set up the team project so everyone can align around the shared build and repository.",
-        ctaLabel: "Set up project",
+          language === "fr"
+            ? "Configurez le projet d’équipe pour que tout le monde s’aligne sur le build et le repository partagés."
+            : "Set up the team project so everyone can align around the shared build and repository.",
+        ctaLabel: language === "fr" ? "Configurer le projet" : "Set up project",
         href: `/workspace?party=${activeTeam.id}`,
       };
     }
 
     if (!snapshot.currentProject.github_repo_url) {
       return {
-        badge: "Suggested next step",
-        title: "Your project still needs a repository.",
+        badge: language === "fr" ? "Prochaine action suggérée" : "Suggested next step",
+        title: language === "fr" ? "Votre projet a encore besoin d’un repository." : "Your project still needs a repository.",
         description:
-          "Link the public GitHub repository to give the party one shared place to build from.",
-        ctaLabel: "Link repository",
+          language === "fr"
+            ? "Liez le repository GitHub public pour donner à la party un seul endroit commun où construire."
+            : "Link the public GitHub repository to give the party one shared place to build from.",
+        ctaLabel: language === "fr" ? "Lier le repository" : "Link repository",
         href: `/workspace?party=${activeTeam.id}`,
       };
     }
 
     if (activeTeam.completion_requested_at) {
       return {
-        badge: "Suggested next step",
-        title: "Your completion request is under review.",
+        badge: language === "fr" ? "Prochaine action suggérée" : "Suggested next step",
+        title: language === "fr" ? "Votre demande de complétion est en révision." : "Your completion request is under review.",
         description:
-          "Open the party workspace to review the latest project details while admin checks completion.",
-        ctaLabel: "Open workspace",
+          language === "fr"
+            ? "Ouvrez l’espace de la party pour revoir les derniers détails du projet pendant que l’admin vérifie la complétion."
+            : "Open the party workspace to review the latest project details while admin checks completion.",
+        ctaLabel: language === "fr" ? "Ouvrir l’espace" : "Open workspace",
         href: `/workspace?party=${activeTeam.id}`,
       };
     }
 
     return {
-      badge: "Suggested next step",
-      title: "Keep your active party moving.",
+      badge: language === "fr" ? "Prochaine action suggérée" : "Suggested next step",
+      title: language === "fr" ? "Faites avancer votre party active." : "Keep your active party moving.",
       description:
-        "Open the workspace to coordinate with the team, review the repo, and keep the project on track.",
-      ctaLabel: "Open workspace",
+        language === "fr"
+          ? "Ouvrez l’espace pour coordonner l’équipe, vérifier le repo et garder le projet sur les rails."
+          : "Open the workspace to coordinate with the team, review the repo, and keep the project on track.",
+      ctaLabel: language === "fr" ? "Ouvrir l’espace" : "Open workspace",
       href: `/workspace?party=${activeTeam.id}`,
     };
   }
@@ -385,9 +423,14 @@ function getDashboardSuggestedAction(snapshot: WorkspaceSnapshot | null): Sugges
   if (queueEntryStatus === "waiting") {
     return {
       badge: null,
-      title: "You are currently in the matchmaking queue.",
+      title:
+        language === "fr"
+          ? "Vous êtes actuellement dans la file de matchmaking."
+          : "You are currently in the matchmaking queue.",
       description:
-        "Check your matchmaking status and stay ready while the next party is being formed.",
+        language === "fr"
+          ? "Gardez un œil sur votre statut et restez prêt pendant que le prochain party se forme."
+          : "Check your matchmaking status and stay ready while the next party is being formed.",
       ctaLabel: null,
       href: null,
     };
@@ -395,21 +438,25 @@ function getDashboardSuggestedAction(snapshot: WorkspaceSnapshot | null): Sugges
 
   if (hasPastParties) {
     return {
-      badge: "Suggested next step",
-      title: "Ready for your next party?",
+      badge: language === "fr" ? "Prochaine action suggérée" : "Suggested next step",
+      title: language === "fr" ? "Prêt pour votre prochain party ?" : "Ready for your next party?",
       description:
-        "You already have party history. Jump back into matchmaking when you want to start a new build.",
-      ctaLabel: "Join matchmaking",
+        language === "fr"
+          ? "Vous avez déjà un historique de parties. Retournez dans le matchmaking quand vous voulez lancer un nouveau build."
+          : "You already have party history. Jump back into matchmaking when you want to start a new build.",
+      ctaLabel: language === "fr" ? "Rejoindre le matchmaking" : "Join matchmaking",
       href: "/matchmaking",
     };
   }
 
   return {
-    badge: "Suggested next step",
-    title: "You are ready for your first party.",
+    badge: language === "fr" ? "Prochaine action suggérée" : "Suggested next step",
+    title: language === "fr" ? "Vous êtes prêt pour votre première party." : "You are ready for your first party.",
     description:
-      "Your profile is already set. Join matchmaking to get placed into a team and start building.",
-    ctaLabel: "Join matchmaking",
+      language === "fr"
+        ? "Votre profil est déjà prêt. Rejoignez le matchmaking pour être placé dans une équipe et commencer à construire."
+        : "Your profile is already set. Join matchmaking to get placed into a team and start building.",
+    ctaLabel: language === "fr" ? "Rejoindre le matchmaking" : "Join matchmaking",
     href: "/matchmaking",
   };
 }
@@ -423,9 +470,9 @@ function getRepoLabel(repoUrl: string) {
   }
 }
 
-function formatDate(value: string) {
+function formatDate(value: string, language: "en" | "fr" = "en") {
   try {
-    return new Intl.DateTimeFormat("en-US", {
+    return new Intl.DateTimeFormat(language === "fr" ? "fr-CA" : "en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -435,7 +482,12 @@ function formatDate(value: string) {
   }
 }
 
-function formatPartyStatus(status: "active" | "completed" | "cancelled") {
+function formatPartyStatus(status: "active" | "completed" | "cancelled", language: "en" | "fr" = "en") {
+  if (language === "fr") {
+    if (status === "active") return "Active";
+    if (status === "completed") return "Complétée";
+    return "Annulée";
+  }
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
@@ -445,7 +497,12 @@ function getPartyStatusClasses(status: "active" | "completed" | "cancelled") {
   return "bg-[#fff0f3] text-[#b84b66]";
 }
 
-function formatLabel(value: string) {
+function formatLabel(value: string, language: "en" | "fr" = "en") {
+  if (language === "fr") {
+    if (value === "active") return "statut actif";
+    if (value === "completed") return "statut complété";
+    if (value === "cancelled") return "statut annulé";
+  }
   return value
     .replaceAll("_", " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());

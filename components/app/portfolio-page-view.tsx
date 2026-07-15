@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import {
   CalendarDays,
@@ -16,10 +17,14 @@ import {
   Users,
 } from "lucide-react";
 
+import { LanguageToggleButton } from "@/components/app/language-toggle-button";
+import { useLanguage } from "@/components/app/language-provider";
+import { Mascot } from "@/components/app/mascot";
 import { ProfileAvatar } from "@/components/app/profile-avatar";
 import { useTheme } from "@/components/app/theme-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatLanguageValue } from "@/lib/profile-options";
 import type { PortfolioPageData } from "@/lib/portfolio";
 
 export function PortfolioPageView({
@@ -41,6 +46,8 @@ export function PortfolioPageView({
 }) {
   const [copied, setCopied] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { language } = useLanguage();
+  const pathname = usePathname();
 
   function getAbsolutePublicUrl() {
     return `${window.location.origin}${data.publicUrlPath}`;
@@ -62,36 +69,73 @@ export function PortfolioPageView({
       <div className="mx-auto max-w-7xl">
         <header className="mb-5 flex flex-col gap-4 rounded-[2rem] border border-[#ece8f8] bg-white px-5 py-4 shadow-[0_20px_70px_rgba(113,87,255,0.08)] dark:border-[#27272f] dark:bg-[#16161d] md:flex-row md:items-center md:justify-between md:px-8">
           <div className="flex items-center gap-4">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-[#7650ff] text-lg font-bold text-white">
-              C
-            </div>
+            <Mascot pose="icon" size="sm" className="rounded-xl bg-[#7650ff] p-1" />
             <p className="text-3xl font-bold tracking-tight text-[#1f1c38] dark:text-[#f2f2f5]">
               CodeParty
             </p>
             <nav className="hidden items-center gap-8 pl-6 text-[15px] text-[#4f496e] dark:text-muted-foreground md:flex">
-              <Link href="/dashboard" className="transition hover:text-[#1f1c38] dark:hover:text-[#f2f2f5]">
-                Dashboard
+              <Link
+                href="/dashboard"
+                className="transition hover:text-[#1f1c38] dark:hover:text-[#f2f2f5]"
+              >
+                {language === "fr" ? "Tableau de bord" : "Dashboard"}
               </Link>
-              <Link href="/matchmaking" className="transition hover:text-[#1f1c38] dark:hover:text-[#f2f2f5]">
-                Matchmaking
+              <Link
+                href="/matchmaking"
+                className="transition hover:text-[#1f1c38] dark:hover:text-[#f2f2f5]"
+              >
+                {language === "fr" ? "Matchmaking" : "Matchmaking"}
               </Link>
-              <Link href="/workspace" className="transition hover:text-[#1f1c38] dark:hover:text-[#f2f2f5]">
-                Workspace
+              <Link
+                href="/workspace"
+                className="transition hover:text-[#1f1c38] dark:hover:text-[#f2f2f5]"
+              >
+                {language === "fr" ? "Espace" : "Workspace"}
               </Link>
-              <Link href="/settings" className="transition hover:text-[#1f1c38] dark:hover:text-[#f2f2f5]">
-                Settings
+              <Link
+                href="/portfolio"
+                className={
+                  pathname === "/portfolio" || pathname.startsWith("/p/")
+                    ? "rounded-full bg-[#f3eeff] px-3 py-1.5 font-medium text-[#7650ff] dark:bg-[#272138] dark:text-[#b8acff]"
+                    : "transition hover:text-[#1f1c38] dark:hover:text-[#f2f2f5]"
+                }
+              >
+                {language === "fr" ? "Portfolio" : "Portfolio"}
+              </Link>
+              <Link
+                href="/settings"
+                className="transition hover:text-[#1f1c38] dark:hover:text-[#f2f2f5]"
+              >
+                {language === "fr" ? "Paramètres" : "Settings"}
               </Link>
             </nav>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            <LanguageToggleButton />
             <Button
               type="button"
               onClick={toggleTheme}
               variant="outline"
               size="icon"
-              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              title={
+                theme === "dark"
+                  ? language === "fr"
+                    ? "Passer en mode clair"
+                    : "Switch to light mode"
+                  : language === "fr"
+                    ? "Passer en mode sombre"
+                    : "Switch to dark mode"
+              }
+              aria-label={
+                theme === "dark"
+                  ? language === "fr"
+                    ? "Passer en mode clair"
+                    : "Switch to light mode"
+                  : language === "fr"
+                    ? "Passer en mode sombre"
+                    : "Switch to dark mode"
+              }
               className="rounded-full border-[#e8e2f7] bg-white text-[#1f1c38] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#f2f2f5]"
             >
               {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
@@ -102,7 +146,12 @@ export function PortfolioPageView({
               className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[linear-gradient(90deg,#7650ff_0%,#947cff_100%)] px-5 text-sm font-medium text-white transition hover:opacity-95"
             >
               <Copy className="size-4" />
-              {copied ? "Copied" : headerActions?.copiedLabel ?? "Copy portfolio link"}
+              {copied
+                ? language === "fr"
+                  ? "Copié"
+                  : "Copied"
+                : headerActions?.copiedLabel ??
+                  (language === "fr" ? "Copier le lien du portfolio" : "Copy portfolio link")}
             </button>
           </div>
         </header>
@@ -157,7 +206,7 @@ export function PortfolioPageView({
                       ) : null}
                       <span className="inline-flex items-center gap-2">
                         <Globe className="size-4" />
-                        {data.languageLabel}
+                        {formatLanguageValue(data.profile.language, language)}
                       </span>
                       {data.showTimezone && data.timezoneLabel ? (
                         <span className="inline-flex items-center gap-2">
@@ -172,8 +221,12 @@ export function PortfolioPageView({
                 <div className="w-fit rounded-full border border-white/70 bg-white/80 px-4 py-2 text-sm font-medium text-[#5b45d9] shadow-sm backdrop-blur dark:border-[#3a3450] dark:bg-[#1a1a22]/80 dark:text-[#b8acff]">
                   <span className={`mr-2 inline-block size-2 rounded-full ${data.availableForOpportunities ? "bg-emerald-500" : "bg-amber-500"}`} />
                   {data.availableForOpportunities
-                    ? "Available for new opportunities"
-                    : "Currently building with a party"}
+                    ? language === "fr"
+                      ? "Disponible pour de nouvelles opportunités"
+                      : "Available for new opportunities"
+                    : language === "fr"
+                      ? "Travaille actuellement avec un party"
+                      : "Currently building with a party"}
                 </div>
               </div>
 
@@ -188,7 +241,7 @@ export function PortfolioPageView({
                 ))}
                 {hiddenSkillsCount > 0 ? (
                   <span className="rounded-full border border-[#e8e2f7] bg-white px-4 py-2 text-sm font-medium text-[#8b82b1] shadow-sm dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-muted-foreground">
-                    +{hiddenSkillsCount} more
+                    +{hiddenSkillsCount} {language === "fr" ? "de plus" : "more"}
                   </span>
                 ) : null}
               </div>
@@ -202,22 +255,31 @@ export function PortfolioPageView({
           <CardHeader className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
               <CardTitle className="text-3xl tracking-[-0.06em] text-[#1f1c38] dark:text-[#f2f2f5] md:text-4xl">
-                Completed Projects
+                {language === "fr" ? "Projets complétés" : "Completed Projects"}
               </CardTitle>
               <CardDescription className="mt-2 text-base leading-8 text-app-secondary">
-                Team projects you&apos;ve built and shipped.
+                {language === "fr"
+                  ? "Les projets d’équipe que vous avez construits et livrés."
+                  : "Team projects you've built and shipped."}
               </CardDescription>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <StatBox value={String(data.completedProjectsCount)} label="Projects completed" />
-              <StatBox value={String(data.collaboratorsCount)} label="Developers worked with" />
+              <StatBox
+                value={String(data.completedProjectsCount)}
+                label={language === "fr" ? "Projets complétés" : "Projects completed"}
+              />
+              <StatBox
+                value={String(data.collaboratorsCount)}
+                label={language === "fr" ? "Développeurs rencontrés" : "Developers worked with"}
+              />
             </div>
           </CardHeader>
           <CardContent className="grid gap-4">
             {data.completedProjects.length === 0 ? (
-              <div className="rounded-[1.5rem] border border-[#ece8f8] bg-[#fcfbff] p-6 text-sm text-app-secondary dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-muted-foreground">
-                No completed parties yet.
+              <div className="rounded-[1.5rem] border border-[#ece8f8] bg-[#fcfbff] p-6 text-center text-sm text-app-secondary dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-muted-foreground">
+                <Mascot pose="sad" size="md" centered className="mb-3" />
+                {language === "fr" ? "Aucun projet complété pour le moment." : "No completed projects yet."}
               </div>
             ) : (
               data.completedProjects.map((project, index) => (
@@ -237,11 +299,14 @@ export function PortfolioPageView({
                         {project.projectName}
                       </p>
                       <p className="mt-2 max-w-2xl text-sm leading-7 text-app-secondary md:text-base">
-                        {project.description || "A completed team project shipped through CodeParty."}
+                        {project.description ||
+                          (language === "fr"
+                            ? "Un projet d’équipe complété et livré via CodeParty."
+                            : "A completed team project shipped through CodeParty.")}
                       </p>
                       <div className="mt-4 flex flex-wrap gap-2">
                         <span className="rounded-full bg-[#e9f9ef] px-3 py-1 text-sm font-medium text-[#1d8d51]">
-                          Completed
+                          {language === "fr" ? "Complété" : "Completed"}
                         </span>
                         {project.stack.map((item) => (
                           <span
@@ -258,13 +323,17 @@ export function PortfolioPageView({
                   <div className="grid gap-4 text-sm text-[#5f587f] dark:text-muted-foreground">
                     <InfoRow
                       icon={<CalendarDays className="size-4" />}
-                      label="Completed on"
-                      value={formatPortfolioDate(project.completedAt)}
+                      label={language === "fr" ? "Complété le" : "Completed on"}
+                      value={formatPortfolioDate(project.completedAt, language)}
                     />
                     <InfoRow
                       icon={<Users className="size-4" />}
-                      label="Team size"
-                      value={`${project.teamSize} developer${project.teamSize === 1 ? "" : "s"}`}
+                      label={language === "fr" ? "Taille de l’équipe" : "Team size"}
+                      value={
+                        language === "fr"
+                          ? `${project.teamSize} développeur${project.teamSize === 1 ? "" : "s"}`
+                          : `${project.teamSize} developer${project.teamSize === 1 ? "" : "s"}`
+                      }
                     />
                   </div>
 
@@ -280,7 +349,13 @@ export function PortfolioPageView({
                       }`}
                     >
                       <ExternalLink className="size-4" />
-                      {project.githubRepoUrl ? "View on GitHub" : "GitHub repo unavailable"}
+                      {project.githubRepoUrl
+                        ? language === "fr"
+                          ? "Voir sur GitHub"
+                          : "View on GitHub"
+                        : language === "fr"
+                          ? "Repo GitHub indisponible"
+                          : "GitHub repo unavailable"}
                     </Link>
                   </div>
                 </div>
@@ -297,10 +372,14 @@ export function PortfolioPageView({
               </div>
               <div>
                 <p className="text-2xl font-semibold tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
-                  Let&apos;s build awesome things together
+                  {language === "fr"
+                    ? "Construisons de belles choses ensemble"
+                    : "Let's build awesome things together"}
                 </p>
                 <p className="mt-2 text-sm leading-7 text-app-secondary">
-                  I&apos;m always open to joining new teams and building impactful projects.
+                  {language === "fr"
+                    ? "Je suis toujours partant pour rejoindre de nouvelles équipes et construire des projets concrets."
+                    : "I'm always open to joining new teams and building impactful projects."}
                 </p>
               </div>
             </div>
@@ -311,18 +390,24 @@ export function PortfolioPageView({
                   href={data.resumeUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[linear-gradient(90deg,#7650ff_0%,#947cff_100%)] px-5 text-sm font-medium text-white transition hover:opacity-95"
+                  className="group relative inline-flex h-12 items-center justify-center overflow-hidden rounded-full border border-[#8f7cff]/35 bg-[linear-gradient(135deg,#6f49ff_0%,#8f6dff_45%,#a68dff_100%)] px-6 text-sm font-semibold text-white shadow-[0_18px_50px_rgba(118,80,255,0.28)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_24px_70px_rgba(118,80,255,0.34)] dark:border-[#8d7cff]/30 dark:bg-[linear-gradient(135deg,#6b58e8_0%,#7b67ef_45%,#9687f5_100%)] dark:shadow-[0_18px_50px_rgba(64,48,140,0.38)]"
                 >
-                  <ExternalLink className="size-4" />
-                  Get my resume
+                  <span className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent_0%,rgba(255,255,255,0.24)_18%,transparent_36%)] opacity-0 transition duration-500 group-hover:translate-x-full group-hover:opacity-100" />
+                  <span className="pointer-events-none absolute inset-[1px] rounded-full bg-[linear-gradient(135deg,rgba(255,255,255,0.14),rgba(255,255,255,0.04))]" />
+                  <span className="relative inline-flex items-center gap-2">
+                    <ExternalLink className="size-4 transition group-hover:scale-105" />
+                    {language === "fr" ? "Voir mon CV" : "Get my resume"}
+                  </span>
                 </a>
               ) : isOwner ? (
                 <p className="text-sm text-[#7a73a0] dark:text-muted-foreground">
-                  Upload your resume in edit mode to publish it here.
+                  {language === "fr"
+                    ? "Importez votre CV en mode édition pour le publier ici."
+                    : "Upload your resume in edit mode to publish it here."}
                 </p>
               ) : (
                 <p className="text-sm text-[#7a73a0] dark:text-muted-foreground">
-                  Resume not available.
+                  {language === "fr" ? "CV non disponible." : "Resume not available."}
                 </p>
               )}
             </div>
@@ -382,12 +467,12 @@ function ProjectBadgeIcon({ index }: { index: number }) {
   return <Globe className="size-8" />;
 }
 
-function formatPortfolioDate(value: string | null) {
+function formatPortfolioDate(value: string | null, language: "en" | "fr") {
   if (!value) {
-    return "Recently";
+    return language === "fr" ? "Récemment" : "Recently";
   }
 
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(language === "fr" ? "fr-CA" : "en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",

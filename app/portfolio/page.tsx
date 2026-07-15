@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 
 import { FeedbackBanner } from "@/components/app/feedback";
+import { useLanguage } from "@/components/app/language-provider";
 import { PortfolioEditorCard, type PortfolioEditorFormData } from "@/components/app/portfolio-editor-card";
 import { PortfolioPageView } from "@/components/app/portfolio-page-view";
 import type { PortfolioPageData } from "@/lib/portfolio";
@@ -14,6 +15,7 @@ const PORTFOLIO_RESUME_BUCKET = "portfolio-resumes";
 
 export default function PortfolioOwnerPage() {
   const supabase = getSupabaseBrowserClient();
+  const { language } = useLanguage();
   const [portfolio, setPortfolio] = useState<PortfolioPageData | null>(null);
   const [formData, setFormData] = useState<PortfolioEditorFormData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -66,7 +68,12 @@ export default function PortfolioOwnerPage() {
       }
 
       if (!response.ok || !payload?.data) {
-        setErrorMessage(payload?.error ?? "Unable to load your portfolio.");
+        setErrorMessage(
+          payload?.error ??
+            (language === "fr"
+              ? "Impossible de charger votre portfolio."
+              : "Unable to load your portfolio.")
+        );
         setIsLoading(false);
         return;
       }
@@ -83,7 +90,7 @@ export default function PortfolioOwnerPage() {
     return () => {
       mounted = false;
     };
-  }, [supabase]);
+  }, [language, supabase]);
 
   const feedback = useMemo(() => {
     if (errorMessage) {
@@ -104,7 +111,12 @@ export default function PortfolioOwnerPage() {
     } = await supabase.auth.getSession();
 
     if (sessionError || !session?.access_token) {
-      setErrorMessage(sessionError?.message ?? "Your session expired. Please sign in again.");
+      setErrorMessage(
+        sessionError?.message ??
+          (language === "fr"
+            ? "Votre session a expiré. Veuillez vous reconnecter."
+            : "Your session expired. Please sign in again.")
+      );
       return false;
     }
 
@@ -132,7 +144,12 @@ export default function PortfolioOwnerPage() {
       | undefined;
 
     if (!response.ok || !payload?.data) {
-      setErrorMessage(payload?.error ?? "Unable to save your portfolio.");
+      setErrorMessage(
+        payload?.error ??
+          (language === "fr"
+            ? "Impossible d’enregistrer votre portfolio."
+            : "Unable to save your portfolio.")
+      );
       return false;
     }
 
@@ -158,7 +175,12 @@ export default function PortfolioOwnerPage() {
     } = await supabase.auth.getSession();
 
     if (sessionError || !session?.user) {
-      setErrorMessage(sessionError?.message ?? "Your session expired. Please sign in again.");
+      setErrorMessage(
+        sessionError?.message ??
+          (language === "fr"
+            ? "Votre session a expiré. Veuillez vous reconnecter."
+            : "Your session expired. Please sign in again.")
+      );
       setIsSaving(false);
       return;
     }
@@ -203,10 +225,16 @@ export default function PortfolioOwnerPage() {
         resume_path: nextResumePath,
       },
       removeResumeOnSave
-        ? "Portfolio updated and resume removed."
+        ? language === "fr"
+          ? "Portfolio mis à jour et CV supprimé."
+          : "Portfolio updated and resume removed."
         : pendingResumeFile
-          ? "Portfolio updated and resume uploaded."
-          : "Portfolio updated."
+          ? language === "fr"
+            ? "Portfolio mis à jour et CV importé."
+            : "Portfolio updated and resume uploaded."
+          : language === "fr"
+            ? "Portfolio mis à jour."
+            : "Portfolio updated."
     );
     if (success) {
       setIsEditing(false);
@@ -223,12 +251,14 @@ export default function PortfolioOwnerPage() {
     setSuccessMessage(null);
 
     if (file.type !== "application/pdf") {
-      setErrorMessage("Resume must be a PDF.");
+      setErrorMessage(language === "fr" ? "Le CV doit être un PDF." : "Resume must be a PDF.");
       return;
     }
 
     if (file.size > MAX_RESUME_SIZE_BYTES) {
-      setErrorMessage("Resume must be 500 KB or smaller.");
+      setErrorMessage(
+        language === "fr" ? "Le CV doit faire 500 Ko maximum." : "Resume must be 500 KB or smaller."
+      );
       return;
     }
 
@@ -254,7 +284,9 @@ export default function PortfolioOwnerPage() {
         <div className="rounded-[1.8rem] border border-[#ece8f8] bg-white px-8 py-10 text-center shadow-[0_20px_70px_rgba(113,87,255,0.08)] dark:border-[#27272f] dark:bg-[#16161d]">
           <div className="flex items-center justify-center gap-3">
             <Loader2 className="size-5 animate-spin text-[#7650ff]" />
-            <p className="text-sm text-app-secondary">Loading your portfolio...</p>
+            <p className="text-sm text-app-secondary">
+              {language === "fr" ? "Chargement de votre portfolio..." : "Loading your portfolio..."}
+            </p>
           </div>
         </div>
       </main>
@@ -265,7 +297,16 @@ export default function PortfolioOwnerPage() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#fbfaff] px-4 py-8 text-[#1f1c38] dark:bg-[#0d0d12] dark:text-[#f2f2f5]">
         <div className="w-full max-w-xl rounded-[1.8rem] border border-[#ece8f8] bg-white p-6 shadow-[0_20px_70px_rgba(113,87,255,0.08)] dark:border-[#27272f] dark:bg-[#16161d]">
-          {feedback ?? <FeedbackBanner tone="error" message="Unable to load your portfolio." />}
+          {feedback ?? (
+            <FeedbackBanner
+              tone="error"
+              message={
+                language === "fr"
+                  ? "Impossible de charger votre portfolio."
+                  : "Unable to load your portfolio."
+              }
+            />
+          )}
         </div>
       </main>
     );
@@ -277,8 +318,14 @@ export default function PortfolioOwnerPage() {
       isOwner
       feedback={feedback}
       headerActions={{
-        copiedLabel: "Copy portfolio link",
-        primaryButtonLabel: isEditing ? "Close editor" : "Edit portfolio",
+        copiedLabel: language === "fr" ? "Copier le lien du portfolio" : "Copy portfolio link",
+        primaryButtonLabel: isEditing
+          ? language === "fr"
+            ? "Fermer l’éditeur"
+            : "Close editor"
+          : language === "fr"
+            ? "Modifier le portfolio"
+            : "Edit portfolio",
         onPrimaryAction: () => {
           setErrorMessage(null);
           setSuccessMessage(null);
@@ -306,6 +353,7 @@ export default function PortfolioOwnerPage() {
               pendingResumeFile,
               removeResumeOnSave,
               resumePath: formData.resume_path,
+              language,
             })}
             hasResume={
               Boolean(pendingResumeFile) || (Boolean(formData.resume_path) && !removeResumeOnSave)
@@ -335,22 +383,26 @@ function getResumeLabel({
   pendingResumeFile,
   removeResumeOnSave,
   resumePath,
+  language,
 }: {
   pendingResumeFile: File | null;
   removeResumeOnSave: boolean;
   resumePath: string | null;
+  language: "en" | "fr";
 }) {
   if (pendingResumeFile) {
     return pendingResumeFile.name;
   }
 
   if (removeResumeOnSave) {
-    return "Resume will be removed when you save.";
+    return language === "fr"
+      ? "Le CV sera supprimé lors de l’enregistrement."
+      : "Resume will be removed when you save.";
   }
 
   if (resumePath) {
-    return resumePath.split("/").pop() ?? "Resume uploaded";
+    return resumePath.split("/").pop() ?? (language === "fr" ? "CV importé" : "Resume uploaded");
   }
 
-  return "No resume uploaded yet";
+  return language === "fr" ? "Aucun CV importé pour le moment" : "No resume uploaded yet";
 }

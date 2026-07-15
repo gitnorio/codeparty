@@ -180,6 +180,30 @@ html.theme-fade body * {
 }
 
 @layer utilities {
+  @keyframes mascot-float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+  @keyframes mascot-pop {
+    0% {
+      opacity: 0;
+      transform: translateY(8px) scale(0.94);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  .animate-mascot-float {
+    animation: mascot-float 3.8s ease-in-out infinite;
+  }
+  .animate-mascot-pop {
+    animation: mascot-pop 560ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
   .text-app-secondary {
     @apply text-[#6a6683] dark:text-muted-foreground;
   }

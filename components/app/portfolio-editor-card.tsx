@@ -3,22 +3,28 @@
 import { ChevronDown, Loader2, X } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 
+import { useLanguage } from "@/components/app/language-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   deriveLanguageValue,
   formatProjectTypeList,
+  getProfileLanguageOptions,
+  getProfileProjectTypeOptions,
   getTimezonePreview,
   parseLanguageValue,
-  profileLanguageOptions,
-  profileProjectTypeOptions,
   profileTimezoneOptions,
   type ProfileLanguageValue,
   type ProfileProjectTypeValue,
   type SelectableLanguage,
 } from "@/lib/profile-options";
-import { maxSelectedSkills, technologyGroups } from "@/lib/technology-options";
+import {
+  formatTechnologyGroupLabel,
+  formatTechnologyLabel,
+  maxSelectedSkills,
+  technologyGroups,
+} from "@/lib/technology-options";
 
 export type PortfolioEditorFormData = {
   bio: string;
@@ -54,11 +60,14 @@ export function PortfolioEditorCard({
   hasResume?: boolean;
 }) {
   const [showTechnicalStack, setShowTechnicalStack] = useState(false);
+  const { language } = useLanguage();
   const resumeInputRef = useRef<HTMLInputElement | null>(null);
   const timezonePreview = useMemo(
     () => getTimezonePreview(formData.timezone),
     [formData.timezone]
   );
+  const languageOptions = useMemo(() => getProfileLanguageOptions(language), [language]);
+  const projectTypeOptions = useMemo(() => getProfileProjectTypeOptions(language), [language]);
   const selectedLanguages = useMemo(
     () => parseLanguageValue(formData.language),
     [formData.language]
@@ -111,25 +120,35 @@ export function PortfolioEditorCard({
       <CardHeader className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
         <div>
           <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
-            Edit your portfolio
+            {language === "fr" ? "Modifier votre portfolio" : "Edit your portfolio"}
           </CardTitle>
           <CardDescription className="text-sm leading-6 text-app-secondary">
-            Update your public intro and the profile details already stored in CodeParty.
+            {language === "fr"
+              ? "Mettez à jour votre intro publique et les détails déjà enregistrés dans CodeParty."
+              : "Update your public intro and the profile details already stored in CodeParty."}
           </CardDescription>
         </div>
       </CardHeader>
       <CardContent className="grid gap-5">
-        <Field label="Bio">
+        <Field label={language === "fr" ? "Bio" : "Bio"}>
           <textarea
             value={formData.bio}
-            onChange={(event) => onChange({ ...formData, bio: event.target.value })}
+            onChange={(event) =>
+              onChange({ ...formData, bio: event.target.value.slice(0, 500) })
+            }
+            maxLength={500}
             rows={4}
-            placeholder="Write a short introduction for your portfolio."
+            placeholder={
+              language === "fr"
+                ? "Écrivez une courte introduction pour votre portfolio."
+                : "Write a short introduction for your portfolio."
+            }
             className="w-full rounded-[0.95rem] border border-[#e8e2f7] bg-[#fcfbff] px-3.5 py-2.5 text-sm text-[#1f1c38] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#f2f2f5]"
           />
+          <p className="text-xs text-app-meta">{formData.bio.length}/500</p>
         </Field>
 
-        <Field label="Resume (PDF, max 500 KB)">
+        <Field label={language === "fr" ? "CV (PDF, max 500 Ko)" : "Resume (PDF, max 500 KB)"}>
           <div className="flex flex-wrap items-center gap-3">
             <input
               ref={resumeInputRef}
@@ -147,17 +166,24 @@ export function PortfolioEditorCard({
               variant="outline"
               onClick={() => resumeInputRef.current?.click()}
             >
-              Upload resume
+              {language === "fr" ? "Importer le CV" : "Upload resume"}
             </Button>
             <p className="text-xs text-app-meta">
-              {resumeLabel ?? (formData.resume_path ? "Resume uploaded" : "No resume uploaded yet")}
+              {resumeLabel ??
+                (formData.resume_path
+                  ? language === "fr"
+                    ? "CV importé"
+                    : "Resume uploaded"
+                  : language === "fr"
+                    ? "Aucun CV importé pour le moment"
+                    : "No resume uploaded yet")}
             </p>
             {hasResume ? (
               <button
                 type="button"
                 onClick={onResumeDelete}
-                title="Delete resume"
-                aria-label="Delete resume"
+                title={language === "fr" ? "Supprimer le CV" : "Delete resume"}
+                aria-label={language === "fr" ? "Supprimer le CV" : "Delete resume"}
                 className="inline-flex size-7 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-500 transition hover:bg-red-100 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-950/70"
               >
                 <X className="size-4" />
@@ -167,16 +193,24 @@ export function PortfolioEditorCard({
         </Field>
 
         <div className="grid gap-5 md:grid-cols-2">
-          <Field label="Location">
+          <Field label={language === "fr" ? "Localisation" : "Location"}>
             <div className="grid gap-2">
               <input
                 value={formData.location}
-                onChange={(event) => onChange({ ...formData, location: event.target.value })}
-                placeholder="Montreal, Canada"
+                onChange={(event) =>
+                  onChange({ ...formData, location: event.target.value.slice(0, 120) })
+                }
+                maxLength={120}
+                placeholder={language === "fr" ? "Montréal, Canada" : "Montreal, Canada"}
                 className="h-10 w-full rounded-[0.95rem] border border-[#e8e2f7] bg-[#fcfbff] px-3.5 text-sm text-[#1f1c38] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#f2f2f5]"
               />
+              <p className="text-xs text-app-meta">{formData.location.length}/120</p>
               <VisibilityToggle
-                label="Hide location from portfolio"
+                label={
+                  language === "fr"
+                    ? "Masquer la localisation dans le portfolio"
+                    : "Hide location from portfolio"
+                }
                 checked={!formData.show_location_on_portfolio}
                 onToggle={() =>
                   onChange({
@@ -188,7 +222,7 @@ export function PortfolioEditorCard({
             </div>
           </Field>
 
-          <Field label="Timezone">
+          <Field label={language === "fr" ? "Fuseau horaire" : "Timezone"}>
             <div className="grid gap-2">
               <select
                 value={formData.timezone}
@@ -202,7 +236,11 @@ export function PortfolioEditorCard({
                 ))}
               </select>
               <VisibilityToggle
-                label="Hide timezone from portfolio"
+                label={
+                  language === "fr"
+                    ? "Masquer le fuseau horaire dans le portfolio"
+                    : "Hide timezone from portfolio"
+                }
                 checked={!formData.show_timezone_on_portfolio}
                 onToggle={() =>
                   onChange({
@@ -211,14 +249,16 @@ export function PortfolioEditorCard({
                   })
                 }
               />
-              <p className="text-xs text-app-meta">Current local time: {timezonePreview}</p>
+              <p className="text-xs text-app-meta">
+                {language === "fr" ? "Heure locale actuelle :" : "Current local time:"} {timezonePreview}
+              </p>
             </div>
           </Field>
         </div>
 
-        <Field label="Languages">
+        <Field label={language === "fr" ? "Langues" : "Languages"}>
           <div className="flex flex-wrap gap-2">
-            {profileLanguageOptions.map((option) => {
+            {languageOptions.map((option) => {
               const active = selectedLanguages.includes(option.value);
               return (
                 <button
@@ -238,9 +278,9 @@ export function PortfolioEditorCard({
           </div>
         </Field>
 
-        <Field label="Project types">
+        <Field label={language === "fr" ? "Types de projet" : "Project types"}>
           <div className="grid gap-3 sm:grid-cols-2">
-            {profileProjectTypeOptions.map((option) => {
+            {projectTypeOptions.map((option) => {
               const active = formData.project_types.includes(option.value);
               return (
                 <button
@@ -260,11 +300,11 @@ export function PortfolioEditorCard({
             })}
           </div>
           <p className="text-xs text-app-meta">
-            Selected: {formatProjectTypeList(formData.project_types)}
+            {language === "fr" ? "Sélection :" : "Selected:"} {formatProjectTypeList(formData.project_types, language)}
           </p>
         </Field>
 
-        <Field label="Technical stack">
+        <Field label={language === "fr" ? "Stack technique" : "Technical stack"}>
           <div className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff] dark:border-[#27272f] dark:bg-[#1a1a22]">
             <button
               type="button"
@@ -272,11 +312,15 @@ export function PortfolioEditorCard({
               className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
             >
               <div>
-                <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">Selected technologies</p>
+                <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
+                  {language === "fr" ? "Technologies sélectionnées" : "Selected technologies"}
+                </p>
                 <p className="mt-1 text-xs text-app-meta">
                   {formData.skills.length > 0
-                    ? `${formData.skills.length} / ${maxSelectedSkills} selected`
-                    : "No technologies selected yet"}
+                    ? `${formData.skills.length} / ${maxSelectedSkills} ${language === "fr" ? "sélectionnées" : "selected"}`
+                    : language === "fr"
+                      ? "Aucune technologie sélectionnée"
+                      : "No technologies selected yet"}
                 </p>
               </div>
               <ChevronDown
@@ -294,11 +338,15 @@ export function PortfolioEditorCard({
                       onClick={() => toggleSkill(skill)}
                       className="rounded-full border border-[#e8e2f7] bg-white px-3 py-1.5 text-xs font-medium text-[#5b45d9] dark:border-[#27272f] dark:bg-[#16161d] dark:text-[#b8acff]"
                     >
-                      {skill.replaceAll(": Other", " · Other")} ×
+                      {formatTechnologyLabel(skill, language)} ×
                     </button>
                   ))
                 ) : (
-                  <p className="text-xs text-app-meta">Choose from the predefined technologies below.</p>
+                  <p className="text-xs text-app-meta">
+                    {language === "fr"
+                      ? "Choisissez parmi les technologies prédéfinies ci-dessous."
+                      : "Choose from the predefined technologies below."}
+                  </p>
                 )}
               </div>
             </div>
@@ -308,11 +356,13 @@ export function PortfolioEditorCard({
                 <div className="grid gap-4">
                   {technologyGroups.map((group) => (
                     <div key={group.label}>
-                      <p className="mb-2 text-sm font-medium text-app-secondary">{group.label}</p>
+                      <p className="mb-2 text-sm font-medium text-app-secondary">
+                        {formatTechnologyGroupLabel(group.label, language)}
+                      </p>
                       <div className="flex flex-wrap gap-2">
                         {group.technologies.map((tech) => {
                           const selected = formData.skills.includes(tech);
-                          const labelValue = tech.endsWith(": Other") ? "Other" : tech;
+                          const labelValue = formatTechnologyLabel(tech, language);
 
                           return (
                             <button
@@ -340,11 +390,17 @@ export function PortfolioEditorCard({
 
         <div className="flex flex-wrap items-center justify-end gap-3">
           <Button variant="outline" onClick={onCancel}>
-            Cancel
+            {language === "fr" ? "Annuler" : "Cancel"}
           </Button>
           <Button onClick={onSave} disabled={isSaving}>
             {isSaving ? <Loader2 className="size-4 animate-spin" /> : null}
-            {isSaving ? "Saving..." : "Save changes"}
+            {isSaving
+              ? language === "fr"
+                ? "Enregistrement..."
+                : "Saving..."
+              : language === "fr"
+                ? "Enregistrer les modifications"
+                : "Save changes"}
           </Button>
         </div>
       </CardContent>

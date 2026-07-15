@@ -26,6 +26,58 @@ export const profileProjectTypeOptions = [
   },
 ] as const;
 
+export function getProfileLanguageOptions(locale: "en" | "fr" = "en") {
+  return profileLanguageOptions.map((option) => ({
+    ...option,
+    label:
+      locale === "fr"
+        ? option.value === "en"
+          ? "Anglais"
+          : "Français"
+        : option.value === "en"
+          ? "English"
+          : "French",
+  }));
+}
+
+export function getProfileProjectTypeOptions(locale: "en" | "fr" = "en") {
+  if (locale === "fr") {
+    return profileProjectTypeOptions.map((option) => {
+      if (option.value === "web_app") {
+        return {
+          ...option,
+          label: "Application web",
+          description: "Produits web, plateformes SaaS et expériences dans le navigateur.",
+        };
+      }
+
+      if (option.value === "mobile_app") {
+        return {
+          ...option,
+          label: "Application mobile",
+          description: "Produits iOS, Android ou mobiles cross-platform.",
+        };
+      }
+
+      if (option.value === "api") {
+        return {
+          ...option,
+          label: "API",
+          description: "Services backend, intégrations et endpoints.",
+        };
+      }
+
+      return {
+        ...option,
+        label: "Application IA",
+        description: "Produits où l’IA fait partie du flux principal.",
+      };
+    });
+  }
+
+  return [...profileProjectTypeOptions];
+}
+
 export const profileTimezoneOptions = [
   { value: "America/Toronto", label: "Toronto (Eastern Time)" },
   { value: "America/Montreal", label: "Montreal (Eastern Time)" },
@@ -74,25 +126,48 @@ export function parseLanguageValue(
   return [];
 }
 
-export function formatLanguageValue(language: string | null | undefined) {
-  if (language === "fr_en") return "Français & English";
-  if (language === "fr") return "Français";
+export function formatLanguageValue(
+  language: string | null | undefined,
+  locale: "en" | "fr" = "en"
+) {
+  if (locale === "fr") {
+    if (language === "fr_en") return "Français et anglais";
+    if (language === "fr") return "Français";
+    if (language === "en") return "Anglais";
+    return "Non sélectionné";
+  }
+
+  if (language === "fr_en") return "French & English";
+  if (language === "fr") return "French";
   if (language === "en") return "English";
   return "Not selected";
 }
 
-export function formatProjectTypeValue(value: string) {
-  return value
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (character) => character.toUpperCase());
-}
-
-export function formatProjectTypeList(values: string[] | null | undefined) {
-  if (!values || values.length === 0) {
-    return "Not selected";
+export function formatProjectTypeValue(value: string, locale: "en" | "fr" = "en") {
+  if (locale === "fr") {
+    if (value === "web_app") return "Application web";
+    if (value === "mobile_app") return "Application mobile";
+    if (value === "api") return "API";
+    if (value === "ai_app") return "Application IA";
+  } else {
+    if (value === "web_app") return "Web app";
+    if (value === "mobile_app") return "Mobile app";
+    if (value === "api") return "API";
+    if (value === "ai_app") return "AI app";
   }
 
-  return values.map((item) => formatProjectTypeValue(item)).join(", ");
+  return value.replaceAll("_", " ").replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+export function formatProjectTypeList(
+  values: string[] | null | undefined,
+  locale: "en" | "fr" = "en"
+) {
+  if (!values || values.length === 0) {
+    return locale === "fr" ? "Non sélectionné" : "Not selected";
+  }
+
+  return values.map((item) => formatProjectTypeValue(item, locale)).join(", ");
 }
 
 export function getDetectedTimezone() {

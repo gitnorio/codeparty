@@ -7,6 +7,8 @@ import {
   useWorkspaceAccess,
 } from "@/components/app/workspace-shell";
 import { FeedbackBanner } from "@/components/app/feedback";
+import { useLanguage } from "@/components/app/language-provider";
+import { Mascot } from "@/components/app/mascot";
 import { ProfileAvatar } from "@/components/app/profile-avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +21,7 @@ const maxTeamSize = 4;
 
 export default function AdminMatchmakingPage() {
   const { isAdmin } = useWorkspaceAccess();
+  const { language } = useLanguage();
   const supabase = getSupabaseBrowserClient();
   const [waitingCandidates, setWaitingCandidates] = useState<WaitingCandidate[]>([]);
   const [formedTeams, setFormedTeams] = useState<FormedTeam[]>([]);
@@ -41,11 +44,13 @@ export default function AdminMatchmakingPage() {
     }
 
     if (!session?.access_token) {
-      throw new Error("Missing authenticated session.");
+      throw new Error(
+        language === "fr" ? "Session authentifiée manquante." : "Missing authenticated session."
+      );
     }
 
     return session.access_token;
-  }, [supabase]);
+  }, [language, supabase]);
 
   const loadAdminData = useCallback(
     async (options?: { silent?: boolean }) => {
@@ -65,7 +70,13 @@ export default function AdminMatchmakingPage() {
       try {
         accessToken = await getAccessToken();
       } catch (error) {
-        setErrorMessage(error instanceof Error ? error.message : "Missing session.");
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : language === "fr"
+              ? "Session manquante."
+              : "Missing session."
+        );
         setIsLoading(false);
         setIsRefreshing(false);
         return;
@@ -85,7 +96,12 @@ export default function AdminMatchmakingPage() {
       };
 
       if (!response.ok) {
-        setErrorMessage(payload.error ?? "Failed to load admin matchmaking data.");
+        setErrorMessage(
+          payload.error ??
+            (language === "fr"
+              ? "Impossible de charger les données admin du matchmaking."
+              : "Failed to load admin matchmaking data.")
+        );
         setIsLoading(false);
         setIsRefreshing(false);
         return;
@@ -96,7 +112,7 @@ export default function AdminMatchmakingPage() {
       setIsLoading(false);
       setIsRefreshing(false);
     },
-    [getAccessToken, isAdmin]
+    [getAccessToken, isAdmin, language]
   );
 
   useEffect(() => {
@@ -133,7 +149,11 @@ export default function AdminMatchmakingPage() {
       }
 
       if (current.length >= maxTeamSize) {
-        setErrorMessage(`You can select up to ${maxTeamSize} members for one team.`);
+        setErrorMessage(
+          language === "fr"
+            ? `Vous pouvez sélectionner jusqu’à ${maxTeamSize} membres pour une party.`
+            : `You can select up to ${maxTeamSize} members for one team.`
+        );
         return current;
       }
 
@@ -146,7 +166,11 @@ export default function AdminMatchmakingPage() {
     setSuccessMessage(null);
 
     if (selectedCandidates.length < minTeamSize) {
-      setErrorMessage(`Select at least ${minTeamSize} members to create a team.`);
+      setErrorMessage(
+        language === "fr"
+          ? `Sélectionnez au moins ${minTeamSize} membres pour créer une party.`
+          : `Select at least ${minTeamSize} members to create a team.`
+      );
       return;
     }
 
@@ -178,14 +202,21 @@ export default function AdminMatchmakingPage() {
     };
 
     if (!response.ok) {
-      setErrorMessage(payload.error ?? "Failed to create team.");
+      setErrorMessage(
+        payload.error ??
+          (language === "fr" ? "Impossible de créer la party." : "Failed to create team.")
+      );
       setIsCreating(false);
       return;
     }
 
     setSelectedUserIds([]);
     setIsCreating(false);
-    setSuccessMessage(`Party ${payload.team?.party_id ?? payload.team?.name} created successfully.`);
+    setSuccessMessage(
+      language === "fr"
+        ? `La party ${payload.team?.party_id ?? payload.team?.name} a été créée avec succès.`
+        : `Party ${payload.team?.party_id ?? payload.team?.name} created successfully.`
+    );
     await loadAdminData({ silent: true });
   }
 
@@ -234,7 +265,10 @@ export default function AdminMatchmakingPage() {
     };
 
     if (!response.ok) {
-      setErrorMessage(payload.error ?? "Admin action failed.");
+      setErrorMessage(
+        payload.error ??
+          (language === "fr" ? "L’action admin a échoué." : "Admin action failed.")
+      );
       setActionKey(null);
       return;
     }
@@ -258,7 +292,10 @@ export default function AdminMatchmakingPage() {
       },
       {
         pendingKey: `${status}-${teamId}`,
-        successMessage: `${teamName} was marked as ${status}.`,
+        successMessage:
+          language === "fr"
+            ? `La party ${teamName} a été marquée comme ${formatPartyStatus(status, language).toLowerCase()}.`
+            : `${teamName} was marked as ${status}.`,
       }
     );
   }
@@ -271,7 +308,10 @@ export default function AdminMatchmakingPage() {
       },
       {
         pendingKey: `reject-${teamId}`,
-        successMessage: `Completion request for ${teamName} was rejected.`,
+        successMessage:
+          language === "fr"
+            ? `La demande de complétion pour la party ${teamName} a été refusée.`
+            : `Completion request for ${teamName} was rejected.`,
       }
     );
   }
@@ -282,10 +322,12 @@ export default function AdminMatchmakingPage() {
         <Card className="border border-red-200 shadow-none dark:border-red-500/20 dark:bg-[#1a1a22]">
           <CardContent className="pt-5">
             <h1 className="text-2xl font-semibold tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
-              Access denied
+              {language === "fr" ? "Accès refusé" : "Access denied"}
             </h1>
             <p className="mt-2 text-sm leading-6 text-app-secondary">
-              This admin matchmaking screen is restricted to approved admin email addresses.
+              {language === "fr"
+                ? "Cet écran admin matchmaking est réservé aux adresses email admin approuvées."
+                : "This admin matchmaking screen is restricted to approved admin email addresses."}
             </p>
           </CardContent>
         </Card>
@@ -296,10 +338,14 @@ export default function AdminMatchmakingPage() {
           <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-none dark:bg-[linear-gradient(135deg,#6d5ce8_0%,#5f50d2_100%)]">
             <CardHeader>
               <CardTitle className="mt-4 text-5xl leading-[0.96] tracking-[-0.05em]">
-                Build teams manually, supervise lightly.
+                {language === "fr"
+                  ? "Créez les équipes manuellement, supervisez légèrement."
+                  : "Build teams manually, supervise lightly."}
               </CardTitle>
               <CardDescription className="mt-2 max-w-2xl text-base leading-7 text-white/82">
-                Admins create teams from the queue, then teams create their own project setup in self-service.
+                {language === "fr"
+                  ? "Les admins créent les équipes depuis la file, puis les équipes configurent leur projet en libre-service."
+                  : "Admins create teams from the queue, then teams create their own project setup in self-service."}
               </CardDescription>
             </CardHeader>
           </Card>
@@ -308,17 +354,19 @@ export default function AdminMatchmakingPage() {
             <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
               <CardHeader>
                 <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
-                  Waiting profiles
+                  {language === "fr" ? "Profils en attente" : "Waiting profiles"}
                 </CardTitle>
                 <CardDescription className="text-sm leading-6 text-app-secondary">
-                  Every user currently marked as `waiting` appears here for manual team creation.
+                  {language === "fr"
+                    ? "Chaque utilisateur marqué `waiting` apparaît ici pour la création manuelle d’équipe."
+                    : "Every user currently marked as `waiting` appears here for manual team creation."}
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
                 <div className="flex items-center justify-between rounded-[1.2rem] bg-[#faf8ff] p-4 dark:bg-[#16161d]">
                   <div>
                     <p className="text-xs uppercase tracking-[0.18em] text-app-overline">
-                      Waiting users
+                      {language === "fr" ? "Utilisateurs en attente" : "Waiting users"}
                     </p>
                     <p className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-[#1f1c38] dark:text-[#f2f2f5]">
                       {waitingCandidates.length}
@@ -334,12 +382,12 @@ export default function AdminMatchmakingPage() {
                     {isRefreshing ? (
                       <>
                         <Loader2 className="size-4 animate-spin" />
-                        Refreshing...
+                        {language === "fr" ? "Actualisation..." : "Refreshing..."}
                       </>
                     ) : (
                       <>
                         <RefreshCcw className="size-4" />
-                        Refresh
+                        {language === "fr" ? "Actualiser" : "Refresh"}
                       </>
                     )}
                   </Button>
@@ -351,7 +399,9 @@ export default function AdminMatchmakingPage() {
                   </div>
                 ) : waitingCandidates.length === 0 ? (
                   <div className="rounded-[1.5rem] bg-[#faf8ff] p-6 text-sm text-app-secondary dark:bg-[#16161d] dark:text-muted-foreground">
-                    No profiles are currently waiting in the queue.
+                    {language === "fr"
+                      ? "Aucun profil n’est actuellement en attente dans la file."
+                      : "No profiles are currently waiting in the queue."}
                   </div>
                 ) : (
                   <div className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff] dark:border-[#27272f] dark:bg-[#1a1a22]">
@@ -380,16 +430,17 @@ export default function AdminMatchmakingPage() {
                               {candidate.profile.display_name}
                             </p>
                             <p className="mt-0.5 truncate text-[11px] text-app-secondary">
-                              {formatLanguageValue(candidate.profile.language)} · {formatTimezoneValue(candidate.profile.timezone)}
+                              {formatLanguageValue(candidate.profile.language, language)} · {formatTimezoneValue(candidate.profile.timezone)}
                             </p>
                             <p className="mt-0.5 truncate text-[10px] text-app-overline dark:text-[#a698ff]">
-                              {candidate.profile.skills.slice(0, 3).join(" · ") || "No stack selected"}
+                              {candidate.profile.skills.slice(0, 3).join(" · ") ||
+                                (language === "fr" ? "Aucune stack sélectionnée" : "No stack selected")}
                             </p>
                           </div>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
                           <span className="rounded-full border border-[#e8e2f7] bg-white px-2 py-1 text-[10px] font-medium text-[#7650ff] dark:border-[#27272f] dark:bg-[#23232c] dark:text-[#a698ff]">
-                            {formatProjectTypeList(candidate.profile.project_type)}
+                            {formatProjectTypeList(candidate.profile.project_type, language)}
                           </span>
                           <span className="text-[10px] text-app-overline">
                             {queuedDays}d
@@ -406,22 +457,24 @@ export default function AdminMatchmakingPage() {
             <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
               <CardHeader>
                 <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
-                  Party builder
+                  {language === "fr" ? "Créateur de party" : "Party builder"}
                 </CardTitle>
                 <CardDescription className="text-sm leading-6 text-app-secondary">
-                  Select members, then create the party.
+                  {language === "fr"
+                    ? "Sélectionnez les membres, puis créez la party."
+                    : "Select members, then create the party."}
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-3">
                 <div className="rounded-[1rem] bg-[#faf8ff] p-3.5 dark:bg-[#16161d]">
                   <p className="text-xs uppercase tracking-[0.18em] text-app-overline">
-                    Selected members
+                    {language === "fr" ? "Membres sélectionnés" : "Selected members"}
                   </p>
                   <p className="mt-1 text-xl font-semibold tracking-[-0.04em] text-[#1f1c38] dark:text-[#f2f2f5]">
                     {selectedCandidates.length} / {maxTeamSize}
                   </p>
                   <p className="mt-1 text-xs text-app-secondary">
-                    {minTeamSize} to {maxTeamSize} members recommended.
+                    {minTeamSize} {language === "fr" ? "à" : "to"} {maxTeamSize} {language === "fr" ? "membres recommandés." : "members recommended."}
                   </p>
                 </div>
 
@@ -446,14 +499,23 @@ export default function AdminMatchmakingPage() {
                     ))
                   ) : (
                     <div className="rounded-[1rem] bg-[#faf8ff] p-4 text-sm text-app-secondary dark:bg-[#16161d] dark:text-muted-foreground">
-                      Select 3 to 4 waiting developers to build a team.
+                      {language === "fr"
+                        ? "Sélectionnez 3 à 4 développeurs en attente pour créer une party."
+                        : "Select 3 to 4 waiting developers to build a party."}
                     </div>
                   )}
                 </div>
 
                 {errorMessage ? <FeedbackBanner tone="error" message={errorMessage} /> : null}
 
-                {successMessage ? <FeedbackBanner tone="success" message={successMessage} /> : null}
+                {successMessage ? (
+                  <div className="grid gap-3">
+                    {successMessage.includes("marked as completed") ? (
+                      <Mascot pose="celebration" size="lg" animate centered />
+                    ) : null}
+                    <FeedbackBanner tone="success" message={successMessage} />
+                  </div>
+                ) : null}
 
                 <Button
                   type="button"
@@ -464,12 +526,12 @@ export default function AdminMatchmakingPage() {
                   {isCreating ? (
                     <>
                       <Loader2 className="size-4 animate-spin" />
-                      Creating party...
+                      {language === "fr" ? "Création de la party..." : "Creating party..."}
                     </>
                   ) : (
                     <>
                       <ShieldCheck className="size-4" />
-                      Create party
+                      {language === "fr" ? "Créer la party" : "Create party"}
                     </>
                   )}
                 </Button>
@@ -481,11 +543,13 @@ export default function AdminMatchmakingPage() {
           <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
             <CardHeader>
               <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">
-                Party history
-              </CardTitle>
-              <CardDescription className="text-sm leading-6 text-app-secondary">
-                Minimal admin controls for active, completed, and cancelled parties.
-              </CardDescription>
+                {language === "fr" ? "Historique des parties" : "Party history"}
+                </CardTitle>
+                <CardDescription className="text-sm leading-6 text-app-secondary">
+                {language === "fr"
+                  ? "Contrôles admin minimaux pour les parties actives, complétées et annulées."
+                  : "Minimal admin controls for active, completed, and cancelled parties."}
+                </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3">
               {isLoading ? (
@@ -494,7 +558,7 @@ export default function AdminMatchmakingPage() {
                 </div>
               ) : formedTeams.length === 0 ? (
                 <div className="rounded-[1.5rem] bg-[#faf8ff] p-6 text-sm text-app-secondary dark:bg-[#16161d] dark:text-muted-foreground">
-                  No parties have been formed yet.
+                  {language === "fr" ? "Aucun party n’a encore été formé." : "No parties have been formed yet."}
                 </div>
               ) : (
                 formedTeams.map((item) => (
@@ -509,17 +573,19 @@ export default function AdminMatchmakingPage() {
                         </p>
                         <div className="mt-1 flex items-center gap-2">
                           <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${getPartyStatusClasses(item.team.status)}`}>
-                            {formatPartyStatus(item.team.status)}
+                            {formatPartyStatus(item.team.status, language)}
                           </span>
                           <span className="text-xs text-app-secondary">
-                            Created {formatCreatedDate(item.team.created_at)}
+                            {language === "fr" ? "Créée" : "Created"} {formatCreatedDate(item.team.created_at, language)}
                           </span>
                         </div>
                         {item.team.completion_requested_at ? (
                           <p className="mt-1 text-[11px] text-[#5b45d9] dark:text-[#a698ff]">
-                            Completion requested {formatCreatedDate(item.team.completion_requested_at)}
+                            {language === "fr" ? "Complétion demandée" : "Completion requested"} {formatCreatedDate(item.team.completion_requested_at, language)}
                             {item.team.completion_requested_by
-                              ? ` by ${item.members.find((member) => member.id === item.team.completion_requested_by)?.display_name ?? "a member"}`
+                              ? language === "fr"
+                                ? ` par ${item.members.find((member) => member.id === item.team.completion_requested_by)?.display_name ?? "un membre"}`
+                                : ` by ${item.members.find((member) => member.id === item.team.completion_requested_by)?.display_name ?? "a member"}`
                               : ""}
                           </p>
                         ) : null}
@@ -535,12 +601,12 @@ export default function AdminMatchmakingPage() {
                           }
                           className="h-8 rounded-full border-[#d6efdf] bg-white px-3 text-[#208a52] hover:bg-[#f7fff9] dark:border-[#244a35] dark:bg-[#1a1a22] dark:text-[#7dd7a4] dark:hover:bg-[#1f2a24]"
                         >
-                          {actionKey === `completed-${item.team.id}` ? (
-                            "Updating..."
+                            {actionKey === `completed-${item.team.id}` ? (
+                            language === "fr" ? "Mise à jour..." : "Updating..."
                           ) : (
                             <>
                               <CheckCircle2 className="size-3.5" />
-                              Complete
+                              {language === "fr" ? "Compléter" : "Complete"}
                             </>
                           )}
                         </Button>
@@ -552,7 +618,13 @@ export default function AdminMatchmakingPage() {
                             disabled={actionKey === `reject-${item.team.id}`}
                             className="h-8 rounded-full border-[#e8e2f7] bg-white px-3 text-[#5f587f] hover:bg-[#faf8ff] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#c2bdd8] dark:hover:bg-[#23232c]"
                           >
-                            {actionKey === `reject-${item.team.id}` ? "Updating..." : "Reject"}
+                            {actionKey === `reject-${item.team.id}`
+                              ? language === "fr"
+                                ? "Mise à jour..."
+                                : "Updating..."
+                              : language === "fr"
+                                ? "Refuser"
+                                : "Reject"}
                           </Button>
                         ) : null}
                         <Button
@@ -565,12 +637,12 @@ export default function AdminMatchmakingPage() {
                           }
                           className="h-8 rounded-full border-[#f1d4dc] bg-white px-3 text-[#a14b63] hover:bg-[#fff7f9] dark:border-[#4a2731] dark:bg-[#1a1a22] dark:text-[#f09ab0] dark:hover:bg-[#2a1d22]"
                         >
-                          {actionKey === `cancelled-${item.team.id}` ? (
-                            "Updating..."
+                            {actionKey === `cancelled-${item.team.id}` ? (
+                            language === "fr" ? "Mise à jour..." : "Updating..."
                           ) : (
                             <>
                               <XCircle className="size-3.5" />
-                              Cancel
+                              {language === "fr" ? "Annuler" : "Cancel"}
                             </>
                           )}
                         </Button>
@@ -599,7 +671,7 @@ export default function AdminMatchmakingPage() {
                           {item.project.github_repo_url}
                         </a>
                       ) : (
-                        "No GitHub repo linked yet."
+                        language === "fr" ? "Aucun repo GitHub lié pour le moment." : "No GitHub repo linked yet."
                       )}
                     </p>
                   </div>
@@ -613,7 +685,16 @@ export default function AdminMatchmakingPage() {
   );
 }
 
-function formatPartyStatus(status: "active" | "completed" | "cancelled") {
+function formatPartyStatus(
+  status: "active" | "completed" | "cancelled",
+  language: "en" | "fr" = "en"
+) {
+  if (language === "fr") {
+    if (status === "active") return "Active";
+    if (status === "completed") return "Complétée";
+    return "Annulée";
+  }
+
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
@@ -630,8 +711,8 @@ function getQueuedDays(createdAt: string) {
   return Math.max(1, Math.ceil(difference / (1000 * 60 * 60 * 24)));
 }
 
-function formatCreatedDate(createdAt: string) {
-  return new Intl.DateTimeFormat("en-US", {
+function formatCreatedDate(createdAt: string, language: "en" | "fr" = "en") {
+  return new Intl.DateTimeFormat(language === "fr" ? "fr-CA" : "en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",

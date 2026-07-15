@@ -17,6 +17,9 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { LanguageToggleButton } from "@/components/app/language-toggle-button";
+import { useLanguage } from "@/components/app/language-provider";
+import { Mascot } from "@/components/app/mascot";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FeedbackBanner } from "@/components/app/feedback";
@@ -49,6 +52,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const supabase = getSupabaseBrowserClient();
   const { theme, toggleTheme } = useTheme();
+  const { language } = useLanguage();
   const [profile, setProfile] = useState<AppProfile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -168,7 +172,9 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex min-h-[18rem] max-w-7xl items-center justify-center rounded-[2.25rem] border border-[#ece8f8] bg-white dark:border-[#27272f] dark:bg-[#16161d]">
           <div className="flex flex-col items-center gap-4 text-center">
             <Loader2 className="size-8 animate-spin text-[#7650ff]" />
-            <p className="text-sm tracking-wide text-app-secondary">Loading workspace...</p>
+            <p className="text-sm tracking-wide text-app-secondary">
+              {language === "fr" ? "Chargement de l’espace..." : "Loading workspace..."}
+            </p>
           </div>
         </div>
       </main>
@@ -181,7 +187,9 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex min-h-[18rem] max-w-7xl items-center justify-center rounded-[2.25rem] border border-[#ece8f8] bg-white dark:border-[#27272f] dark:bg-[#16161d]">
           <Card className="w-full max-w-md rounded-[1.8rem] border border-red-200 shadow-none">
             <CardContent className="pt-6 text-center">
-              <h1 className="text-2xl font-semibold text-red-600">Workspace error</h1>
+              <h1 className="text-2xl font-semibold text-red-600">
+                {language === "fr" ? "Erreur d’espace de travail" : "Workspace error"}
+              </h1>
               <div className="mt-4 text-left">
                 <FeedbackBanner tone="error" message={errorMessage} />
               </div>
@@ -189,7 +197,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
                 onClick={() => window.location.reload()}
                 className="mt-5 rounded-full bg-[#7650ff] text-white"
               >
-                Try again
+                {language === "fr" ? "Réessayer" : "Try again"}
               </Button>
             </CardContent>
           </Card>
@@ -208,12 +216,10 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto grid w-full max-w-7xl gap-5 rounded-[2.25rem] border border-[#ece8f8] bg-white p-4 shadow-[0_30px_100px_rgba(113,87,255,0.08)] dark:border-[#27272f] dark:bg-[#16161d] dark:shadow-[0_30px_100px_rgba(0,0,0,0.45)] lg:grid-cols-[280px_1fr] lg:p-5">
           <aside className="rounded-[1.8rem] border border-transparent bg-[#f6f3ff] p-4 dark:border-[#27272f] dark:bg-[#121218]">
             <div className="flex items-center gap-3 px-2 py-3">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-[#7650ff] text-lg font-bold text-white">
-                C
-              </div>
+              <Mascot pose="icon" size="sm" className="rounded-xl bg-[#7650ff] p-1 dark:bg-[#6d5ce8]" />
               <div>
                 <p className="text-2xl font-bold tracking-tight text-[#1f1c38] dark:text-white">CodeParty</p>
-                <p className="text-sm text-app-meta">Workspace</p>
+                <p className="text-sm text-app-meta">{language === "fr" ? "Espace" : "Workspace"}</p>
               </div>
             </div>
 
@@ -222,7 +228,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
                 <SidebarItem
                   key={item.href}
                   href={item.href}
-                  label={item.label}
+                  label={translateNavLabel(item.label, language)}
                   icon={item.icon}
                   active={pathname === item.href}
                 />
@@ -231,10 +237,14 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
 
             <div className="mt-6 rounded-[1.35rem] bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] p-4 text-white dark:bg-[linear-gradient(135deg,#6d5ce8_0%,#5f50d2_100%)]">
               <p className="mt-3 text-xl font-semibold leading-tight tracking-[-0.04em]">
-                Keep your team and project setup in one clean flow.
+                {language === "fr"
+                  ? "Gardez votre équipe et votre projet dans un flux simple."
+                  : "Keep your team and project setup in one clean flow."}
               </p>
               <p className="mt-2 text-sm leading-6 text-white/82">
-                Match, form a team, link the repo, and keep the build context easy to follow.
+                {language === "fr"
+                  ? "Match, formez une équipe, liez le repo et gardez un contexte de build clair."
+                  : "Match, form a team, link the repo, and keep the build context easy to follow."}
               </p>
             </div>
           </aside>
@@ -242,20 +252,42 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
           <div className="flex min-w-0 flex-col gap-4">
             <div className="flex items-center justify-between rounded-[1.4rem] border border-[#ece8f8] bg-[#fcfbff] px-4 py-3.5 dark:border-[#27272f] dark:bg-[#1a1a22]">
               <div>
-                <p className="text-sm uppercase tracking-[0.18em] text-app-overline">Workspace</p>
+                <p className="text-sm uppercase tracking-[0.18em] text-app-overline">
+                  {language === "fr" ? "Espace" : "Workspace"}
+                </p>
                 <p className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-[#1f1c38] dark:text-[#f2f2f5]">
-                  {navItems.find((item) => item.href === pathname)?.label ?? "Dashboard"}
+                  {translateNavLabel(
+                    navItems.find((item) => item.href === pathname)?.label ?? "Dashboard",
+                    language
+                  )}
                 </p>
               </div>
 
               <div className="flex items-center gap-3">
+                <LanguageToggleButton />
                 <Button
                   type="button"
                   onClick={toggleTheme}
                   variant="outline"
                   size="icon"
-                  title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-                  aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                  title={
+                    theme === "dark"
+                      ? language === "fr"
+                        ? "Passer en mode clair"
+                        : "Switch to light mode"
+                      : language === "fr"
+                        ? "Passer en mode sombre"
+                        : "Switch to dark mode"
+                  }
+                  aria-label={
+                    theme === "dark"
+                      ? language === "fr"
+                        ? "Passer en mode clair"
+                        : "Switch to light mode"
+                      : language === "fr"
+                        ? "Passer en mode sombre"
+                        : "Switch to dark mode"
+                  }
                   className="rounded-full border-[#e8e2f7] bg-white text-[#1f1c38] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#f2f2f5]"
                 >
                   {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
@@ -277,7 +309,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
                   className="rounded-full border-[#e8e2f7] bg-white text-[#1f1c38] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#f2f2f5]"
                 >
                   <LogOut className="size-4" />
-                  Logout
+                  {language === "fr" ? "Déconnexion" : "Logout"}
                 </Button>
               </div>
             </div>
@@ -288,6 +320,20 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
       </main>
     </WorkspaceContext.Provider>
   );
+}
+
+function translateNavLabel(label: string, language: "en" | "fr") {
+  if (language === "en") {
+    return label;
+  }
+
+  if (label === "Dashboard") return "Tableau de bord";
+  if (label === "Matchmaking") return "Matchmaking";
+  if (label === "Admin Matchmaking") return "Admin matchmaking";
+  if (label === "Workspace") return "Espace";
+  if (label === "Portfolio") return "Portfolio";
+  if (label === "Settings") return "Paramètres";
+  return label;
 }
 
 function SidebarItem({

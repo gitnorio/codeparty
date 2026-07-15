@@ -14,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full font-sans antialiased">
+    <html lang="en" className="h-full font-sans antialiased" data-scroll-behavior="smooth">
       <body className="min-h-full flex flex-col">
         <RootClientShell>{children}</RootClientShell>
       </body>

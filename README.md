@@ -1,131 +1,54 @@
-# Junior Dev Team Projects
+# CodeParty
 
-Plateforme web qui aide les développeurs juniors à former une équipe, construire un vrai projet sur GitHub et créer une preuve crédible de collaboration pour leur CV.
+CodeParty matches junior developers into focused parties, gives each party a shared workspace and turns completed projects into public portfolio proof.
 
-## Objectif
+## MVP features
 
-Aider les développeurs juniors à montrer plus que des projets solo :
-
-- travail en équipe ;
-- Git/GitHub ;
-- pull requests ;
-- contribution réelle ;
-- projet terminé ;
-- rôle clair dans une équipe.
-
-## MVP
-
-Fonctionnalités principales :
-
-- Authentification avec GitHub
-- Création d’un profil développeur
-- File de matchmaking
-- Création d’équipe
-- Création d’un projet lié à une équipe
-- Ajout manuel du repo GitHub
-- Page équipe/projet
-- `publicProfile` pour afficher les projets terminés d’un utilisateur
-
-## Règle importante
-
-Une équipe correspond toujours à un seul projet.
-
-```txt
-1 team = 1 project
-1 project = 1 team
-```
-
-Même si les mêmes membres veulent faire un nouveau projet, une nouvelle équipe doit être créée.
+- GitHub authentication through Supabase Auth
+- Bilingual English/French onboarding and application UI
+- Profile-based matchmaking queue with admin party creation
+- One active party per user, with completed and cancelled party history
+- Party workspace with members, public GitHub repository and realtime team chat
+- Member completion requests with admin approval or rejection
+- Public automated portfolio with completed projects and optional PDF resume
+- Responsive light and dark themes
 
 ## Stack
 
-- Next.js
-- TypeScript
-- Tailwind CSS
-- shadcn/ui
-- Supabase
-- GitHub Auth
-- Vercel
+- Next.js 16 App Router
+- React 19 and TypeScript
+- Tailwind CSS and shadcn/ui
+- Supabase Auth, Postgres, Storage, RLS and Realtime
+- GitHub OAuth and public repository validation
+- Vercel-ready production build
 
-## Structure
-
-```txt
-src/
-  app/
-    api/
-    dashboard/
-    matchmaking/
-    teams/
-    publicProfile/
-
-  components/
-  lib/
-  services/
-  hooks/
-  constants/
-```
-
-## Base de données
-
-Tables principales :
-
-```txt
-profiles
-matchmaking_queue
-teams
-team_members
-projects
-project_members
-```
-
-Relation importante :
-
-```txt
-projects.team_id UNIQUE
-```
-
-Cela garantit qu’une équipe ne peut avoir qu’un seul projet.
-
-## GitHub
-
-Pour le MVP, la plateforme ne crée pas automatiquement les repos GitHub.
-
-Chaque équipe crée son propre repo GitHub, puis ajoute le lien dans la plateforme.
-
-## Développement local
+## Local setup
 
 ```bash
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
-Créer un fichier `.env.local` :
+Required environment variables:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
-NEXT_PUBLIC_ADMIN_EMAILS=
+NEXT_PUBLIC_ADMIN_EMAILS=admin@example.com
 ```
 
-Production GitHub OAuth callback should point to:
+Never commit `.env.local` or expose `SUPABASE_SERVICE_ROLE_KEY` to the browser.
 
-```txt
-{NEXT_PUBLIC_SITE_URL}/
-```
-
-Ne jamais envoyer `.env.local` sur GitHub.
-
-## Scripts
+## Quality checks
 
 ```bash
-npm run dev
-npm run build
-npm run lint
-npm run start
+npm run check
+npm run build:webpack
 ```
 
-## Priorité MVP
+## Deployment
 
-Valider que des développeurs juniors veulent réellement rejoindre une équipe, construire un projet et terminer quelque chose qu’ils peuvent montrer sur leur CV.
+Use `docs/mvp-release-readiness.md` as the release checklist. Apply the required SQL files in the documented order before deploying the web application.

@@ -11,12 +11,13 @@ export type MascotPose =
   | "neutral"
   | "icon";
 
-type MascotSize = "sm" | "md" | "lg";
+type MascotSize = "sm" | "md" | "lg" | "xl";
 
 const mascotDimensions: Record<MascotSize, string> = {
   sm: "h-10 w-10",
   md: "h-20 w-20",
   lg: "h-32 w-32",
+  xl: "h-44 w-44 sm:h-52 sm:w-52",
 };
 
 export function Mascot({

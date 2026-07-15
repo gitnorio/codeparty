@@ -8,16 +8,10 @@ import { getLatestMatchmakingEntry, type MatchmakingQueueRow } from "@/lib/match
 type TeamRow = Database["public"]["Tables"]["teams"]["Row"];
 type TeamMemberRow = Database["public"]["Tables"]["team_members"]["Row"];
 type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
-type ProjectMemberRow = Database["public"]["Tables"]["project_members"]["Row"];
 type SupabaseBrowserClient = ReturnType<typeof getSupabaseBrowserClient>;
 
 export type TeamMemberWithProfile = {
   membership: TeamMemberRow;
-  profile: AppProfile;
-};
-
-export type ProjectMemberWithProfile = {
-  membership: ProjectMemberRow;
   profile: AppProfile;
 };
 
@@ -29,8 +23,6 @@ export type WorkspaceSnapshot = {
   currentMembership: TeamMemberRow | null;
   teamMembers: TeamMemberWithProfile[];
   currentProject: ProjectRow | null;
-  projectMembers: ProjectMemberWithProfile[];
-  currentProjectMember: ProjectMemberWithProfile | null;
 };
 
 export async function getWorkspaceSnapshot(
@@ -71,8 +63,6 @@ export async function getWorkspaceSnapshot(
         currentMembership: null,
         teamMembers: [],
         currentProject: null,
-        projectMembers: [],
-        currentProjectMember: null,
       } satisfies WorkspaceSnapshot,
       error: null,
     };
@@ -123,8 +113,6 @@ export async function getWorkspaceSnapshot(
         currentMembership: null,
         teamMembers: [],
         currentProject: null,
-        projectMembers: [],
-        currentProjectMember: null,
       } satisfies WorkspaceSnapshot,
       error: null,
     };
@@ -192,58 +180,10 @@ export async function getWorkspaceSnapshot(
         currentMembership,
         teamMembers: teamMemberList,
         currentProject: null,
-        projectMembers: [],
-        currentProjectMember: null,
       } satisfies WorkspaceSnapshot,
       error: null,
     };
   }
-
-  const { data: projectMembers, error: projectMembersError } = await supabase
-    .from("project_members")
-    .select("*")
-    .eq("project_id", project.id);
-
-  if (projectMembersError) {
-    return {
-      data: null,
-      error: projectMembersError,
-    };
-  }
-
-  const projectUserIds = [...new Set((projectMembers ?? []).map((item) => item.user_id))];
-  const projectProfilesById = new Map(
-    (teamProfiles ?? []).map((profile) => [profile.id, profile] as const)
-  );
-
-  if (projectUserIds.some((id) => !projectProfilesById.has(id))) {
-    const { data: extraProfiles, error: extraProfilesError } = await supabase
-      .from("profiles")
-      .select("*")
-      .in(
-        "id",
-        projectUserIds.filter((id) => !projectProfilesById.has(id))
-      );
-
-    if (extraProfilesError) {
-      return {
-        data: null,
-        error: extraProfilesError,
-      };
-    }
-
-    for (const profile of extraProfiles ?? []) {
-      projectProfilesById.set(profile.id, profile);
-    }
-  }
-
-  const projectMemberList = (projectMembers ?? [])
-    .map((membership) => {
-      const profile = projectProfilesById.get(membership.user_id);
-      if (!profile) return null;
-      return { membership, profile };
-    })
-    .filter((item): item is ProjectMemberWithProfile => Boolean(item));
 
   return {
     data: {
@@ -254,9 +194,6 @@ export async function getWorkspaceSnapshot(
       currentMembership,
       teamMembers: teamMemberList,
       currentProject: project,
-      projectMembers: projectMemberList,
-      currentProjectMember:
-        projectMemberList.find((item) => item.profile.id === userId) ?? null,
     } satisfies WorkspaceSnapshot,
     error: null,
   };

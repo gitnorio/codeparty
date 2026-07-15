@@ -8,31 +8,11 @@ type TeamRow = Database["public"]["Tables"]["teams"]["Row"];
 type TeamMemberRow = Database["public"]["Tables"]["team_members"]["Row"];
 type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
 
-export const projectRoleOptions = [
-  "frontend",
-  "backend",
-  "fullstack",
-  "mobile",
-  "designer",
-  "lead",
-] as const;
-
-export type ProjectRole = (typeof projectRoleOptions)[number];
-
-export type TeamProjectAssignmentInput = {
-  userId: string;
-  projectRole: ProjectRole;
-  contributionSummary?: string | null;
-};
-
 export type TeamProjectCreateInput = {
   name: string;
   description: string | null;
   stack: string[];
   githubRepoUrl: string;
-  startDate: string | null;
-  endDate: string | null;
-  assignments?: TeamProjectAssignmentInput[];
 };
 
 const githubRepoUrlPattern = /^https:\/\/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?\/?$/i;
@@ -41,10 +21,6 @@ export function formatProjectLabel(value: string) {
   return value
     .replaceAll("_", " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
-}
-
-export function getDefaultProjectRole(): ProjectRole {
-  return "fullstack";
 }
 
 export function normalizeProjectStack(stackInput: string) {
@@ -196,49 +172,6 @@ export async function createTeamProjectForMember(
     };
   }
 
-  const { data: teamMembers, error: teamMembersError } = await supabase
-    .from("team_members")
-    .select("*")
-    .eq("team_id", team.id)
-    .eq("member_status", "active");
-
-  if (teamMembersError) {
-    return {
-      project: null,
-      error: teamMembersError,
-    };
-  }
-
-  const activeMembers = teamMembers ?? [];
-
-  if (activeMembers.length === 0) {
-    return {
-      project: null,
-      error: new Error("This team does not have any active members."),
-    };
-  }
-
-  const normalizedAssignments =
-    input.assignments && input.assignments.length > 0
-      ? input.assignments
-      : activeMembers.map((member) => ({
-          userId: member.user_id,
-          projectRole: getDefaultProjectRole(),
-          contributionSummary: null,
-        }));
-
-  const activeMemberIds = new Set(activeMembers.map((member) => member.user_id));
-  const invalidAssignment = normalizedAssignments.find(
-    (assignment) => !activeMemberIds.has(assignment.userId)
-  );
-
-  if (invalidAssignment) {
-    return {
-      project: null,
-      error: new Error("Every assigned role must belong to an active team member."),
-    };
-  }
-
   const githubValidation = await verifyPublicGitHubRepository(input.githubRepoUrl);
 
   if (!githubValidation.data) {
@@ -257,8 +190,6 @@ export async function createTeamProjectForMember(
       stack: input.stack,
       github_repo_url: githubValidation.data.normalizedUrl,
       status: "planning",
-      start_date: input.startDate,
-      end_date: input.endDate,
     })
     .select("*")
     .single<ProjectRow>();
@@ -267,24 +198,6 @@ export async function createTeamProjectForMember(
     return {
       project: null,
       error: projectError,
-    };
-  }
-
-  const { error: projectMembersError } = await supabase
-    .from("project_members")
-    .insert(
-      normalizedAssignments.map((assignment) => ({
-        project_id: project.id,
-        user_id: assignment.userId,
-        project_role: assignment.projectRole,
-        contribution_summary: assignment.contributionSummary?.trim() || null,
-      }))
-    );
-
-  if (projectMembersError) {
-    return {
-      project: null,
-      error: projectMembersError,
     };
   }
 

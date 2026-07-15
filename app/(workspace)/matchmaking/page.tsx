@@ -146,7 +146,7 @@ export default function MatchmakingPage() {
         <CardHeader>
           <CardTitle className="mt-4 text-5xl leading-[0.96] tracking-[-0.05em]">
             {language === "fr"
-              ? "Trouvez la bonne party, puis continuez à construire."
+              ? "Trouvez le bon party, puis continuez à construire."
               : "Match into the right party, then keep building."}
           </CardTitle>
           <CardDescription className="mt-2 max-w-2xl text-base leading-7 text-white/82">
@@ -285,7 +285,7 @@ function Criteria({
 
 function getQueueStatusLabel(status?: string | null, activePartyCount = 0, language: "en" | "fr" = "en") {
   if (status === "waiting") return language === "fr" ? "En attente d’un party" : "Waiting for a party";
-  if (activePartyCount >= 1) return language === "fr" ? "Party active en cours" : "Active party in progress";
+  if (activePartyCount >= 1) return language === "fr" ? "Party actif en cours" : "Active party in progress";
   return language === "fr" ? "Hors file" : "Not in queue";
 }
 

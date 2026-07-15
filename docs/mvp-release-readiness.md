@@ -1,72 +1,115 @@
-# CodeParty MVP Release Readiness
+# CodeParty MVP — Production Release Checklist
 
-This checklist is the final release and demo readiness reference for the MVP.
+This file is the deployment source of truth for the current MVP.
 
-## Verified in code
+## 1. Supabase database
 
-- `npm run lint` passes
-- `npx next build --webpack` passes
-- Auth entry routing resolves through `/`
-- Signed-in users without a profile are redirected to `/onboarding`
-- Signed-in users with a profile are redirected to `/dashboard`
-- Onboarded users are redirected away from `/onboarding`
-- Team members can create their own project and paste a public GitHub repository URL
-- Admins can supervise matchmaking and mark a team/project as abandoned
-- Canonical SQL policy file lives at `supabase/rls-policies.sql`
+The existing Supabase project must already contain the core tables: `profiles`, `matchmaking_queue`, `teams`, `team_members` and `projects`.
 
-## Environment variables required
+Apply these current SQL files in this order from the Supabase SQL editor:
 
-- `NEXT_PUBLIC_SITE_URL`
+1. `supabase/profile-avatar-url.sql`
+2. `supabase/profile-onboarding-schema-update.sql`
+3. `supabase/profile-schema-coherence-cleanup.sql`
+4. `supabase/profile-headline-cleanup.sql`
+5. `supabase/make-location-optional.sql`
+6. `supabase/teams-party-id-migration.sql`
+7. `supabase/single-active-party-lifecycle.sql`
+8. `supabase/party-completion-requests.sql`
+9. `supabase/portfolio-schema-update.sql`
+10. `supabase/portfolio-visibility-preferences.sql`
+11. `supabase/mvp-schema-cleanup.sql`
+12. `supabase/rls-policies.sql`
+13. `supabase/text-length-guards.sql`
+14. `supabase/portfolio-resume-storage.sql`
+
+Do **not** apply `supabase/restore-required-profile-fields.sql`: `location` is intentionally optional. `supabase/team-members-max-active-parties.sql` is superseded by `supabase/single-active-party-lifecycle.sql`.
+
+Before launch, keep the email allowlist inside `public.is_admin_email()` in `supabase/rls-policies.sql` synchronized with `NEXT_PUBLIC_ADMIN_EMAILS` in the deployment environment.
+
+Confirm in Supabase:
+
+- RLS is enabled on every public application table
+- `team_messages` is present in the `supabase_realtime` publication
+- `portfolio-resumes` is public, accepts PDF only and has a 500 KB limit
+- `project_members`, `projects.start_date` and `projects.end_date` no longer exist
+- A user cannot belong to more than one active party
+
+## 2. Production environment
+
+Set these variables in the hosting provider for Production and Preview environments:
+
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `NEXT_PUBLIC_ADMIN_EMAILS`
+- `NEXT_PUBLIC_SITE_URL` — exact deployed origin, for example `https://codeparty.example`
+- `NEXT_PUBLIC_ADMIN_EMAILS` — comma-separated admin emails; never leave empty
 
-## Supabase / SQL status
+Never expose the service-role key with a `NEXT_PUBLIC_` prefix.
 
-- Current canonical policy file: `supabase/rls-policies.sql`
-- Self-service project RLS patch has already been applied to the linked Supabase project
+Keep `DEV_LOGIN_ENABLED` and `NEXT_PUBLIC_DEV_LOGIN_ENABLED` unset or `false` in Production. They may be set to `true` together only on an access-protected Preview deployment.
 
-## Manual validation checklist
+## 3. Supabase Auth and GitHub OAuth
 
-### User journey
+In Supabase Auth URL configuration:
 
-1. Open `/`
-2. Click `Login with GitHub`
-3. Confirm redirect:
-   - no profile -> `/onboarding`
-   - existing profile -> `/dashboard`
-4. Complete onboarding
-5. Confirm queue entry is created
-6. Open `Matchmaking`
-7. Confirm queue state is visible
-8. After admin team creation, confirm:
-   - `My Team` shows members
-   - `My Project` allows self-service creation if no project exists
-   - `Dashboard` reflects team/project state
-9. Create a project with a valid public GitHub URL
-10. Confirm project, roles, repo, and contribution data appear across workspace pages
+- Set the Site URL to the production `NEXT_PUBLIC_SITE_URL`
+- Add the production origin and required preview origins to Redirect URLs
 
-### Admin journey
+In the GitHub OAuth App:
 
-1. Sign in with an email present in `NEXT_PUBLIC_ADMIN_EMAILS`
-2. Open `/admin-matchmaking`
-3. Confirm all `waiting` queue profiles appear
-4. Create a team from waiting users
-5. Confirm formed team appears in admin supervision
-6. Confirm admin can reopen cancelled queue entries
-7. Confirm admin can mark a team/project as abandoned
+- Keep the authorization callback URL equal to the callback URL shown by Supabase for the GitHub provider
+- Confirm GitHub login returns to the production CodeParty origin
 
-## Production callback note
+## 4. Automated validation
 
-GitHub OAuth should redirect back to:
+Run from the repository root:
 
-```txt
-{NEXT_PUBLIC_SITE_URL}/
+```bash
+npm ci
+npm run check
+npm run build:webpack
 ```
 
-## Remaining non-code validation
+Deployment must stop if lint, TypeScript or the production build fails.
 
-- Run the manual user journey once in the browser
-- Run the manual admin journey once in the browser
-- Verify the production GitHub OAuth app callback URL matches the deployed `NEXT_PUBLIC_SITE_URL`
+## 5. Manual smoke test
+
+Use two normal GitHub accounts and one admin account.
+
+### User flow
+
+1. Sign in with GitHub
+2. Complete onboarding and confirm the profile and GitHub avatar are saved
+3. Join the matchmaking queue and confirm live queue updates
+4. Have the admin create a party and confirm the user leaves the waiting state
+5. Open the party workspace and create the project with a valid public GitHub repository
+6. Send chat messages between two browsers without refreshing
+7. Request party completion
+8. After admin approval, confirm the project appears on the public portfolio
+9. Edit portfolio visibility, bio and resume, then verify the public link in a signed-out browser
+10. Verify English/French and light/dark mode on Home, Onboarding, Dashboard, Matchmaking, Workspace, Settings, Admin Matchmaking and Portfolio
+
+### Admin flow
+
+1. Confirm non-admin accounts cannot load or call admin matchmaking APIs
+2. Confirm every waiting profile is visible
+3. Create a party and verify the generated five-digit Party ID
+4. Reject one completion request and approve another
+5. Mark a test party cancelled and verify it is no longer treated as active
+
+## 6. Known MVP operational limits
+
+- Chat API rate limiting is process-local and therefore best-effort on serverless infrastructure; database length guards and RLS remain enforced. A shared rate-limit store is recommended after MVP validation.
+- GitHub repository existence is checked through the public GitHub API and can be temporarily affected by GitHub rate limits.
+- Portfolio resumes are publicly readable by design because public portfolios link directly to them.
+
+## 7. Release decision
+
+The MVP is ready only when:
+
+- all automated checks pass
+- all SQL changes are applied to production
+- OAuth URLs use the production domain
+- the full user and admin smoke tests pass
+- no production environment variable still references `localhost`

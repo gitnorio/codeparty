@@ -10,13 +10,6 @@ export type QueueRow = Database["public"]["Tables"]["matchmaking_queue"]["Row"];
 export type TeamRow = Database["public"]["Tables"]["teams"]["Row"];
 export type TeamMemberRow = Database["public"]["Tables"]["team_members"]["Row"];
 export type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
-export type ProjectMemberRow = Database["public"]["Tables"]["project_members"]["Row"];
-
-export type ProjectAssignment = {
-  userId: string;
-  projectRole: ProjectMemberRow["project_role"];
-  contributionSummary: string | null;
-};
 
 export type WaitingCandidate = {
   profile: AppProfile;
@@ -27,10 +20,6 @@ export type FormedTeam = {
   team: TeamRow;
   members: AppProfile[];
   project: ProjectRow | null;
-  projectMembers: Array<{
-    membership: ProjectMemberRow;
-    profile: AppProfile;
-  }>;
 };
 
 function generatePartyId() {
@@ -312,37 +301,11 @@ export async function getFormedTeams(supabase: AppSupabaseClient) {
     (projects ?? []).map((project) => [project.team_id, project] as const)
   );
 
-  const projectIds = (projects ?? []).map((project) => project.id);
-  let projectMembers: ProjectMemberRow[] = [];
-
-  if (projectIds.length > 0) {
-    const { data, error } = await supabase
-      .from("project_members")
-      .select("*")
-      .in("project_id", projectIds);
-
-    if (error) {
-      return {
-        data: [] as FormedTeam[],
-        error,
-      };
-    }
-
-    projectMembers = data ?? [];
-  }
-
   const membersByTeamId = new Map<string, TeamMemberRow[]>();
   for (const member of members ?? []) {
     const list = membersByTeamId.get(member.team_id) ?? [];
     list.push(member);
     membersByTeamId.set(member.team_id, list);
-  }
-
-  const projectMembersByProjectId = new Map<string, ProjectMemberRow[]>();
-  for (const membership of projectMembers) {
-    const list = projectMembersByProjectId.get(membership.project_id) ?? [];
-    list.push(membership);
-    projectMembersByProjectId.set(membership.project_id, list);
   }
 
   return {
@@ -354,22 +317,6 @@ export async function getFormedTeams(supabase: AppSupabaseClient) {
           ?.map((member) => profilesById.get(member.user_id) ?? null)
           .filter((profile): profile is AppProfile => Boolean(profile)) ?? [],
       project: projectsByTeamId.get(team.id) ?? null,
-      projectMembers:
-        projectMembersByProjectId
-          .get(projectsByTeamId.get(team.id)?.id ?? "")
-          ?.map((membership) => {
-            const profile = profilesById.get(membership.user_id);
-            if (!profile) return null;
-            return { membership, profile };
-          })
-          .filter(
-            (
-              item
-            ): item is {
-              membership: ProjectMemberRow;
-              profile: AppProfile;
-            } => Boolean(item)
-          ) ?? [],
     })),
     error: null,
   };

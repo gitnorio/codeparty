@@ -1,18 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { ArrowRight, Loader2, RefreshCcw, Sparkles, Users } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowRight, Loader2, Sparkles, Users } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FeedbackBanner } from "@/components/app/feedback";
 import { useWorkspaceProfile } from "@/components/app/workspace-shell";
 import {
+  getActivePartyCount,
   ensureWaitingMatchmakingEntry,
   updateMatchmakingEntryStatus,
 } from "@/lib/matchmaking";
+import { formatLanguageValue, formatProjectTypeList } from "@/lib/profile-options";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useWorkspaceSnapshot } from "@/lib/workspace-data";
 
@@ -22,10 +23,72 @@ export default function MatchmakingPage() {
   const { snapshot, isLoading, errorMessage, refreshSnapshot } = useWorkspaceSnapshot(profile.id);
   const [isMutating, setIsMutating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const activePartyCount = useMemo(() => {
+    if (!snapshot) return 0;
+
+    const activeTeamIds = new Set(
+      snapshot.allTeams
+        .filter((team) => team.status === "active")
+        .map((team) => team.id)
+    );
+
+    return snapshot.allMemberships.filter(
+      (membership) =>
+        membership.member_status === "active" && activeTeamIds.has(membership.team_id)
+    ).length;
+  }, [snapshot]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`matchmaking-live-${profile.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "matchmaking_queue",
+          filter: `user_id=eq.${profile.id}`,
+        },
+        () => {
+          void refreshSnapshot();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "team_members",
+          filter: `user_id=eq.${profile.id}`,
+        },
+        () => {
+          void refreshSnapshot();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [profile.id, refreshSnapshot, supabase]);
 
   async function handleJoinMatchmaking() {
     setIsMutating(true);
     setActionError(null);
+
+    const activePartyCountResult = await getActivePartyCount(supabase, profile.id);
+
+    if (activePartyCountResult.error) {
+      setActionError(activePartyCountResult.error.message);
+      setIsMutating(false);
+      return;
+    }
+
+    if (activePartyCountResult.count >= 1) {
+      setActionError("You already belong to an active party.");
+      setIsMutating(false);
+      return;
+    }
 
     const result = await ensureWaitingMatchmakingEntry(supabase, profile.id);
 
@@ -63,26 +126,18 @@ export default function MatchmakingPage() {
     await refreshSnapshot();
   }
 
-  const queueStatusLabel = getQueueStatusLabel(snapshot?.queueEntry?.status);
-  const queueStatusDescription = getQueueStatusDescription(snapshot?.queueEntry?.status);
+  const queueStatusLabel = getQueueStatusLabel(snapshot?.queueEntry?.status, activePartyCount);
   const isWaiting = snapshot?.queueEntry?.status === "waiting";
-  const isMatched = snapshot?.queueEntry?.status === "matched";
-  const hasAssignedTeam = Boolean(snapshot?.currentTeam);
-  const hasAssignedProject = Boolean(snapshot?.currentProject);
+  const parties = useMemo(() => snapshot?.allTeams ?? [], [snapshot?.allTeams]);
+  const canJoinAnotherParty = activePartyCount < 1;
 
   return (
     <div className="grid gap-4">
-      <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-none">
+      <Card className="overflow-hidden border-0 bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-none dark:bg-[linear-gradient(135deg,#6d5ce8_0%,#5f50d2_100%)]">
         <CardHeader>
-          <Badge className="w-fit rounded-full bg-white/14 text-white hover:bg-white/14">
-            Matchmaking
-          </Badge>
           <CardTitle className="mt-4 text-5xl leading-[0.96] tracking-[-0.05em]">
-            Match into the right team, then move fast.
+            Match into the right party, then keep building.
           </CardTitle>
-          <CardDescription className="mt-2 max-w-2xl text-base leading-7 text-white/82">
-            Your profile currently highlights {formatLabel(profile.goal)}, {formatLabel(profile.language)}, and {profile.availability_per_week} hours per week.
-          </CardDescription>
         </CardHeader>
       </Card>
 
@@ -91,28 +146,27 @@ export default function MatchmakingPage() {
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="border border-[#ece8f8] shadow-none">
+        <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
           <CardHeader>
-            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">Queue status</CardTitle>
-            <CardDescription className="text-sm leading-6 text-[#6a6683]">
-              Join the queue, pause your availability, or confirm that your match is already in motion.
-            </CardDescription>
+            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">Queue status</CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-4">
-            <div className="rounded-[1.2rem] bg-[#faf8ff] p-4">
-              <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">Current status</p>
-              <p className="mt-1 text-xl font-semibold text-[#1f1c38]">
+          <CardContent className="grid gap-3">
+            <div className="rounded-[1rem] bg-[#faf8ff] px-4 py-3 dark:bg-[#16161d]">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-app-overline">Current status</p>
+              <p className="mt-1 text-lg font-semibold text-[#1f1c38] dark:text-[#f2f2f5]">
                 {isLoading ? "Loading..." : queueStatusLabel}
               </p>
-              <p className="mt-1 text-sm leading-6 text-[#6a6683]">
-                {isLoading ? "Checking your queue entry..." : queueStatusDescription}
+              <p className="mt-1 text-xs leading-5 text-app-secondary">
+                {isLoading
+                  ? "Checking your queue entry..."
+                  : getQueueStatusDescription(snapshot?.queueEntry?.status, activePartyCount)}
               </p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <Button
                 onClick={() => void handleJoinMatchmaking()}
-                disabled={isLoading || isMutating || isWaiting || isMatched}
+                disabled={isLoading || isMutating || isWaiting || !canJoinAnotherParty}
                 className="h-11 rounded-full bg-[#7650ff] text-white hover:bg-[#6744f0]"
               >
                 {isMutating && !isWaiting ? (
@@ -122,10 +176,8 @@ export default function MatchmakingPage() {
                   </>
                 ) : isWaiting ? (
                   "Already in queue"
-                ) : isMatched ? (
-                  "Already matched"
                 ) : (
-                  "Join matchmaking"
+                  "Join queue"
                 )}
               </Button>
 
@@ -134,7 +186,7 @@ export default function MatchmakingPage() {
                 variant="outline"
                 onClick={() => void handleCancelQueue()}
                 disabled={isLoading || isMutating || !isWaiting}
-                className="h-11 rounded-full border-[#e8e2f7] bg-white text-[#1f1c38]"
+                className="h-11 rounded-full border-[#e8e2f7] bg-white text-[#1f1c38] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#f2f2f5]"
               >
                 {isMutating && isWaiting ? (
                   <>
@@ -146,32 +198,20 @@ export default function MatchmakingPage() {
                 )}
               </Button>
             </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => void refreshSnapshot()}
-              disabled={isLoading}
-              className="h-11 rounded-full border-[#e8e2f7] bg-white text-[#5b45d9]"
-            >
-              <RefreshCcw className="size-4" />
-              Refresh status
-            </Button>
           </CardContent>
         </Card>
 
-        <Card className="border border-[#ece8f8] shadow-none">
+        <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
           <CardHeader>
-            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">Profile signals</CardTitle>
-            <CardDescription className="text-sm leading-6 text-[#6a6683]">
-              Matchmaking combines your preferences, project direction, availability, and stack focus.
+            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">Profile signals</CardTitle>
+            <CardDescription className="text-sm leading-6 text-app-secondary">
+              Matchmaking combines your language, timezone, project interests, and stack focus.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
-            <Criteria label="Goal" value={formatLabel(profile.goal)} icon={Sparkles} />
-            <Criteria label="Availability" value={`${profile.availability_per_week} h / week`} icon={Users} />
-            <Criteria label="Language" value={formatLabel(profile.language)} icon={Users} />
-            <Criteria label="Project type" value={formatLabel(profile.project_type)} icon={Sparkles} />
+            <Criteria label="Language" value={formatLanguageValue(profile.language)} icon={Users} />
+            <Criteria label="Timezone" value={profile.timezone} icon={Users} />
+            <Criteria label="Project types" value={formatProjectTypeList(profile.project_type)} icon={Sparkles} />
             <Criteria
               label="Selected stack"
               value={profile.skills.slice(0, 5).join(", ") || "No technologies selected"}
@@ -181,45 +221,47 @@ export default function MatchmakingPage() {
         </Card>
       </div>
 
-      {isMatched ? (
-        <Card className="border border-[#d8cff8] bg-[#f8f4ff] shadow-none">
-          <CardContent className="pt-5">
-            <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">
-              Match confirmed
-            </p>
-            <p className="mt-1 text-xl font-semibold tracking-[-0.04em] text-[#1f1c38]">
-              {hasAssignedTeam
-                ? `You are now in ${snapshot?.currentTeam?.name}.`
-                : "Your profile has been matched."}
-            </p>
-            <p className="mt-1 text-sm leading-6 text-[#6a6683]">
-              {hasAssignedProject
-                ? `Your team is already linked to ${snapshot?.currentProject?.name}.`
-                : "Your team exists, and the project setup is the next step."}
-            </p>
-            <Link
-              href="/workspace"
-              className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-[#5b45d9] underline-offset-4 hover:underline"
-            >
-              Open workspace
-              <ArrowRight className="size-4" />
-            </Link>
-          </CardContent>
-        </Card>
-      ) : null}
-
-      {!isMatched ? (
-        <Card className="border border-[#ece8f8] shadow-none">
-          <CardHeader>
-            <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38]">What happens next</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-3 md:grid-cols-3">
-            <Criteria label="Queue visibility" value="Your profile becomes visible to matching." icon={Sparkles} />
-            <Criteria label="Team creation" value="An admin can place you into a serious team." icon={Users} />
-            <Criteria label="Workspace handoff" value="Your team then creates the project in the workspace." icon={Sparkles} />
-          </CardContent>
-        </Card>
-      ) : null}
+      <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
+        <CardHeader>
+          <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">Parties</CardTitle>
+          <CardDescription className="text-sm leading-6 text-app-secondary">
+            Your full party history lives here: active, completed, and cancelled.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {parties.length === 0 ? (
+            <div className="rounded-[1rem] bg-[#faf8ff] p-4 text-sm text-app-secondary dark:bg-[#16161d] dark:text-muted-foreground">
+              No parties yet.
+            </div>
+          ) : (
+            <div className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff] dark:border-[#27272f] dark:bg-[#16161d]">
+              {parties.map((party) => (
+                <Link
+                  key={party.id}
+                  href={`/workspace?party=${party.id}`}
+                  className="flex items-center justify-between gap-3 border-b px-4 py-3 transition hover:bg-[#faf8ff] dark:border-[#27272f] dark:hover:bg-[#1a1a22] last:border-b-0"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">Party {party.party_id}</p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${getPartyStatusClasses(party.status)}`}>
+                        {formatPartyStatus(party.status)}
+                      </span>
+                      <span className="text-[11px] text-app-secondary">
+                        Created {formatShortDate(party.created_at)}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-sm font-medium text-[#5b45d9]">
+                    Open
+                    <ArrowRight className="size-4" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -234,36 +276,56 @@ function Criteria({
   icon: typeof Sparkles;
 }) {
   return (
-    <div className="rounded-[1.1rem] bg-[#faf8ff] p-3.5">
+    <div className="rounded-[1.1rem] bg-[#faf8ff] p-3.5 dark:bg-[#16161d]">
       <div className="flex items-start gap-3">
-        <div className="rounded-xl bg-[#ece4ff] p-2 text-[#7650ff]">
+        <div className="rounded-xl bg-[#ece4ff] p-2 text-[#7650ff] dark:bg-[#272138] dark:text-[#a698ff]">
           <Icon className="size-4" />
         </div>
         <div>
-          <p className="text-xs uppercase tracking-[0.18em] text-[#8f84bc]">{label}</p>
-          <p className="mt-1 text-sm font-medium leading-6 text-[#1f1c38]">{value}</p>
+          <p className="text-xs uppercase tracking-[0.18em] text-app-overline">{label}</p>
+          <p className="mt-1 text-sm font-medium leading-6 text-[#1f1c38] dark:text-[#f2f2f5]">{value}</p>
         </div>
       </div>
     </div>
   );
 }
 
-function getQueueStatusLabel(status?: string | null) {
-  if (!status) return "Not in queue";
-  if (status === "waiting") return "Waiting for a team";
-  if (status === "matched") return "Matched";
-  return "Queue paused";
+function getQueueStatusLabel(status?: string | null, activePartyCount = 0) {
+  if (status === "waiting") return "Waiting for a party";
+  if (activePartyCount >= 1) return "Active party in progress";
+  return "Not in queue";
 }
 
-function getQueueStatusDescription(status?: string | null) {
-  if (!status) return "You are not in the matchmaking queue yet.";
-  if (status === "waiting") return "Your profile is currently visible for manual or future automatic team matching.";
-  if (status === "matched") return "A team has already been formed for your profile.";
-  return "Your previous queue entry is paused. You can rejoin whenever you are ready.";
+function getQueueStatusDescription(status?: string | null, activePartyCount = 0) {
+  if (status === "waiting") {
+    return "Your profile is currently visible for manual or future party matching.";
+  }
+
+  if (activePartyCount >= 1) {
+    return "You already belong to an active party. An admin must mark it completed or cancelled before you rejoin the queue.";
+  }
+
+  return "You are not in the matchmaking queue yet.";
 }
 
-function formatLabel(value: string) {
-  return value
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (character) => character.toUpperCase());
+function formatPartyStatus(status: "active" | "completed" | "cancelled") {
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function getPartyStatusClasses(status: "active" | "completed" | "cancelled") {
+  if (status === "active") return "bg-[#ece4ff] text-[#5b45d9]";
+  if (status === "completed") return "bg-[#e9f9ef] text-[#208a52]";
+  return "bg-[#fff0f3] text-[#b84b66]";
+}
+
+function formatShortDate(value: string) {
+  try {
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
 }

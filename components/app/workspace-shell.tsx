@@ -8,8 +8,10 @@ import {
   LayoutDashboard,
   Loader2,
   LogOut,
+  Moon,
   Settings,
   Sparkles,
+  Sun,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -18,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FeedbackBanner } from "@/components/app/feedback";
+import { useTheme } from "@/components/app/theme-provider";
 import { isAdminEmail } from "@/lib/admin-access";
 import { cn } from "@/lib/utils";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -43,6 +46,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = getSupabaseBrowserClient();
+  const { theme, toggleTheme } = useTheme();
   const [profile, setProfile] = useState<AppProfile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -158,11 +162,11 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-[#fbfaff] px-4 py-4 md:px-6">
-        <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-7xl items-center justify-center rounded-[2.25rem] border border-[#ece8f8] bg-white">
+      <main className="min-h-screen bg-[#fbfaff] px-4 py-4 dark:bg-[#0d0d12] md:px-6">
+        <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-7xl items-center justify-center rounded-[2.25rem] border border-[#ece8f8] bg-white dark:border-[#27272f] dark:bg-[#16161d]">
           <div className="flex flex-col items-center gap-4 text-center">
             <Loader2 className="size-8 animate-spin text-[#7650ff]" />
-            <p className="text-sm tracking-wide text-[#6a6683]">Loading workspace...</p>
+            <p className="text-sm tracking-wide text-app-secondary">Loading workspace...</p>
           </div>
         </div>
       </main>
@@ -171,8 +175,8 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
 
   if (errorMessage) {
     return (
-      <main className="min-h-screen bg-[#fbfaff] px-4 py-4 md:px-6">
-        <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-7xl items-center justify-center rounded-[2.25rem] border border-[#ece8f8] bg-white">
+      <main className="min-h-screen bg-[#fbfaff] px-4 py-4 dark:bg-[#0d0d12] md:px-6">
+        <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-7xl items-center justify-center rounded-[2.25rem] border border-[#ece8f8] bg-white dark:border-[#27272f] dark:bg-[#16161d]">
           <Card className="w-full max-w-md rounded-[1.8rem] border border-red-200 shadow-none">
             <CardContent className="pt-6 text-center">
               <h1 className="text-2xl font-semibold text-red-600">Workspace error</h1>
@@ -198,16 +202,16 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
 
   return (
     <WorkspaceContext.Provider value={contextValue}>
-      <main className="min-h-screen bg-[#fbfaff] px-4 py-4 md:px-6">
-        <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-7xl gap-5 rounded-[2.25rem] border border-[#ece8f8] bg-white p-4 shadow-[0_30px_100px_rgba(113,87,255,0.08)] lg:grid-cols-[280px_1fr] lg:p-5">
-          <aside className="rounded-[1.8rem] bg-[#f6f3ff] p-4">
+      <main className="min-h-screen bg-[#fbfaff] px-4 py-4 dark:bg-[#0d0d12] md:px-6">
+        <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-7xl gap-5 rounded-[2.25rem] border border-[#ece8f8] bg-white p-4 shadow-[0_30px_100px_rgba(113,87,255,0.08)] dark:border-[#27272f] dark:bg-[#16161d] dark:shadow-[0_30px_100px_rgba(0,0,0,0.45)] lg:grid-cols-[280px_1fr] lg:p-5">
+          <aside className="rounded-[1.8rem] border border-transparent bg-[#f6f3ff] p-4 dark:border-[#27272f] dark:bg-[#121218]">
             <div className="flex items-center gap-3 px-2 py-3">
               <div className="flex size-10 items-center justify-center rounded-xl bg-[#7650ff] text-lg font-bold text-white">
                 C
               </div>
               <div>
-                <p className="text-2xl font-bold tracking-tight text-[#1f1c38]">CodeParty</p>
-                <p className="text-sm text-[#7d7896]">Workspace</p>
+                <p className="text-2xl font-bold tracking-tight text-[#1f1c38] dark:text-white">CodeParty</p>
+                <p className="text-sm text-app-meta">Workspace</p>
               </div>
             </div>
 
@@ -223,7 +227,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
               ))}
             </div>
 
-            <div className="mt-6 rounded-[1.35rem] bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] p-4 text-white">
+            <div className="mt-6 rounded-[1.35rem] bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] p-4 text-white dark:bg-[linear-gradient(135deg,#6d5ce8_0%,#5f50d2_100%)]">
               <Badge className="rounded-full bg-white/14 text-white hover:bg-white/14">
                 Live workspace
               </Badge>
@@ -237,30 +241,39 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
           </aside>
 
           <div className="flex min-w-0 flex-col gap-4">
-            <div className="flex items-center justify-between rounded-[1.4rem] border border-[#ece8f8] bg-[#fcfbff] px-4 py-3.5">
+            <div className="flex items-center justify-between rounded-[1.4rem] border border-[#ece8f8] bg-[#fcfbff] px-4 py-3.5 dark:border-[#27272f] dark:bg-[#1a1a22]">
               <div>
-                <p className="text-sm uppercase tracking-[0.18em] text-[#8f84bc]">Workspace</p>
-                <p className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-[#1f1c38]">
+                <p className="text-sm uppercase tracking-[0.18em] text-app-overline">Workspace</p>
+                <p className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-[#1f1c38] dark:text-[#f2f2f5]">
                   {navItems.find((item) => item.href === pathname)?.label ?? "Dashboard"}
                 </p>
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="hidden items-center gap-3 rounded-full border border-[#e8e2f7] bg-white px-3.5 py-2 md:flex">
-                  <div className="flex size-9 items-center justify-center rounded-full bg-[#e9e0ff] text-sm font-semibold text-[#7650ff]">
+                <Button
+                  type="button"
+                  onClick={toggleTheme}
+                  variant="outline"
+                  size="icon"
+                  title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                  aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                  className="rounded-full border-[#e8e2f7] bg-white text-[#1f1c38] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#f2f2f5]"
+                >
+                  {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+                </Button>
+
+                <div className="hidden items-center gap-3 rounded-full border border-[#e8e2f7] bg-white px-3.5 py-2 dark:border-[#27272f] dark:bg-[#1a1a22] md:flex">
+                  <div className="flex size-9 items-center justify-center rounded-full bg-[#e9e0ff] text-sm font-semibold text-[#7650ff] dark:bg-[#272138] dark:text-[#9b8cff]">
                     {profile.display_name.slice(0, 2).toUpperCase()}
                   </div>
-                  <div className="text-left">
-                    <p className="text-sm font-medium text-[#1f1c38]">{profile.display_name}</p>
-                    <p className="text-xs text-[#7a7493]">{profile.level}</p>
-                  </div>
+                  <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">{profile.display_name}</p>
                 </div>
 
                 <Button
                   type="button"
                   onClick={handleSignOut}
                   variant="outline"
-                  className="rounded-full border-[#e8e2f7] bg-white text-[#1f1c38]"
+                  className="rounded-full border-[#e8e2f7] bg-white text-[#1f1c38] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#f2f2f5]"
                 >
                   <LogOut className="size-4" />
                   Logout
@@ -294,7 +307,7 @@ function SidebarItem({
         "flex items-center gap-3 rounded-[1.1rem] px-4 py-3 text-[15px] font-medium transition",
         active
           ? "bg-[#7650ff] text-white shadow-[0_16px_40px_rgba(118,80,255,0.24)]"
-          : "text-[#4a4567] hover:bg-white hover:text-[#1f1c38]"
+          : "text-[#4a4567] hover:bg-white hover:text-[#1f1c38] dark:text-muted-foreground dark:hover:bg-[#1a1a22] dark:hover:text-[#f2f2f5]"
       )}
     >
       <Icon className="size-4" />

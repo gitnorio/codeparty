@@ -72,6 +72,15 @@ const testUsers = [
     icon: Smartphone,
     badgeColor: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
   },
+    {
+    label: "Toto Tom",
+    role: "Mobile Developer",
+    email: "user6@test.com",
+    password: "Password123!",
+    skills: ["SwiftUI", "Flutter", "Firebase"],
+    icon: Smartphone,
+    badgeColor: "bg-cyan-500/10 text-cyan-300 border-cyan-500/20",
+  },
 ];
 
 export default function DevLoginPage() {

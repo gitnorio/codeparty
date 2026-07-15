@@ -33,6 +33,34 @@ export type FormedTeam = {
   }>;
 };
 
+function generatePartyId() {
+  return String(Math.floor(10000 + Math.random() * 90000));
+}
+
+async function generateUniquePartyId(supabase: AppSupabaseClient) {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const partyId = generatePartyId();
+    const { data, error } = await supabase
+      .from("teams")
+      .select("id")
+      .eq("party_id", partyId)
+      .maybeSingle<{ id: string }>();
+
+    if (error) {
+      return { partyId: null, error };
+    }
+
+    if (!data) {
+      return { partyId, error: null };
+    }
+  }
+
+  return {
+    partyId: null,
+    error: new Error("Failed to generate a unique Party ID. Please try again."),
+  };
+}
+
 async function getQueuedCandidatesByStatus(
   supabase: AppSupabaseClient,
   status: QueueStatus
@@ -97,19 +125,80 @@ export async function getCancelledCandidates(supabase: AppSupabaseClient) {
 export async function createManualTeamMatch(
   supabase: AppSupabaseClient,
   options: {
-    teamName: string;
     createdBy: string;
     queueEntries: QueueRow[];
   }
 ) {
-  const { teamName, createdBy, queueEntries } = options;
+  const { createdBy, queueEntries } = options;
+  const candidateUserIds = [...new Set(queueEntries.map((entry) => entry.user_id))];
+
+  const { data: activeMemberships, error: activeMembershipsError } = await supabase
+    .from("team_members")
+    .select("user_id, team_id, member_status")
+    .in("user_id", candidateUserIds)
+    .eq("member_status", "active");
+
+  if (activeMembershipsError) {
+    return {
+      team: null,
+      error: activeMembershipsError,
+    };
+  }
+
+  if ((activeMemberships ?? []).length > 0) {
+    const activeTeamIds = [...new Set((activeMemberships ?? []).map((membership) => membership.team_id))];
+    const { data: activeTeams, error: activeTeamsError } = await supabase
+      .from("teams")
+      .select("id, status")
+      .in("id", activeTeamIds)
+      .eq("status", "active");
+
+    if (activeTeamsError) {
+      return {
+        team: null,
+        error: activeTeamsError,
+      };
+    }
+
+    const activeTeamIdSet = new Set((activeTeams ?? []).map((team) => team.id));
+    const activeCountsByUserId = new Map<string, number>();
+
+    for (const membership of activeMemberships ?? []) {
+      if (!activeTeamIdSet.has(membership.team_id)) continue;
+      activeCountsByUserId.set(
+        membership.user_id,
+        (activeCountsByUserId.get(membership.user_id) ?? 0) + 1
+      );
+    }
+
+    const blockedUserId = candidateUserIds.find(
+      (userId) => (activeCountsByUserId.get(userId) ?? 0) >= 1
+    );
+
+    if (blockedUserId) {
+      return {
+        team: null,
+        error: new Error("At least one selected developer already belongs to an active party."),
+      };
+    }
+  }
+
+  const generatedPartyId = await generateUniquePartyId(supabase);
+
+  if (generatedPartyId.error || !generatedPartyId.partyId) {
+    return {
+      team: null,
+      error: generatedPartyId.error ?? new Error("Failed to generate Party ID."),
+    };
+  }
 
   const { data: team, error: teamError } = await supabase
     .from("teams")
     .insert({
-      name: teamName,
+      name: `Party ${generatedPartyId.partyId}`,
+      party_id: generatedPartyId.partyId,
       created_by: createdBy,
-      status: "forming",
+      status: "active",
     })
     .select("*")
     .single();
@@ -159,7 +248,7 @@ export async function getFormedTeams(supabase: AppSupabaseClient) {
   const { data: teams, error: teamsError } = await supabase
     .from("teams")
     .select("*")
-    .in("status", ["forming", "active", "completed"])
+    .in("status", ["active", "completed", "cancelled"])
     .order("created_at", { ascending: false });
 
   if (teamsError) {
@@ -316,7 +405,11 @@ export async function updateTeamLifecycle(
 
   const { data: team, error: teamError } = await supabase
     .from("teams")
-    .update({ status })
+    .update({
+      status,
+      completion_requested_at: status === "active" ? undefined : null,
+      completion_requested_by: status === "active" ? undefined : null,
+    })
     .eq("id", teamId)
     .select("*")
     .single();
@@ -343,10 +436,25 @@ export async function updateTeamLifecycle(
     }
   }
 
-  if (status === "active" || status === "forming") {
+  if (status === "active") {
     const { error: membersError } = await supabase
       .from("team_members")
       .update({ member_status: "active" })
+      .eq("team_id", teamId)
+      .in("member_status", ["active", "completed"]);
+
+    if (membersError) {
+      return {
+        team: null,
+        error: membersError,
+      };
+    }
+  }
+
+  if (status === "cancelled") {
+    const { error: membersError } = await supabase
+      .from("team_members")
+      .update({ member_status: "completed" })
       .eq("team_id", teamId)
       .in("member_status", ["active", "completed"]);
 
@@ -364,13 +472,37 @@ export async function updateTeamLifecycle(
   };
 }
 
-export async function markTeamAbandoned(
+export async function rejectTeamCompletionRequest(
   supabase: AppSupabaseClient,
   options: {
     teamId: string;
   }
 ) {
-  const { teamId } = options;
+  const { data: team, error } = await supabase
+    .from("teams")
+    .update({
+      completion_requested_at: null,
+      completion_requested_by: null,
+    })
+    .eq("id", options.teamId)
+    .eq("status", "active")
+    .select("*")
+    .single();
+
+  return {
+    team: team as TeamRow | null,
+    error,
+  };
+}
+
+export async function updateTeamStatusByAdmin(
+  supabase: AppSupabaseClient,
+  options: {
+    teamId: string;
+    status: "completed" | "cancelled";
+  }
+) {
+  const { teamId, status } = options;
 
   const { data: project, error: projectLookupError } = await supabase
     .from("projects")
@@ -388,7 +520,7 @@ export async function markTeamAbandoned(
   if (project) {
     const { error: projectError } = await supabase
       .from("projects")
-      .update({ status: "cancelled" })
+      .update({ status })
       .eq("id", project.id);
 
     if (projectError) {
@@ -399,15 +531,15 @@ export async function markTeamAbandoned(
     }
   }
 
-  const { error: updateTeamError } = await supabase
-    .from("teams")
-    .update({ status: "cancelled" })
-    .eq("id", teamId);
+  const lifecycleResult = await updateTeamLifecycle(supabase, {
+    teamId,
+    status,
+  });
 
-  if (updateTeamError) {
+  if (lifecycleResult.error) {
     return {
       project: null,
-      error: updateTeamError,
+      error: lifecycleResult.error,
     };
   }
 

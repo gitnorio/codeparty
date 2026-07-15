@@ -43,10 +43,7 @@ export function formatProjectLabel(value: string) {
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
-export function mapGoalToProjectRole(goal: string): ProjectRole {
-  if (goal === "frontend") return "frontend";
-  if (goal === "backend") return "backend";
-  if (goal === "mobile") return "mobile";
+export function getDefaultProjectRole(): ProjectRole {
   return "fullstack";
 }
 
@@ -296,7 +293,7 @@ export async function createTeamProjectForMember(
 
   const lifecycleResult = await updateTeamLifecycle(supabase, {
     teamId: team.id,
-    status: "forming",
+    status: "active",
   });
 
   if (lifecycleResult.error) {

@@ -48,27 +48,59 @@ export type Database = {
         };
         Relationships: [];
       };
+      team_messages: {
+        Row: {
+          id: string;
+          team_id: string;
+          user_id: string;
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          team_id: string;
+          user_id: string;
+          content: string;
+          created_at?: string;
+        };
+        Update: {
+          team_id?: string;
+          user_id?: string;
+          content?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       teams: {
         Row: {
           id: string;
           name: string;
-          status: "forming" | "active" | "completed" | "cancelled";
+          party_id: string;
+          status: "active" | "completed" | "cancelled";
           created_by: string;
+          completion_requested_at: string | null;
+          completion_requested_by: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
           name: string;
-          status?: "forming" | "active" | "completed" | "cancelled";
+          party_id: string;
+          status?: "active" | "completed" | "cancelled";
           created_by: string;
+          completion_requested_at?: string | null;
+          completion_requested_by?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           name?: string;
-          status?: "forming" | "active" | "completed" | "cancelled";
+          party_id?: string;
+          status?: "active" | "completed" | "cancelled";
           created_by?: string;
+          completion_requested_at?: string | null;
+          completion_requested_by?: string | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -145,38 +177,29 @@ export type Database = {
         Row: {
           id: string;
           display_name: string;
-          level: "beginner" | "junior" | "intermediate";
           skills: string[];
-          goal: "frontend" | "backend" | "fullstack" | "mobile";
-          availability_per_week: number;
           language: "fr" | "en" | "fr_en";
           timezone: string;
-          project_type: "web_app" | "mobile_app" | "api" | "ai_app";
+          project_type: ("web_app" | "mobile_app" | "api" | "ai_app")[];
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id: string;
           display_name: string;
-          level: "beginner" | "junior" | "intermediate";
           skills?: string[];
-          goal: "frontend" | "backend" | "fullstack" | "mobile";
-          availability_per_week: number;
           language: "fr" | "en" | "fr_en";
           timezone?: string;
-          project_type: "web_app" | "mobile_app" | "api" | "ai_app";
+          project_type?: ("web_app" | "mobile_app" | "api" | "ai_app")[];
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           display_name?: string;
-          level?: "beginner" | "junior" | "intermediate";
           skills?: string[];
-          goal?: "frontend" | "backend" | "fullstack" | "mobile";
-          availability_per_week?: number;
           language?: "fr" | "en" | "fr_en";
           timezone?: string;
-          project_type?: "web_app" | "mobile_app" | "api" | "ai_app";
+          project_type?: ("web_app" | "mobile_app" | "api" | "ai_app")[];
           updated_at?: string;
         };
         Relationships: [];

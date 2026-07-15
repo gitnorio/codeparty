@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Loader2, Sparkles, Users } from "lucide-react";
+import { Loader2, Sparkles, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -128,7 +127,6 @@ export default function MatchmakingPage() {
 
   const queueStatusLabel = getQueueStatusLabel(snapshot?.queueEntry?.status, activePartyCount);
   const isWaiting = snapshot?.queueEntry?.status === "waiting";
-  const parties = useMemo(() => snapshot?.allTeams ?? [], [snapshot?.allTeams]);
   const canJoinAnotherParty = activePartyCount < 1;
 
   return (
@@ -138,6 +136,9 @@ export default function MatchmakingPage() {
           <CardTitle className="mt-4 text-5xl leading-[0.96] tracking-[-0.05em]">
             Match into the right party, then keep building.
           </CardTitle>
+          <CardDescription className="mt-2 max-w-2xl text-base leading-7 text-white/82">
+            Join the queue, track your current status, and stay ready for your next party.
+          </CardDescription>
         </CardHeader>
       </Card>
 
@@ -220,48 +221,6 @@ export default function MatchmakingPage() {
           </CardContent>
         </Card>
       </div>
-
-      <Card className="border border-[#ece8f8] shadow-none dark:border-[#27272f] dark:bg-[#1a1a22]">
-        <CardHeader>
-          <CardTitle className="text-2xl tracking-[-0.05em] text-[#1f1c38] dark:text-[#f2f2f5]">Parties</CardTitle>
-          <CardDescription className="text-sm leading-6 text-app-secondary">
-            Your full party history lives here: active, completed, and cancelled.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {parties.length === 0 ? (
-            <div className="rounded-[1rem] bg-[#faf8ff] p-4 text-sm text-app-secondary dark:bg-[#16161d] dark:text-muted-foreground">
-              No parties yet.
-            </div>
-          ) : (
-            <div className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff] dark:border-[#27272f] dark:bg-[#16161d]">
-              {parties.map((party) => (
-                <Link
-                  key={party.id}
-                  href={`/workspace?party=${party.id}`}
-                  className="flex items-center justify-between gap-3 border-b px-4 py-3 transition hover:bg-[#faf8ff] dark:border-[#27272f] dark:hover:bg-[#1a1a22] last:border-b-0"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">Party {party.party_id}</p>
-                    <div className="mt-1 flex items-center gap-2">
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${getPartyStatusClasses(party.status)}`}>
-                        {formatPartyStatus(party.status)}
-                      </span>
-                      <span className="text-[11px] text-app-secondary">
-                        Created {formatShortDate(party.created_at)}
-                      </span>
-                    </div>
-                  </div>
-                  <span className="inline-flex items-center gap-1 text-sm font-medium text-[#5b45d9]">
-                    Open
-                    <ArrowRight className="size-4" />
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }
@@ -306,26 +265,4 @@ function getQueueStatusDescription(status?: string | null, activePartyCount = 0)
   }
 
   return "You are not in the matchmaking queue yet.";
-}
-
-function formatPartyStatus(status: "active" | "completed" | "cancelled") {
-  return status.charAt(0).toUpperCase() + status.slice(1);
-}
-
-function getPartyStatusClasses(status: "active" | "completed" | "cancelled") {
-  if (status === "active") return "bg-[#ece4ff] text-[#5b45d9]";
-  if (status === "completed") return "bg-[#e9f9ef] text-[#208a52]";
-  return "bg-[#fff0f3] text-[#b84b66]";
-}
-
-function formatShortDate(value: string) {
-  try {
-    return new Intl.DateTimeFormat("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }).format(new Date(value));
-  } catch {
-    return value;
-  }
 }

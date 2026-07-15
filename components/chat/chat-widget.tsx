@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FeedbackBanner } from "@/components/app/feedback";
+import { ProfileAvatar } from "@/components/app/profile-avatar";
 import type { TeamMessageWithProfile } from "@/lib/team-messages";
 import { getWorkspaceSnapshot } from "@/lib/workspace-data";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
@@ -123,7 +124,7 @@ export function ChatWidget() {
       if (
         !currentMembership ||
         currentMembership.member_status !== "active" ||
-        currentTeam.status === "cancelled"
+        currentTeam.status !== "active"
       ) {
         setChatContext(null);
         setIsLoading(false);
@@ -419,13 +420,13 @@ function ChatWindow({
     isDraftTooLong;
 
   return (
-    <Card className="pointer-events-auto h-[480px] w-[360px] overflow-hidden rounded-[1.6rem] border border-[#e8e2f7] bg-white shadow-[0_24px_80px_rgba(75,56,161,0.18)] transition duration-200 ease-out animate-in fade-in zoom-in-95">
-      <CardHeader className="flex flex-row items-start justify-between border-b border-[#f0ebfb] bg-[#fcfbff] px-4 py-3">
+    <Card className="pointer-events-auto h-[480px] w-[360px] overflow-hidden rounded-[1.6rem] border border-[#e8e2f7] bg-white shadow-[0_24px_80px_rgba(75,56,161,0.18)] transition duration-200 ease-out animate-in fade-in zoom-in-95 dark:border-[#27272f] dark:bg-[#1a1a22] dark:shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
+      <CardHeader className="flex flex-row items-start justify-between border-b border-[#f0ebfb] bg-[#fcfbff] px-4 py-3 dark:border-[#27272f] dark:bg-[#16161d]">
         <div className="min-w-0">
-          <Badge className="rounded-full bg-[#f1ebff] text-[#7650ff] hover:bg-[#f1ebff]">
+          <Badge className="rounded-full bg-[#f1ebff] text-[#7650ff] hover:bg-[#f1ebff] dark:bg-[#272138] dark:text-[#a698ff] dark:hover:bg-[#272138]">
             Team chat
           </Badge>
-          <CardTitle className="mt-2 text-lg tracking-[-0.04em] text-[#1f1c38]">
+          <CardTitle className="mt-2 text-lg tracking-[-0.04em] text-[#1f1c38] dark:text-[#f2f2f5]">
             {teamName}
           </CardTitle>
           <p className="mt-1 flex items-center gap-2 text-sm text-app-secondary">
@@ -439,7 +440,7 @@ function ChatWindow({
           variant="ghost"
           size="icon"
           onClick={onMinimize}
-          className="size-8 rounded-full text-app-secondary hover:bg-[#f3eeff] hover:text-[#1f1c38]"
+          className="size-8 rounded-full text-app-secondary hover:bg-[#f3eeff] hover:text-[#1f1c38] dark:hover:bg-[#23232c] dark:hover:text-[#f2f2f5]"
         >
           <Minus className="size-4" />
         </Button>
@@ -448,7 +449,7 @@ function ChatWindow({
       <CardContent className="flex h-[calc(100%-88px)] flex-col gap-3 p-3">
         <div
           ref={scrollAreaRef}
-          className="flex-1 overflow-y-auto rounded-[1.2rem] bg-[#faf8ff] p-3"
+          className="flex-1 overflow-y-auto rounded-[1.2rem] bg-[#faf8ff] p-3 dark:bg-[#16161d]"
         >
           {isLoading ? (
             <div className="flex h-full items-center justify-center">
@@ -462,7 +463,7 @@ function ChatWindow({
           ) : sortedMessages.length === 0 ? (
             <div className="flex h-full items-center justify-center text-center">
               <div className="max-w-[220px]">
-                <p className="text-sm font-medium text-[#1f1c38]">
+                <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
                   No messages yet, say hello to your team!
                 </p>
                 <p className="mt-2 text-sm leading-6 text-app-secondary">
@@ -484,19 +485,20 @@ function ChatWindow({
                       className={`max-w-[82%] rounded-[1.05rem] px-3 py-2 ${
                         isCurrentUser
                           ? "bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white"
-                          : "bg-white text-[#1f1c38]"
+                          : "bg-white text-[#1f1c38] dark:bg-[#23232c] dark:text-[#f2f2f5]"
                       }`}
                     >
                       <div className="mb-1 flex items-center gap-2">
-                        <div
-                          className={`flex size-6 items-center justify-center rounded-full text-[11px] font-semibold ${
+                        <ProfileAvatar
+                          name={item.profile.display_name}
+                          avatarUrl={item.profile.avatar_url}
+                          className="size-6"
+                          initialsClassName={
                             isCurrentUser
                               ? "bg-white/18 text-white"
-                              : "bg-[#ece4ff] text-[#7650ff]"
-                          }`}
-                        >
-                          {getInitials(item.profile.display_name)}
-                        </div>
+                              : "bg-[#ece4ff] text-[#7650ff] dark:bg-[#272138] dark:text-[#a698ff]"
+                          }
+                        />
                         <p
                           className={`text-[11px] font-medium ${
                             isCurrentUser ? "text-white/85" : "text-app-secondary"
@@ -529,7 +531,7 @@ function ChatWindow({
 
         {sendError ? <FeedbackBanner tone="error" message={sendError} /> : null}
 
-        <div className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff] p-2">
+        <div className="rounded-[1rem] border border-[#ece8f8] bg-[#fcfbff] p-2 dark:border-[#27272f] dark:bg-[#16161d]">
           <div className="flex items-center gap-2">
           <Input
             value={draft}
@@ -542,13 +544,13 @@ function ChatWindow({
               }
             }}
             placeholder="Write a message..."
-            className="h-10 border-0 bg-transparent px-2 shadow-none focus-visible:ring-0"
+            className="h-10 border-0 bg-transparent px-2 shadow-none focus-visible:ring-0 dark:text-[#f2f2f5] dark:placeholder:text-[#747482]"
           />
           <Button
             type="button"
             onClick={() => void handleSubmit()}
             disabled={isSubmitDisabled}
-            className="h-10 rounded-full bg-[#7650ff] px-3 text-white hover:bg-[#6744f0]"
+            className="h-10 rounded-full bg-[#7650ff] px-3 text-white hover:bg-[#6744f0] dark:bg-[#6d5ce8] dark:hover:bg-[#5f50d2]"
           >
             {isSending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
           </Button>
@@ -582,7 +584,7 @@ function ChatBubbleButton({
     <button
       type="button"
       onClick={onOpen}
-      className="pointer-events-auto relative flex size-14 items-center justify-center rounded-full bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-[0_18px_50px_rgba(118,80,255,0.35)] transition duration-200 ease-out hover:scale-[1.02]"
+      className="pointer-events-auto relative flex size-14 items-center justify-center rounded-full bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] text-white shadow-[0_18px_50px_rgba(118,80,255,0.35)] transition duration-200 ease-out hover:scale-[1.02] dark:bg-[linear-gradient(135deg,#6d5ce8_0%,#5f50d2_100%)] dark:shadow-[0_18px_50px_rgba(0,0,0,0.45)]"
       aria-label="Open team chat"
     >
       <MessageSquare className="size-5" />
@@ -593,15 +595,6 @@ function ChatBubbleButton({
       ) : null}
     </button>
   );
-}
-
-function getInitials(displayName: string) {
-  return displayName
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((item) => item[0]?.toUpperCase() ?? "")
-    .join("");
 }
 
 function formatMessageTime(createdAt: string) {

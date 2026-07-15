@@ -32,7 +32,7 @@ export type TeamProjectCreateInput = {
   githubRepoUrl: string;
   startDate: string | null;
   endDate: string | null;
-  assignments: TeamProjectAssignmentInput[];
+  assignments?: TeamProjectAssignmentInput[];
 };
 
 const githubRepoUrlPattern = /^https:\/\/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?\/?$/i;
@@ -210,8 +210,6 @@ export async function createTeamProjectForMember(
   }
 
   const activeMembers = teamMembers ?? [];
-  const activeMemberIds = new Set(activeMembers.map((member) => member.user_id));
-  const assignmentUserIds = new Set(input.assignments.map((assignment) => assignment.userId));
 
   if (activeMembers.length === 0) {
     return {
@@ -220,7 +218,17 @@ export async function createTeamProjectForMember(
     };
   }
 
-  const invalidAssignment = input.assignments.find(
+  const normalizedAssignments =
+    input.assignments && input.assignments.length > 0
+      ? input.assignments
+      : activeMembers.map((member) => ({
+          userId: member.user_id,
+          projectRole: getDefaultProjectRole(),
+          contributionSummary: null,
+        }));
+
+  const activeMemberIds = new Set(activeMembers.map((member) => member.user_id));
+  const invalidAssignment = normalizedAssignments.find(
     (assignment) => !activeMemberIds.has(assignment.userId)
   );
 
@@ -228,17 +236,6 @@ export async function createTeamProjectForMember(
     return {
       project: null,
       error: new Error("Every assigned role must belong to an active team member."),
-    };
-  }
-
-  const missingMembers = activeMembers.filter(
-    (member) => !assignmentUserIds.has(member.user_id)
-  );
-
-  if (missingMembers.length > 0) {
-    return {
-      project: null,
-      error: new Error("Assign a project role to every active team member."),
     };
   }
 
@@ -276,7 +273,7 @@ export async function createTeamProjectForMember(
   const { error: projectMembersError } = await supabase
     .from("project_members")
     .insert(
-      input.assignments.map((assignment) => ({
+      normalizedAssignments.map((assignment) => ({
         project_id: project.id,
         user_id: assignment.userId,
         project_role: assignment.projectRole,

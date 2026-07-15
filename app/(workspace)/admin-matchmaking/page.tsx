@@ -7,6 +7,7 @@ import {
   useWorkspaceAccess,
 } from "@/components/app/workspace-shell";
 import { FeedbackBanner } from "@/components/app/feedback";
+import { ProfileAvatar } from "@/components/app/profile-avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { FormedTeam, WaitingCandidate } from "@/lib/admin-matchmaking";
@@ -368,16 +369,23 @@ export default function AdminMatchmakingPage() {
                             : "border-[#ece8f8] bg-[#fcfbff] hover:bg-[#faf8ff] dark:border-[#27272f] dark:bg-[#1a1a22] dark:hover:bg-[#23232c]"
                         }`}
                       >
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
-                            {candidate.profile.display_name}
-                          </p>
-                          <p className="mt-0.5 truncate text-[11px] text-app-secondary">
-                            {formatLanguageValue(candidate.profile.language)} · {candidate.profile.timezone}
-                          </p>
-                          <p className="mt-0.5 truncate text-[10px] text-app-overline dark:text-[#a698ff]">
-                            {candidate.profile.skills.slice(0, 3).join(" · ") || "No stack selected"}
-                          </p>
+                        <div className="min-w-0 flex flex-1 items-center gap-3">
+                          <ProfileAvatar
+                            name={candidate.profile.display_name}
+                            avatarUrl={candidate.profile.avatar_url}
+                            className="size-9 shrink-0"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
+                              {candidate.profile.display_name}
+                            </p>
+                            <p className="mt-0.5 truncate text-[11px] text-app-secondary">
+                              {formatLanguageValue(candidate.profile.language)} · {candidate.profile.timezone}
+                            </p>
+                            <p className="mt-0.5 truncate text-[10px] text-app-overline dark:text-[#a698ff]">
+                              {candidate.profile.skills.slice(0, 3).join(" · ") || "No stack selected"}
+                            </p>
+                          </div>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
                           <span className="rounded-full border border-[#e8e2f7] bg-white px-2 py-1 text-[10px] font-medium text-[#7650ff] dark:border-[#27272f] dark:bg-[#23232c] dark:text-[#a698ff]">
@@ -424,9 +432,16 @@ export default function AdminMatchmakingPage() {
                         key={candidate.profile.id}
                         className="rounded-[0.95rem] bg-[#faf8ff] px-3 py-2.5 dark:bg-[#16161d]"
                       >
-                        <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
-                          {candidate.profile.display_name}
-                        </p>
+                        <div className="flex items-center gap-3">
+                          <ProfileAvatar
+                            name={candidate.profile.display_name}
+                            avatarUrl={candidate.profile.avatar_url}
+                            className="size-8 shrink-0"
+                          />
+                          <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">
+                            {candidate.profile.display_name}
+                          </p>
+                        </div>
                       </div>
                     ))
                   ) : (

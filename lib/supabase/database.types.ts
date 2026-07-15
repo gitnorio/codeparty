@@ -177,6 +177,7 @@ export type Database = {
         Row: {
           id: string;
           display_name: string;
+          avatar_url: string | null;
           skills: string[];
           language: "fr" | "en" | "fr_en";
           timezone: string;
@@ -187,6 +188,7 @@ export type Database = {
         Insert: {
           id: string;
           display_name: string;
+          avatar_url?: string | null;
           skills?: string[];
           language: "fr" | "en" | "fr_en";
           timezone?: string;
@@ -196,6 +198,7 @@ export type Database = {
         };
         Update: {
           display_name?: string;
+          avatar_url?: string | null;
           skills?: string[];
           language?: "fr" | "en" | "fr_en";
           timezone?: string;

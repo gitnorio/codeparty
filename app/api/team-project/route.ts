@@ -35,11 +35,7 @@ export async function POST(request: Request) {
 
   if (
     !body.name?.trim() ||
-    !body.githubRepoUrl?.trim() ||
-    !body.stack ||
-    body.stack.length === 0 ||
-    !body.assignments ||
-    body.assignments.length === 0
+    !body.githubRepoUrl?.trim()
   ) {
     return NextResponse.json(
       { error: "Missing required project fields." },
@@ -51,11 +47,11 @@ export async function POST(request: Request) {
   const result = await createTeamProjectForMember(supabase, auth.user.id, {
     name: body.name.trim(),
     description: body.description?.trim() || null,
-    stack: body.stack.map((value) => value.trim()).filter(Boolean),
+    stack: (body.stack ?? []).map((value) => value.trim()).filter(Boolean),
     githubRepoUrl: body.githubRepoUrl.trim(),
     startDate: body.startDate || null,
     endDate: body.endDate || null,
-    assignments: body.assignments.map((assignment) => ({
+    assignments: body.assignments?.map((assignment) => ({
       userId: assignment.userId,
       projectRole: assignment.projectRole,
       contributionSummary: assignment.contributionSummary?.trim() || null,

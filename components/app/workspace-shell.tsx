@@ -16,10 +16,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FeedbackBanner } from "@/components/app/feedback";
+import { ProfileAvatar } from "@/components/app/profile-avatar";
 import { useTheme } from "@/components/app/theme-provider";
 import { isAdminEmail } from "@/lib/admin-access";
 import { cn } from "@/lib/utils";
@@ -163,7 +163,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
   if (isLoading) {
     return (
       <main className="min-h-screen bg-[#fbfaff] px-4 py-4 dark:bg-[#0d0d12] md:px-6">
-        <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-7xl items-center justify-center rounded-[2.25rem] border border-[#ece8f8] bg-white dark:border-[#27272f] dark:bg-[#16161d]">
+        <div className="mx-auto flex min-h-[18rem] max-w-7xl items-center justify-center rounded-[2.25rem] border border-[#ece8f8] bg-white dark:border-[#27272f] dark:bg-[#16161d]">
           <div className="flex flex-col items-center gap-4 text-center">
             <Loader2 className="size-8 animate-spin text-[#7650ff]" />
             <p className="text-sm tracking-wide text-app-secondary">Loading workspace...</p>
@@ -176,7 +176,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
   if (errorMessage) {
     return (
       <main className="min-h-screen bg-[#fbfaff] px-4 py-4 dark:bg-[#0d0d12] md:px-6">
-        <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-7xl items-center justify-center rounded-[2.25rem] border border-[#ece8f8] bg-white dark:border-[#27272f] dark:bg-[#16161d]">
+        <div className="mx-auto flex min-h-[18rem] max-w-7xl items-center justify-center rounded-[2.25rem] border border-[#ece8f8] bg-white dark:border-[#27272f] dark:bg-[#16161d]">
           <Card className="w-full max-w-md rounded-[1.8rem] border border-red-200 shadow-none">
             <CardContent className="pt-6 text-center">
               <h1 className="text-2xl font-semibold text-red-600">Workspace error</h1>
@@ -203,7 +203,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
   return (
     <WorkspaceContext.Provider value={contextValue}>
       <main className="min-h-screen bg-[#fbfaff] px-4 py-4 dark:bg-[#0d0d12] md:px-6">
-        <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-7xl gap-5 rounded-[2.25rem] border border-[#ece8f8] bg-white p-4 shadow-[0_30px_100px_rgba(113,87,255,0.08)] dark:border-[#27272f] dark:bg-[#16161d] dark:shadow-[0_30px_100px_rgba(0,0,0,0.45)] lg:grid-cols-[280px_1fr] lg:p-5">
+        <div className="mx-auto grid w-full max-w-7xl gap-5 rounded-[2.25rem] border border-[#ece8f8] bg-white p-4 shadow-[0_30px_100px_rgba(113,87,255,0.08)] dark:border-[#27272f] dark:bg-[#16161d] dark:shadow-[0_30px_100px_rgba(0,0,0,0.45)] lg:grid-cols-[280px_1fr] lg:p-5">
           <aside className="rounded-[1.8rem] border border-transparent bg-[#f6f3ff] p-4 dark:border-[#27272f] dark:bg-[#121218]">
             <div className="flex items-center gap-3 px-2 py-3">
               <div className="flex size-10 items-center justify-center rounded-xl bg-[#7650ff] text-lg font-bold text-white">
@@ -228,9 +228,6 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="mt-6 rounded-[1.35rem] bg-[linear-gradient(135deg,#7448ff_0%,#8e6bff_100%)] p-4 text-white dark:bg-[linear-gradient(135deg,#6d5ce8_0%,#5f50d2_100%)]">
-              <Badge className="rounded-full bg-white/14 text-white hover:bg-white/14">
-                Live workspace
-              </Badge>
               <p className="mt-3 text-xl font-semibold leading-tight tracking-[-0.04em]">
                 Keep your team and project setup in one clean flow.
               </p>
@@ -263,9 +260,11 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
                 </Button>
 
                 <div className="hidden items-center gap-3 rounded-full border border-[#e8e2f7] bg-white px-3.5 py-2 dark:border-[#27272f] dark:bg-[#1a1a22] md:flex">
-                  <div className="flex size-9 items-center justify-center rounded-full bg-[#e9e0ff] text-sm font-semibold text-[#7650ff] dark:bg-[#272138] dark:text-[#9b8cff]">
-                    {profile.display_name.slice(0, 2).toUpperCase()}
-                  </div>
+                  <ProfileAvatar
+                    name={profile.display_name}
+                    avatarUrl={profile.avatar_url}
+                    className="size-9"
+                  />
                   <p className="text-sm font-medium text-[#1f1c38] dark:text-[#f2f2f5]">{profile.display_name}</p>
                 </div>
 
@@ -281,7 +280,7 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
               </div>
             </div>
 
-            <div className="min-h-0 flex-1">{children}</div>
+            <div className="min-h-0">{children}</div>
           </div>
         </div>
       </main>

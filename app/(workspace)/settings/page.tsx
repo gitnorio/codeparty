@@ -28,6 +28,7 @@ import { maxSelectedSkills, technologyGroups } from "@/lib/technology-options";
 
 type SettingsFormData = {
   display_name: string;
+  avatar_url: string;
   skills: string[];
   selectedLanguages: SelectableLanguage[];
   timezone: string;
@@ -40,6 +41,7 @@ export default function SettingsPage() {
   const supabase = getSupabaseBrowserClient();
   const [formData, setFormData] = useState<SettingsFormData>({
     display_name: profile.display_name,
+    avatar_url: profile.avatar_url ?? "",
     skills: profile.skills,
     selectedLanguages: parseLanguageValue(profile.language),
     timezone: profile.timezone,
@@ -69,6 +71,7 @@ export default function SettingsPage() {
     }
 
     const payload = {
+      avatar_url: formData.avatar_url.trim() || null,
       skills: formData.skills,
       language,
       timezone: formData.timezone,
@@ -91,6 +94,7 @@ export default function SettingsPage() {
     if (data) {
       setFormData({
         display_name: data.display_name,
+        avatar_url: data.avatar_url ?? "",
         skills: data.skills,
         selectedLanguages: parseLanguageValue(data.language),
         timezone: data.timezone,

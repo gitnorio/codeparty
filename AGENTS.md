@@ -59,6 +59,9 @@ This file contains a growing ruleset that improves over time. **At session start
 13. [PROCESS] Always maintain and follow a written MVP execution plan in a Markdown file as the source of truth once the user requests it — user explicitly asked for a plan file to be followed religiously.
 14. [UX] Never add GitHub-like contribution or progress panels, and always keep forms and cards compact rather than oversized — user explicitly said CodeParty should not try to replace GitHub and that the UI must feel tighter.
 15. [ARCH] Always keep the authenticated MVP navigation focused on `Dashboard`, `Matchmaking`, `Workspace`, and `Settings`, with `Public Profile` removed from primary navigation and `Team`/`Project` merged into one `Workspace` screen — user asked to execute the full cleanup audit.
+16. [UX] Always make the main parent container responsive and content-driven in height — it should grow when a page has many elements and shrink when a page has few, instead of forcing oversized fixed-height shells.
+17. [DATA] Always treat the user avatar as a persisted profile field in Supabase and prefer the user’s Discord avatar URL when available, with a safe fallback when it is missing.
+18. [DATA] Always use the user’s GitHub avatar as the profile avatar source for this app when available — user corrected the earlier Discord wording.
 16. [ARCH] Always add a reliable sync fallback for realtime chat updates instead of depending on Supabase Realtime alone — realtime proved unreliable across two real browser sessions and the chat must update without manual refresh.
 17. [ARCH] Always treat onboarding as profile configuration, not as next-matchmaking configuration — the user explicitly redefined onboarding’s product purpose.
 18. [DATA] Always treat `display_name` as the immutable account username in the UI and product flow — the user explicitly said it is now the username and must not be editable.

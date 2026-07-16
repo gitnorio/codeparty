@@ -24,8 +24,8 @@ export async function completeOAuthSessionFromUrl(
 
   const code = url.searchParams.get("code");
   if (code) {
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     clearOAuthParameters(url.pathname);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     return {
       error: error?.message ?? null,

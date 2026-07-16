@@ -30,6 +30,8 @@ import {
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { completeOAuthSessionFromUrl } from "@/lib/supabase/oauth-callback";
 
+type EntryState = "loading" | "signed-out" | "onboarding" | "dashboard";
+
 export default function HomePage() {
   const router = useRouter();
   const supabase = getSupabaseBrowserClient();
@@ -39,6 +41,7 @@ export default function HomePage() {
     process.env.NODE_ENV !== "production" ||
     process.env.NEXT_PUBLIC_DEV_LOGIN_ENABLED === "true";
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [entryState, setEntryState] = useState<EntryState>("loading");
 
   useEffect(() => {
     let cancelled = false;
@@ -62,10 +65,12 @@ export default function HomePage() {
 
       if (error) {
         setErrorMessage(error.message);
+        setEntryState("signed-out");
         return;
       }
 
       if (!session?.user) {
+        setEntryState("signed-out");
         return;
       }
 
@@ -84,13 +89,18 @@ export default function HomePage() {
         return;
       }
 
-      router.replace(profile ? "/dashboard" : "/onboarding");
+      setEntryState(profile ? "dashboard" : "onboarding");
     }
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (cancelled || !session?.user) {
+      if (cancelled) {
+        return;
+      }
+
+      if (!session?.user) {
+        setEntryState("signed-out");
         return;
       }
 
@@ -109,7 +119,21 @@ export default function HomePage() {
     };
   }, [router, supabase]);
 
-  async function handleGitHubLogin() {
+  async function handlePrimaryAction() {
+    if (entryState === "dashboard") {
+      router.push("/dashboard");
+      return;
+    }
+
+    if (entryState === "onboarding") {
+      router.push("/onboarding");
+      return;
+    }
+
+    if (entryState === "loading") {
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "github",
       options: {
@@ -126,6 +150,12 @@ export default function HomePage() {
   }
 
   const copy = language === "fr" ? frenchCopy : englishCopy;
+  const primaryActionLabel =
+    entryState === "dashboard"
+      ? copy.openDashboard
+      : entryState === "onboarding"
+        ? copy.continueOnboarding
+        : copy.loginWithGitHub;
 
   return (
     <main className="landing-theme landing-grid min-h-screen bg-background px-3 py-3 text-foreground sm:px-5 sm:py-5">
@@ -169,11 +199,12 @@ export default function HomePage() {
             <Button
               type="button"
               size="xl"
-              onClick={handleGitHubLogin}
+              onClick={handlePrimaryAction}
+              disabled={entryState === "loading"}
               className="hidden sm:inline-flex"
             >
               <LogIn data-icon="inline-start" />
-              Login with GitHub
+              {primaryActionLabel}
             </Button>
           </div>
         </header>
@@ -196,9 +227,14 @@ export default function HomePage() {
               </p>
 
               <div className="mt-9 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
-                <Button type="button" size="xl" onClick={handleGitHubLogin}>
+                <Button
+                  type="button"
+                  size="xl"
+                  onClick={handlePrimaryAction}
+                  disabled={entryState === "loading"}
+                >
                   <LogIn data-icon="inline-start" />
-                  Login with GitHub
+                  {primaryActionLabel}
                 </Button>
               </div>
 
@@ -271,9 +307,15 @@ export default function HomePage() {
                   {copy.finalDescription}
                 </p>
               </div>
-              <Button type="button" variant="secondary" size="xl" onClick={handleGitHubLogin}>
+              <Button
+                type="button"
+                variant="secondary"
+                size="xl"
+                onClick={handlePrimaryAction}
+                disabled={entryState === "loading"}
+              >
                 <LogIn data-icon="inline-start" />
-                Login with GitHub
+                {primaryActionLabel}
               </Button>
             </div>
           </div>
@@ -362,6 +404,9 @@ const englishCopy = {
     "concrete proof for your portfolio, ready to show future employers",
   lightMode: "Switch to light mode",
   darkMode: "Switch to dark mode",
+  loginWithGitHub: "Login with GitHub",
+  openDashboard: "Open dashboard",
+  continueOnboarding: "Continue onboarding",
   signalTeam: "3–4 teammates",
   signalTeamDetail: "Small enough to stay accountable",
   signalRepo: "One shared repo",
@@ -398,6 +443,9 @@ const frenchCopy: typeof englishCopy = {
     "preuve concrète pour ton portfolio, prête à montrer à tes futurs employeurs",
   lightMode: "Passer en mode clair",
   darkMode: "Passer en mode sombre",
+  loginWithGitHub: "Connexion avec GitHub",
+  openDashboard: "Ouvrir le tableau de bord",
+  continueOnboarding: "Continuer l’onboarding",
   signalTeam: "3 à 4 coéquipiers",
   signalTeamDetail: "Assez petit pour rester responsable",
   signalRepo: "Un repo partagé",

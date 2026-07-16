@@ -114,3 +114,4 @@ This file contains a growing ruleset that improves over time. **At session start
 55. [UX] Always give the landing-page light/dark theme toggle the exact same dark styling as the language toggle, including the `#1a1a22` background — the user explicitly requested visual consistency between both controls.
 56. [UX] Always give the landing-page theme toggle the exact same light-mode styling as the language toggle, including its white background and lavender border — the user explicitly requested consistency in both themes.
 57. [UX] Never show the `See how it works` hero button on the landing page — the user explicitly removed this secondary CTA.
+58. [SECURITY] Always use a dedicated PKCE `/auth/callback` flow for GitHub OAuth and remove authentication parameters from the URL immediately — the production implicit flow exposed tokens in the fragment and failed to establish the session.

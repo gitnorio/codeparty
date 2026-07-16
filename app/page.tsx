@@ -28,6 +28,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { completeOAuthSessionFromUrl } from "@/lib/supabase/oauth-callback";
 
 export default function HomePage() {
   const router = useRouter();
@@ -43,6 +44,13 @@ export default function HomePage() {
     let cancelled = false;
 
     async function resolveEntryRoute() {
+      const callbackResult = await completeOAuthSessionFromUrl(supabase);
+
+      if (callbackResult.error) {
+        setErrorMessage(callbackResult.error);
+        return;
+      }
+
       const {
         data: { session },
         error,
@@ -105,7 +113,7 @@ export default function HomePage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "github",
       options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/`,
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
 

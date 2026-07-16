@@ -110,3 +110,4 @@ This file contains a growing ruleset that improves over time. **At session start
 51. [SECURITY] Never place development login passwords in Client Components or browser bundles — development credentials must remain in server-only environment variables.
 52. [DATA] Never serialize hidden portfolio fields or a complete private profile into the public portfolio Client Component — public portfolio payloads must contain only explicitly displayable fields.
 53. [ARCH] Always use the `admin_users` table as the single source of truth for administrator authorization instead of email allowlists in code or environment variables.
+54. [UX] Always use the language-toggle dark background `#1a1a22` as the main dark surface color across the landing page — the user identified this exact color as the desired reference.

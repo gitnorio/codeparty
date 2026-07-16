@@ -158,9 +158,9 @@ html.theme-fade body * {
 }
 
 .dark .landing-theme {
-  --background: #171329;
+  --background: #1a1a22;
   --foreground: #f4efff;
-  --card: #211a38;
+  --card: #1a1a22;
   --card-foreground: #f4efff;
   --primary: #7650ff;
   --primary-foreground: #ffffff;
@@ -171,7 +171,7 @@ html.theme-fade body * {
   --border: #40345f;
   --ring: #7650ff;
   --brand-soft: #322650;
-  --brand-quiet: #1c1730;
+  --brand-quiet: #1a1a22;
   --brand-signal: #e8c964;
 }
 

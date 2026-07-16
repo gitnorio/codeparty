@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowRight,
   ExternalLink,
   FolderGit2,
   LogIn,
@@ -152,6 +151,7 @@ export default function HomePage() {
               size="icon-xl"
               onClick={toggleTheme}
               aria-label={theme === "dark" ? copy.lightMode : copy.darkMode}
+              className="border-[#e7e1f6] bg-white text-[#5f4c9b] hover:bg-[#f7f4ff] dark:border-[#27272f] dark:bg-[#1a1a22] dark:text-[#f2f2f5] dark:hover:bg-[#23232c]"
             >
               {theme === "dark" ? <Sun /> : <Moon />}
             </Button>
@@ -189,13 +189,6 @@ export default function HomePage() {
                   <LogIn data-icon="inline-start" />
                   Login with GitHub
                 </Button>
-                <Link
-                  href="#how-it-works"
-                  className="inline-flex h-12 items-center justify-center gap-2 rounded-full px-5 text-base font-medium transition-colors hover:bg-muted"
-                >
-                  {copy.seeHow}
-                  <ArrowRight className="size-4" />
-                </Link>
               </div>
 
               {errorMessage ? (
@@ -356,7 +349,6 @@ const englishCopy = {
     "CodeParty puts you on a team with other junior developers, gives you a shared workspace, and turns every completed project into",
   heroDescriptionEmphasis:
     "concrete proof for your portfolio, ready to show future employers",
-  seeHow: "See how it works",
   lightMode: "Switch to light mode",
   darkMode: "Switch to dark mode",
   signalTeam: "3–4 teammates",
@@ -393,7 +385,6 @@ const frenchCopy: typeof englishCopy = {
     "CodeParty te met en équipe avec d'autres développeurs juniors, vous donne un espace de travail partagé, et transforme chaque projet terminé en",
   heroDescriptionEmphasis:
     "preuve concrète pour ton portfolio, prête à montrer à tes futurs employeurs",
-  seeHow: "Voir comment ça marche",
   lightMode: "Passer en mode clair",
   darkMode: "Passer en mode sombre",
   signalTeam: "3 à 4 coéquipiers",

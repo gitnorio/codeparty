@@ -116,3 +116,4 @@ This file contains a growing ruleset that improves over time. **At session start
 57. [UX] Never show the `See how it works` hero button on the landing page — the user explicitly removed this secondary CTA.
 58. [SECURITY] Always use a dedicated PKCE `/auth/callback` flow for GitHub OAuth and remove authentication parameters from the URL immediately — the production implicit flow exposed tokens in the fragment and failed to establish the session.
 59. [CODE] Never call Supabase Auth methods directly from an `onAuthStateChange` callback; always defer follow-up async work with `setTimeout` — nested auth calls can block the PKCE sign-in lifecycle.
+60. [SECURITY] Always clear the current browser's Supabase session on logout and force GitHub's account picker on the next login — CodeParty may be used on shared or public computers.

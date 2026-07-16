@@ -156,8 +156,13 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
   }, [pathname, router, supabase]);
 
   async function handleSignOut() {
-    await supabase.auth.signOut();
-    router.replace("/");
+    const { error } = await supabase.auth.signOut({ scope: "local" });
+
+    if (error) {
+      console.error("Unable to sign out from CodeParty", error);
+    }
+
+    window.location.replace("/");
   }
 
   const visibleNavItems = useMemo(

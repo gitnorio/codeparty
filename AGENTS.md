@@ -115,3 +115,4 @@ This file contains a growing ruleset that improves over time. **At session start
 56. [UX] Always give the landing-page theme toggle the exact same light-mode styling as the language toggle, including its white background and lavender border — the user explicitly requested consistency in both themes.
 57. [UX] Never show the `See how it works` hero button on the landing page — the user explicitly removed this secondary CTA.
 58. [SECURITY] Always use a dedicated PKCE `/auth/callback` flow for GitHub OAuth and remove authentication parameters from the URL immediately — the production implicit flow exposed tokens in the fragment and failed to establish the session.
+59. [CODE] Never call Supabase Auth methods directly from an `onAuthStateChange` callback; always defer follow-up async work with `setTimeout` — nested auth calls can block the PKCE sign-in lifecycle.

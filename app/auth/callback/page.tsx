@@ -21,56 +21,88 @@ export default function AuthCallbackPage() {
 
     startedRef.current = true;
     let cancelled = false;
+    const timeoutId = window.setTimeout(() => {
+      cancelled = true;
+      setErrorMessage(
+        language === "fr"
+          ? "La connexion GitHub a expiré. Retournez à l’accueil et réessayez."
+          : "GitHub sign-in timed out. Return home and try again."
+      );
+    }, 12000);
 
     async function completeSignIn() {
-      const supabase = getSupabaseBrowserClient();
-      const callbackResult = await completeOAuthSessionFromUrl(supabase);
+      try {
+        const supabase = getSupabaseBrowserClient();
+        const callbackResult = await completeOAuthSessionFromUrl(supabase);
 
-      if (cancelled) {
-        return;
-      }
+        if (cancelled) {
+          return;
+        }
 
-      if (callbackResult.error) {
-        setErrorMessage(callbackResult.error);
-        return;
-      }
+        if (callbackResult.error) {
+          window.clearTimeout(timeoutId);
+          setErrorMessage(callbackResult.error);
+          return;
+        }
 
-      const sessionResult = callbackResult.session
-        ? { data: { session: callbackResult.session }, error: null }
-        : await supabase.auth.getSession();
+        const sessionResult = callbackResult.session
+          ? { data: { session: callbackResult.session }, error: null }
+          : await supabase.auth.getSession();
 
-      if (sessionResult.error || !sessionResult.data.session?.user) {
+        if (cancelled) {
+          return;
+        }
+
+        if (sessionResult.error || !sessionResult.data.session?.user) {
+          window.clearTimeout(timeoutId);
+          setErrorMessage(
+            sessionResult.error?.message ??
+              (language === "fr"
+                ? "La connexion GitHub n’a pas pu être finalisée. Veuillez réessayer."
+                : "GitHub sign-in could not be completed. Please try again.")
+          );
+          return;
+        }
+
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", sessionResult.data.session.user.id)
+          .maybeSingle<{ id: string }>();
+
+        if (cancelled) {
+          return;
+        }
+
+        if (profileError) {
+          window.clearTimeout(timeoutId);
+          setErrorMessage(profileError.message);
+          return;
+        }
+
+        window.clearTimeout(timeoutId);
+        router.replace(profile ? "/dashboard" : "/onboarding");
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        window.clearTimeout(timeoutId);
         setErrorMessage(
-          sessionResult.error?.message ??
-            (language === "fr"
-              ? "La connexion GitHub n’a pas pu être finalisée. Veuillez réessayer."
-              : "GitHub sign-in could not be completed. Please try again.")
+          error instanceof Error
+            ? error.message
+            : language === "fr"
+              ? "La connexion GitHub a échoué. Veuillez réessayer."
+              : "GitHub sign-in failed. Please try again."
         );
-        return;
       }
-
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("id", sessionResult.data.session.user.id)
-        .maybeSingle<{ id: string }>();
-
-      if (cancelled) {
-        return;
-      }
-
-      if (profileError) {
-        setErrorMessage(profileError.message);
-        return;
-      }
-
-      router.replace(profile ? "/dashboard" : "/onboarding");
     }
 
     void completeSignIn();
 
     return () => {
       cancelled = true;
+      window.clearTimeout(timeoutId);
     };
   }, [language, router]);
 

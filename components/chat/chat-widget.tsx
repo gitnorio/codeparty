@@ -146,7 +146,11 @@ export function ChatWidget() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(() => {
-      void resolveChatContext();
+      window.setTimeout(() => {
+        if (mounted) {
+          void resolveChatContext();
+        }
+      }, 0);
     });
 
     void resolveChatContext();

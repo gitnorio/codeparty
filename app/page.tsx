@@ -217,7 +217,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section id="how-it-works" className="border-t bg-brand-quiet px-5 py-16 sm:px-8 lg:px-12 lg:py-20">
+        <section id="how-it-works" className="landing-grid border-t bg-brand-quiet px-5 py-16 sm:px-8 lg:px-12 lg:py-20">
           <div className="mx-auto max-w-4xl text-center">
             <h2 className="text-4xl leading-[0.98] font-semibold tracking-[-0.055em] sm:text-5xl lg:text-6xl">
               {copy.processTitle}

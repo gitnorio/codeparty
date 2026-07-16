@@ -32,7 +32,6 @@ const testUsers = [
     label: "Alex Frontend",
     role: "Frontend Developer",
     email: "user1@test.com",
-    password: "Password123!",
     skills: ["React", "TypeScript", "TailwindCSS"],
     icon: Laptop,
     badgeColor: "bg-blue-500/10 text-blue-400 border-blue-500/20",
@@ -41,7 +40,6 @@ const testUsers = [
     label: "Sam Backend",
     role: "Backend Developer",
     email: "user2@test.com",
-    password: "Password123!",
     skills: ["NodeJS", "Supabase", "PostgreSQL"],
     icon: Server,
     badgeColor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
@@ -50,7 +48,6 @@ const testUsers = [
     label: "Chris Fullstack",
     role: "Fullstack Developer",
     email: "user3@test.com",
-    password: "Password123!",
     skills: ["Next.js", "Supabase", "TypeScript"],
     icon: Layers,
     badgeColor: "bg-amber-500/10 text-amber-400 border-amber-500/20",
@@ -59,7 +56,6 @@ const testUsers = [
     label: "Mina Busy",
     role: "Part-time Coder",
     email: "user4@test.com",
-    password: "Password123!",
     skills: ["React", "CSS Grid", "GraphQL"],
     icon: Braces,
     badgeColor: "bg-purple-500/10 text-purple-400 border-purple-500/20",
@@ -68,7 +64,6 @@ const testUsers = [
     label: "Leo Mobile",
     role: "Mobile Developer",
     email: "user5@test.com",
-    password: "Password123!",
     skills: ["SwiftUI", "Flutter", "Firebase"],
     icon: Smartphone,
     badgeColor: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
@@ -77,7 +72,6 @@ const testUsers = [
     label: "Toto Tom",
     role: "Mobile Developer",
     email: "user6@test.com",
-    password: "Password123!",
     skills: ["SwiftUI", "Flutter", "Firebase"],
     icon: Smartphone,
     badgeColor: "bg-cyan-500/10 text-cyan-300 border-cyan-500/20",
@@ -91,13 +85,32 @@ export default function DevLoginPage() {
   const [loadingUser, setLoadingUser] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  async function loginAs(email: string, password: string, label: string) {
+  async function loginAs(email: string, label: string) {
     setLoadingUser(label);
     setErrorMsg(null);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    const response = await fetch("/api/dev-login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    });
+    const payload = (await response.json()) as {
+      accessToken?: string;
+      refreshToken?: string;
+      error?: string;
+    };
+
+    if (!response.ok || !payload.accessToken || !payload.refreshToken) {
+      setErrorMsg(payload.error ?? "Unable to create the development session.");
+      setLoadingUser(null);
+      return;
+    }
+
+    const { error } = await supabase.auth.setSession({
+      access_token: payload.accessToken,
+      refresh_token: payload.refreshToken,
     });
 
     if (error) {
@@ -180,7 +193,7 @@ export default function DevLoginPage() {
                   </div>
 
                   <Button
-                    onClick={() => loginAs(user.email, user.password, user.label)}
+                    onClick={() => loginAs(user.email, user.label)}
                     disabled={loadingUser !== null}
                     className="w-full h-10 rounded-lg bg-slate-800 hover:bg-orange-500 text-slate-100 hover:text-slate-950 font-medium transition-all duration-300 border border-slate-700 hover:border-orange-400/20"
                   >

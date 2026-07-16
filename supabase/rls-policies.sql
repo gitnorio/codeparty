@@ -4,20 +4,45 @@
 
 begin;
 
+create table if not exists public.admin_users (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+alter table public.admin_users enable row level security;
+
+revoke all on public.admin_users from anon, authenticated;
+grant select on public.admin_users to authenticated;
+
+drop policy if exists "admin_users_select_own" on public.admin_users;
+create policy "admin_users_select_own"
+on public.admin_users
+for select
+to authenticated
+using (user_id = auth.uid());
+
+create or replace function public.is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path to 'public'
+as $$
+  select exists (
+    select 1
+    from public.admin_users
+    where user_id = auth.uid()
+  );
+$$;
+
 create or replace function public.is_admin_email()
 returns boolean
 language sql
 stable
+security definer
+set search_path to 'public'
 as $$
-  -- Keep this allowlist aligned with NEXT_PUBLIC_ADMIN_EMAILS / lib/admin-access.ts.
-  select coalesce(
-    lower(auth.jwt() ->> 'email') = any (
-      array[
-        'gatchebert@gmail.com'
-      ]
-    ),
-    false
-  );
+  select public.is_admin();
 $$;
 
 create or replace function public.is_team_creator(p_team_id uuid)
@@ -57,7 +82,7 @@ set search_path to 'public'
 as $$
   select
     p_profile_id = auth.uid()
-    or public.is_admin_email()
+    or public.is_admin()
     or exists (
       select 1
       from public.team_members me
@@ -186,7 +211,7 @@ for insert
 to authenticated
 with check (
   auth.uid() = id
-  or public.is_admin_email()
+  or public.is_admin()
 );
 
 create policy "profiles_update"
@@ -195,11 +220,11 @@ for update
 to authenticated
 using (
   auth.uid() = id
-  or public.is_admin_email()
+  or public.is_admin()
 )
 with check (
   auth.uid() = id
-  or public.is_admin_email()
+  or public.is_admin()
 );
 
 create policy "matchmaking_queue_select"
@@ -208,7 +233,7 @@ for select
 to authenticated
 using (
   auth.uid() = user_id
-  or public.is_admin_email()
+  or public.is_admin()
 );
 
 create policy "matchmaking_queue_insert"
@@ -217,7 +242,7 @@ for insert
 to authenticated
 with check (
   auth.uid() = user_id
-  or public.is_admin_email()
+  or public.is_admin()
 );
 
 create policy "matchmaking_queue_update"
@@ -226,11 +251,11 @@ for update
 to authenticated
 using (
   auth.uid() = user_id
-  or public.is_admin_email()
+  or public.is_admin()
 )
 with check (
   auth.uid() = user_id
-  or public.is_admin_email()
+  or public.is_admin()
 );
 
 create policy "matchmaking_queue_delete"
@@ -239,7 +264,7 @@ for delete
 to authenticated
 using (
   auth.uid() = user_id
-  or public.is_admin_email()
+  or public.is_admin()
 );
 
 create policy "teams_select"
@@ -247,7 +272,7 @@ on public.teams
 for select
 to authenticated
 using (
-  public.is_admin_email()
+  public.is_admin()
   or created_by = auth.uid()
   or public.is_team_member(id)
 );
@@ -257,7 +282,7 @@ on public.teams
 for insert
 to authenticated
 with check (
-  public.is_admin_email()
+  public.is_admin()
 );
 
 create policy "teams_update"
@@ -265,10 +290,10 @@ on public.teams
 for update
 to authenticated
 using (
-  public.is_admin_email()
+  public.is_admin()
 )
 with check (
-  public.is_admin_email()
+  public.is_admin()
 );
 
 create policy "team_members_select"
@@ -276,7 +301,7 @@ on public.team_members
 for select
 to authenticated
 using (
-  public.is_admin_email()
+  public.is_admin()
   or user_id = auth.uid()
   or public.is_team_member(team_id)
   or public.is_team_creator(team_id)
@@ -287,7 +312,7 @@ on public.team_members
 for insert
 to authenticated
 with check (
-  public.is_admin_email()
+  public.is_admin()
 );
 
 create policy "team_members_update"
@@ -295,10 +320,10 @@ on public.team_members
 for update
 to authenticated
 using (
-  public.is_admin_email()
+  public.is_admin()
 )
 with check (
-  public.is_admin_email()
+  public.is_admin()
 );
 
 create policy "projects_select"
@@ -306,7 +331,7 @@ on public.projects
 for select
 to authenticated
 using (
-  public.is_admin_email()
+  public.is_admin()
   or public.is_team_member(team_id)
   or public.is_team_creator(team_id)
 );
@@ -316,7 +341,7 @@ on public.projects
 for insert
 to authenticated
 with check (
-  public.is_admin_email()
+  public.is_admin()
   or exists (
     select 1
     from public.team_members tm
@@ -333,7 +358,7 @@ on public.projects
 for update
 to authenticated
 using (
-  public.is_admin_email()
+  public.is_admin()
   or exists (
     select 1
     from public.team_members tm
@@ -345,7 +370,7 @@ using (
   )
 )
 with check (
-  public.is_admin_email()
+  public.is_admin()
   or exists (
     select 1
     from public.team_members tm

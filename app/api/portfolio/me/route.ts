@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { getPortfolioByProfile, getPortfolioByProfileId } from "@/lib/portfolio";
+import {
+  getOwnerPortfolioByProfile,
+  getPortfolioByProfileId,
+} from "@/lib/portfolio";
 import {
   profileProjectTypeOptions,
   profileTimezoneOptions,
@@ -129,7 +132,7 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const portfolio = await getPortfolioByProfile(profile);
+  const portfolio = await getOwnerPortfolioByProfile(profile);
 
   if (!portfolio.data) {
     return NextResponse.json(

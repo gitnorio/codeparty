@@ -19,8 +19,13 @@ export type PortfolioProjectCard = {
   teamSize: number;
 };
 
+export type PublicPortfolioProfile = Pick<
+  AppProfile,
+  "display_name" | "avatar_url" | "language"
+>;
+
 export type PortfolioPageData = {
-  profile: AppProfile;
+  profile: PublicPortfolioProfile;
   bio: string;
   githubProfileUrl: string;
   location: string | null;
@@ -35,6 +40,10 @@ export type PortfolioPageData = {
   collaboratorsCount: number;
   completedProjects: PortfolioProjectCard[];
   publicUrlPath: string;
+};
+
+export type PortfolioOwnerPageData = PortfolioPageData & {
+  ownerProfile: AppProfile;
 };
 
 export async function getPortfolioByUsername(username: string) {
@@ -87,7 +96,23 @@ export async function getPortfolioByProfileId(profileId: string) {
     };
   }
 
-  return getPortfolioByProfile(profile);
+  return getOwnerPortfolioByProfile(profile);
+}
+
+export async function getOwnerPortfolioByProfile(profile: AppProfile) {
+  const result = await getPortfolioByProfile(profile);
+
+  if (!result.data) {
+    return result;
+  }
+
+  return {
+    data: {
+      ...result.data,
+      ownerProfile: profile,
+    } satisfies PortfolioOwnerPageData,
+    error: null,
+  };
 }
 
 export async function getPortfolioByProfile(profile: AppProfile) {
@@ -199,16 +224,25 @@ export async function getPortfolioByProfile(profile: AppProfile) {
 
   return {
     data: {
-      profile,
+      profile: {
+        display_name: profile.display_name,
+        avatar_url: profile.avatar_url,
+        language: profile.language,
+      },
       bio:
         profile.bio?.trim() ||
         "I love building clean, scalable web applications and working with motivated developers to ship real projects.",
       githubProfileUrl: `https://github.com/${profile.display_name}`,
-      location: profile.location?.trim() || null,
+      location: profile.show_location_on_portfolio
+        ? profile.location?.trim() || null
+        : null,
       showLocation: profile.show_location_on_portfolio,
       languageLabel: formatLanguageValue(profile.language),
       resumeUrl: buildResumeUrl(profile.resume_path),
-      timezoneLabel: profile.timezone ? formatTimezoneValue(profile.timezone) : null,
+      timezoneLabel:
+        profile.show_timezone_on_portfolio && profile.timezone
+          ? formatTimezoneValue(profile.timezone)
+          : null,
       showTimezone: profile.show_timezone_on_portfolio,
       skills: profile.skills,
       availableForOpportunities: !activeMembership,

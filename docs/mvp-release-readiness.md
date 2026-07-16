@@ -19,13 +19,14 @@ Apply these current SQL files in this order from the Supabase SQL editor:
 9. `supabase/portfolio-schema-update.sql`
 10. `supabase/portfolio-visibility-preferences.sql`
 11. `supabase/mvp-schema-cleanup.sql`
-12. `supabase/rls-policies.sql`
-13. `supabase/text-length-guards.sql`
-14. `supabase/portfolio-resume-storage.sql`
+12. `supabase/admin-users.sql`
+13. `supabase/rls-policies.sql`
+14. `supabase/text-length-guards.sql`
+15. `supabase/portfolio-resume-storage.sql`
 
 Do **not** apply `supabase/restore-required-profile-fields.sql`: `location` is intentionally optional. `supabase/team-members-max-active-parties.sql` is superseded by `supabase/single-active-party-lifecycle.sql`.
 
-Before launch, keep the email allowlist inside `public.is_admin_email()` in `supabase/rls-policies.sql` synchronized with `NEXT_PUBLIC_ADMIN_EMAILS` in the deployment environment.
+Before launch, confirm the owner account has a row in `public.admin_users`. Add or remove administrators only through controlled SQL or service-role operations.
 
 Confirm in Supabase:
 
@@ -34,6 +35,7 @@ Confirm in Supabase:
 - `portfolio-resumes` is public, accepts PDF only and has a 500 KB limit
 - `project_members`, `projects.start_date` and `projects.end_date` no longer exist
 - A user cannot belong to more than one active party
+- `admin_users` contains the intended administrator accounts and cannot be modified by regular authenticated users
 
 ## 2. Production environment
 
@@ -43,11 +45,10 @@ Set these variables in the hosting provider for Production and Preview environme
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `NEXT_PUBLIC_SITE_URL` — exact deployed origin, for example `https://codeparty.example`
-- `NEXT_PUBLIC_ADMIN_EMAILS` — comma-separated admin emails; never leave empty
 
 Never expose the service-role key with a `NEXT_PUBLIC_` prefix.
 
-Keep `DEV_LOGIN_ENABLED` and `NEXT_PUBLIC_DEV_LOGIN_ENABLED` unset or `false` in Production. They may be set to `true` together only on an access-protected Preview deployment.
+Keep `DEV_LOGIN_ENABLED`, `NEXT_PUBLIC_DEV_LOGIN_ENABLED` and `DEV_LOGIN_PASSWORD` unset in Production. They may be configured together only locally or on an access-protected Preview deployment.
 
 ## 3. Supabase Auth and GitHub OAuth
 

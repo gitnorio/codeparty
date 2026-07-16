@@ -7,7 +7,7 @@ create table if not exists public.admin_users (
 
 alter table public.admin_users enable row level security;
 
-revoke insert, update, delete on public.admin_users from anon, authenticated;
+revoke all on public.admin_users from anon, authenticated;
 grant select on public.admin_users to authenticated;
 
 drop policy if exists "admin_users_select_own" on public.admin_users;
@@ -30,5 +30,21 @@ as $$
     where user_id = auth.uid()
   );
 $$;
+
+create or replace function public.is_admin_email()
+returns boolean
+language sql
+stable
+security definer
+set search_path to 'public'
+as $$
+  select public.is_admin();
+$$;
+
+insert into public.admin_users (user_id)
+select id
+from auth.users
+where lower(email) = lower('gatchebert@gmail.com')
+on conflict (user_id) do nothing;
 
 commit;

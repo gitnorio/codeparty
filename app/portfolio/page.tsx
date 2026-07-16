@@ -7,7 +7,7 @@ import { FeedbackBanner } from "@/components/app/feedback";
 import { useLanguage } from "@/components/app/language-provider";
 import { PortfolioEditorCard, type PortfolioEditorFormData } from "@/components/app/portfolio-editor-card";
 import { PortfolioPageView } from "@/components/app/portfolio-page-view";
-import type { PortfolioPageData } from "@/lib/portfolio";
+import type { PortfolioOwnerPageData } from "@/lib/portfolio";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const MAX_RESUME_SIZE_BYTES = 500 * 1024;
@@ -16,7 +16,7 @@ const PORTFOLIO_RESUME_BUCKET = "portfolio-resumes";
 export default function PortfolioOwnerPage() {
   const supabase = getSupabaseBrowserClient();
   const { language } = useLanguage();
-  const [portfolio, setPortfolio] = useState<PortfolioPageData | null>(null);
+  const [portfolio, setPortfolio] = useState<PortfolioOwnerPageData | null>(null);
   const [formData, setFormData] = useState<PortfolioEditorFormData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,7 +60,7 @@ export default function PortfolioOwnerPage() {
       });
 
       const payload = (await response.json()) as
-        | { data?: PortfolioPageData; error?: string }
+        | { data?: PortfolioOwnerPageData; error?: string }
         | undefined;
 
       if (!mounted) {
@@ -140,7 +140,7 @@ export default function PortfolioOwnerPage() {
     });
 
     const payload = (await response.json()) as
-      | { data?: PortfolioPageData; error?: string }
+      | { data?: PortfolioOwnerPageData; error?: string }
       | undefined;
 
     if (!response.ok || !payload?.data) {
@@ -365,17 +365,19 @@ export default function PortfolioOwnerPage() {
   );
 }
 
-function createFormData(data: PortfolioPageData): PortfolioEditorFormData {
+function createFormData(data: PortfolioOwnerPageData): PortfolioEditorFormData {
+  const profile = data.ownerProfile;
+
   return {
-    bio: data.profile.bio ?? "",
-    location: data.profile.location ?? "",
-    resume_path: data.profile.resume_path ?? null,
-    show_location_on_portfolio: data.profile.show_location_on_portfolio,
-    language: data.profile.language,
-    timezone: data.profile.timezone,
-    show_timezone_on_portfolio: data.profile.show_timezone_on_portfolio,
-    skills: data.profile.skills,
-    project_types: data.profile.project_type,
+    bio: profile.bio ?? "",
+    location: profile.location ?? "",
+    resume_path: profile.resume_path ?? null,
+    show_location_on_portfolio: profile.show_location_on_portfolio,
+    language: profile.language,
+    timezone: profile.timezone,
+    show_timezone_on_portfolio: profile.show_timezone_on_portfolio,
+    skills: profile.skills,
+    project_types: profile.project_type,
   };
 }
 

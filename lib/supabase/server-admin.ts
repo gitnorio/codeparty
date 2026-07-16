@@ -1,20 +1,45 @@
 import { createClient } from "@supabase/supabase-js";
 
-import { isAdminEmail } from "@/lib/admin-access";
 import type { Database } from "@/lib/supabase/database.types";
 
 export function getSupabaseServerAnonClient() {
   return createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
   );
 }
 
 export function getSupabaseServiceRoleClient() {
   return createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
   );
+}
+
+export async function isAdminUser(userId: string) {
+  const supabase = getSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", userId)
+    .maybeSingle<{ user_id: string }>();
+
+  return {
+    isAdmin: Boolean(data),
+    error,
+  };
 }
 
 export async function getUserFromBearerToken(authorizationHeader: string | null) {
@@ -58,7 +83,17 @@ export async function getAdminUserFromBearerToken(authorizationHeader: string | 
     return auth;
   }
 
-  if (!isAdminEmail(auth.user.email)) {
+  const adminResult = await isAdminUser(auth.user.id);
+
+  if (adminResult.error) {
+    return {
+      user: null,
+      error: "Unable to verify admin access.",
+      status: 500,
+    };
+  }
+
+  if (!adminResult.isAdmin) {
     return {
       user: null,
       error: "Admin access required.",

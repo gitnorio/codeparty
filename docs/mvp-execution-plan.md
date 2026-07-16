@@ -48,10 +48,10 @@ Make the data layer production-safe and remove security ambiguity.
    - `projects`
    - `project_members`
 2. Keep one consistent access model per table
-3. Preserve admin access through approved email allowlist logic
+3. Preserve admin access through the `admin_users` table
 4. Preserve user self-access where needed
 5. Verify helper functions:
-   - `is_admin_email`
+   - `is_admin`
    - `is_team_member`
    - `is_team_creator`
    - `can_view_profile`
@@ -210,7 +210,7 @@ Confirm the MVP is operational and safe to demo or release.
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
-   - `NEXT_PUBLIC_ADMIN_EMAILS`
+   - `DEV_LOGIN_PASSWORD` only in local or protected Preview environments
 6. Verify GitHub OAuth production callback
 7. Prepare final SQL setup files in repo
 

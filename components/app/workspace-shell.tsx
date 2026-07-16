@@ -25,7 +25,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FeedbackBanner } from "@/components/app/feedback";
 import { ProfileAvatar } from "@/components/app/profile-avatar";
 import { useTheme } from "@/components/app/theme-provider";
-import { isAdminEmail } from "@/lib/admin-access";
 import { cn } from "@/lib/utils";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { AppProfile } from "@/lib/profile";
@@ -84,7 +83,19 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const userIsAdmin = isAdminEmail(session.user.email);
+      const { data: adminRecord, error: adminError } = await supabase
+        .from("admin_users")
+        .select("user_id")
+        .eq("user_id", session.user.id)
+        .maybeSingle<{ user_id: string }>();
+
+      if (adminError) {
+        setErrorMessage(adminError.message);
+        setIsLoading(false);
+        return;
+      }
+
+      const userIsAdmin = Boolean(adminRecord);
       setIsAdmin(userIsAdmin);
 
       const { data, error } = await supabase

@@ -107,3 +107,6 @@ This file contains a growing ruleset that improves over time. **At session start
 46. [UX] Always use the compact lavender celebration banner with the premium `Get my resume` CTA at the bottom of Portfolio — the user explicitly selected this generated design.
 48. [STYLE] Always keep English and French landing-page promises semantically equivalent, including the same emphasized phrase — the user explicitly rejected a mismatched translation.
 49. [SECURITY] Never expose the development login route in Production; allow it only locally or on an explicitly enabled, access-protected Preview deployment — test credentials must not become a public production entry point.
+51. [SECURITY] Never place development login passwords in Client Components or browser bundles — development credentials must remain in server-only environment variables.
+52. [DATA] Never serialize hidden portfolio fields or a complete private profile into the public portfolio Client Component — public portfolio payloads must contain only explicitly displayable fields.
+53. [ARCH] Always use the `admin_users` table as the single source of truth for administrator authorization instead of email allowlists in code or environment variables.

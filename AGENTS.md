@@ -103,6 +103,7 @@ This file contains a growing ruleset that improves over time. **At session start
 47. [STYLE] Always use masculine articles, demonstratives, and adjective agreement for `party` in French copy — the user corrected `la bonne party` to `le bon party`.
 48. [PROCESS] Never claim to remember an exact previous visual design unless it is verifiable from an available screenshot, file, or Git history — explicitly label any reconstruction as an approximation before generating it.
 49. [UX] Always keep the landing page on its lavender/plum grid-backed palette with `#7650ff` as the primary accent unless the user explicitly requests a new palette — the user restored this specific visual identity.
+50. [PROCESS] Never modify the current landing-page layout unless the user explicitly asks for a specific layout change — the user approved the layout as final for the MVP.
 46. [UX] Always use the compact lavender celebration banner with the premium `Get my resume` CTA at the bottom of Portfolio — the user explicitly selected this generated design.
 48. [STYLE] Always keep English and French landing-page promises semantically equivalent, including the same emphasized phrase — the user explicitly rejected a mismatched translation.
 49. [SECURITY] Never expose the development login route in Production; allow it only locally or on an explicitly enabled, access-protected Preview deployment — test credentials must not become a public production entry point.
